@@ -64,18 +64,58 @@ button{cursor:pointer;background:transparent;padding:7px 12px;width:auto}
 .pag-btn.on{background:var(--red);color:#fff;border-color:var(--red)}
 .pag-btn:disabled{opacity:0.35;cursor:default}
 .pag-info{font-size:12px;color:var(--t2);text-align:center;margin-bottom:4px}
+
+/* ===== LOGIN ===== */
+#login-screen{position:fixed;inset:0;background:var(--red);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+#login-box{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,0.18)}
+#login-logo{text-align:center;margin-bottom:20px}
+#login-logo h1{font-size:20px;font-weight:800;color:var(--red);margin-top:8px}
+#login-logo p{font-size:12px;color:#888;margin-top:2px}
+.login-field{margin-bottom:14px}
+.login-field label{display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:5px}
+.login-field input{width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;outline:none;transition:border .15s}
+.login-field input:focus{border-color:var(--red)}
+#login-err{color:#C0232A;font-size:12px;text-align:center;margin-bottom:10px;min-height:18px}
+#btn-login{width:100%;padding:13px;background:var(--red);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+#btn-login:active{opacity:0.85}
+#login-footer{color:rgba(255,255,255,0.7);font-size:12px;text-align:center;margin-top:20px}
+#app-content{display:none}
+
 </style>
 </head>
 <body>
+
+<div id="login-screen">
+  <div id="login-box">
+    <div id="login-logo">
+      <div style="width:56px;height:56px;background:var(--red);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto">🏪</div>
+      <h1>Sales Tool – Đồng Tâm</h1>
+      <p>Khu vực 23 · Dành cho nội bộ</p>
+    </div>
+    <div class="login-field">
+      <label>Tài khoản</label>
+      <input type="text" id="inp-user" placeholder="Nhập username..." autocomplete="username" autocapitalize="none"/>
+    </div>
+    <div class="login-field">
+      <label>Mật khẩu</label>
+      <input type="password" id="inp-pass" placeholder="Nhập mật khẩu..." autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <p id="login-err"></p>
+    <button id="btn-login" onclick="doLogin()">Đăng nhập</button>
+  </div>
+  <p id="login-footer">Quên mật khẩu? Liên hệ Linh · 0819 548 908</p>
+</div>
+<div id="app-content">
 <div class="wrap">
 <div style="display:flex;align-items:center;gap:9px;margin-bottom:13px">
   <div style="width:30px;height:30px;background:#C0232A;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
     <span style="font-size:16px">🏪</span>
   </div>
-  <div>
+  <div style="flex:1">
     <p style="font-size:14px;font-weight:600">Sales Tool – Đồng Tâm</p>
-    <p style="font-size:11px;color:var(--t2)" id="hdr-count">Đang tải...</p>
+    <p style="font-size:11px;color:var(--t2)" id="hdr-user">Khu vực 23</p>
   </div>
+  <button onclick="doLogout()" style="background:#FDECEA;border:none;color:var(--red);padding:6px 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0">↩ Đăng xuất</button>
 </div>
 <div class="tabs">
   <button class="tb on" onclick="swTab('tra')">Tra mã</button>
@@ -509,7 +549,8 @@ function showP(k){
 }
 
 // Init
-document.getElementById('hdr-count').textContent=DATA.length+' mã gạch · '+NGOI.length+' ngói · '+KEO.length+' keo';
+var hdrCount=document.getElementById('hdr-count')||document.getElementById('hdr-user');
+if(hdrCount) hdrCount.textContent=DATA.length+' mã gạch · '+NGOI.length+' ngói · '+KEO.length+' keo';
 
 // Image storage
 var imgStore = {};
@@ -719,7 +760,99 @@ function showShareModal(msg){
 }
 
 
-render();
+
+// ===== LOGIN SYSTEM =====
+// Tài khoản: thêm/sửa tại đây
+// pass được encode base64 để không lộ plaintext
+var USERS = [
+  {u:'linh',    p:btoa('Linh@2024'),   name:'Lê Chí Linh'},
+  {u:'nhanvien1', p:btoa('NV1@2024'), name:'Nhân viên 1'},
+  {u:'nhanvien2', p:btoa('NV2@2024'), name:'Nhân viên 2'},
+];
+
+var SESSION_KEY = 'dt_sales_auth';
+var SESSION_HOURS = 8; // Tự đăng xuất sau 8 tiếng
+
+function checkSession(){
+  try{
+    var s = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
+    if(!s) return false;
+    var obj = JSON.parse(s);
+    if(Date.now() > obj.exp) {
+      localStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(SESSION_KEY);
+      return false;
+    }
+    return obj;
+  } catch(e){ return false; }
+}
+
+function saveSession(user){
+  var obj = {
+    user: user.u,
+    name: user.name,
+    exp: Date.now() + SESSION_HOURS * 3600 * 1000
+  };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(obj));
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(obj));
+}
+
+function doLogin(){
+  var u = document.getElementById('inp-user').value.trim().toLowerCase();
+  var p = document.getElementById('inp-pass').value;
+  var errEl = document.getElementById('login-err');
+  errEl.textContent = '';
+
+  if(!u || !p){
+    errEl.textContent = 'Vui lòng nhập đầy đủ thông tin!';
+    return;
+  }
+
+  var found = USERS.find(function(x){
+    return x.u === u && x.p === btoa(p);
+  });
+
+  if(found){
+    saveSession(found);
+    showApp(found.name);
+  } else {
+    errEl.textContent = '❌ Sai tài khoản hoặc mật khẩu!';
+    document.getElementById('inp-pass').value = '';
+    document.getElementById('inp-pass').focus();
+  }
+}
+
+function showApp(name){
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-content').style.display = 'block';
+  // Hiện tên user trên header
+  var hdr = document.getElementById('hdr-user');
+  if(hdr) hdr.textContent = 'Xin chào, ' + name + ' 👋';
+  // Init app
+  render();
+}
+
+function doLogout(){
+  localStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
+  location.reload();
+}
+
+// Khởi động - check session
+(function init(){
+  var sess = checkSession();
+  if(sess){
+    showApp(sess.name);
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app-content').style.display = 'none';
+    setTimeout(function(){
+      document.getElementById('inp-user').focus();
+    }, 300);
+  }
+})();
+
 </script>
+</div><!-- end app-content -->
 </body>
 </html>
