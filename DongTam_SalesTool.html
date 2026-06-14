@@ -52,6 +52,9 @@ button{cursor:pointer;background:transparent;padding:7px 12px;width:auto}
 .sz-item{padding:10px 6px;font-size:11px;text-align:center;cursor:pointer;color:var(--t2);border-bottom:0.5px solid var(--bd);line-height:1.3}
 .sz-item.on{background:#FDECEA;color:var(--red);font-weight:700}
 .sz-item:active{background:var(--bg2)}
+.cart-item{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r12);padding:12px 14px;margin-bottom:8px}
+.qty-btn{width:28px;height:28px;border:1px solid var(--bd2);border-radius:6px;background:var(--bg2);font-size:16px;cursor:pointer;font-family:var(--f);display:flex;align-items:center;justify-content:center}
+.export-btn{flex:1;padding:11px;border-radius:var(--r8);border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f);display:flex;align-items:center;justify-content:center;gap:5px}
 .cnt{font-size:11px;color:var(--t3);text-align:center;margin-top:6px}
 .sec-hdr{font-size:11px;font-weight:700;color:var(--t2);padding:6px 0 4px;letter-spacing:.5px}
 .keo-card{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r12);padding:12px 14px;margin-bottom:8px;cursor:pointer}
@@ -122,7 +125,7 @@ button{cursor:pointer;background:transparent;padding:7px 12px;width:auto}
   <button class="tb"    onclick="swTab('sale')">🔥 Sale</button>
   <button class="tb"    onclick="swTab('ngoi')">🏠 Ngói</button>
   <button class="tb"    onclick="swTab('keo')">🧱 Keo</button>
-  <button class="tb"    onclick="swTab('pitch')">Pitch</button>
+  <button class="tb"    onclick="swTab('don')" id="tab-don-btn">🛒 <span id="don-badge" style="display:none;background:#C0232A;color:#fff;border-radius:10px;padding:1px 5px;font-size:10px"></span>Đơn</button>
 </div>
 
 <!-- TAB 1: Tra mã -->
@@ -187,6 +190,7 @@ button{cursor:pointer;background:transparent;padding:7px 12px;width:auto}
       <div style="display:flex;gap:6px">
         <button id="dp-img-btn" onclick="toggleImgInput()" style="flex:1;font-size:12px;padding:8px;border-radius:var(--r8);border:1px dashed var(--bd2);color:var(--t2);background:var(--bg2)">📷 Thêm ảnh Drive</button>
         <button id="dp-zalo-btn" onclick="shareZalo()" style="flex:1;font-size:12px;padding:8px;border-radius:var(--r8);border:none;background:#0068FF;color:#fff;font-weight:600">Zalo ↗</button>
+        <button onclick="addToDon(curP_ma)" style="flex:1;font-size:12px;padding:8px;border-radius:var(--r8);border:none;background:#C0232A;color:#fff;font-weight:600;font-family:var(--f)">🛒 + Đơn</button>
       </div>
       <div id="dp-img-input-wrap" style="display:none;margin-top:8px">
         <input type="text" id="dp-img-url" placeholder="Dán link Google Drive vào đây..." style="font-size:12px;padding:8px;margin-bottom:6px"/>
@@ -241,6 +245,32 @@ button{cursor:pointer;background:transparent;padding:7px 12px;width:auto}
       <div class="pr-box" style="background:#E8F5E9"><p>Nhận tại kho</p><p id="nd-nhan2" style="color:#1B5E20"></p></div>
       <div class="pr-box" style="background:#E8F5E9"><p>Giao hàng (ước)</p><p id="nd-giao2" style="color:#1B5E20"></p></div>
     </div>
+    <!-- Lên đơn ngói -->
+    <div style="display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bd)">
+      <span style="font-size:13px;color:var(--t2)">Số lượng:</span>
+      <button onclick="chinhSLNgoi(-10)" style="width:32px;height:32px;border:1px solid var(--bd2);border-radius:6px;background:var(--bg2);font-size:14px;cursor:pointer">−</button>
+      <input type="number" id="nd-soluong" value="100" min="1" oninput="tinhTienNgoi()"
+        style="width:70px;text-align:center;font-size:14px;font-weight:700;padding:6px;border:1px solid var(--bd2);border-radius:6px"/>
+      <button onclick="chinhSLNgoi(10)" style="width:32px;height:32px;border:1px solid var(--bd2);border-radius:6px;background:var(--bg2);font-size:14px;cursor:pointer">+</button>
+      <span style="font-size:12px;color:var(--t2)">viên</span>
+    </div>
+    <div id="nd-tinh" style="background:var(--bg2);border-radius:var(--r8);padding:10px;margin-top:8px;font-size:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="color:var(--t2)">Thành tiền lẻ</span>
+        <span id="nd-tien-le" style="font-weight:700"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="color:#1B5E20">Thành tiền ĐL nhận kho</span>
+        <span id="nd-tien-nhan" style="font-weight:700;color:#1B5E20"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="color:#0D47A1">Thành tiền ĐL đi giao</span>
+        <span id="nd-tien-giao" style="font-weight:700;color:#0D47A1"></span>
+      </div>
+    </div>
+    <button onclick="themNgoiVaoDon()" style="width:100%;margin-top:8px;padding:11px;border:none;border-radius:var(--r8);background:#C0232A;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">
+      🛒 Thêm vào đơn đặt hàng
+    </button>
   </div>
   <div class="sec-hdr">A. NGÓI LỢP</div>
   <div id="ngoi-list-A"></div>
@@ -277,17 +307,95 @@ button{cursor:pointer;background:transparent;padding:7px 12px;width:auto}
 </div>
 
 <!-- TAB 5: Pitch -->
-<div id="tab-pitch" class="tc">
-  <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Script xử lý từng tình huống</p>
-  <div class="filters">
-    <button class="fb on" id="p-gia"  onclick="showP('gia')">Họ than giá cao</button>
-    <button class="fb"    id="p-luoi" onclick="showP('luoi')">Lười tư vấn</button>
-    <button class="fb"    id="p-len"  onclick="showP('len')">Pitch lên đại lý</button>
+<!-- TAB ĐƠN HÀNG -->
+<div id="tab-don" class="tc">
+  <div id="don-empty" style="text-align:center;padding:40px 0;color:var(--t3)">
+    <p style="font-size:36px;margin-bottom:8px">🛒</p>
+    <p style="font-size:14px;font-weight:500;color:var(--t2);margin-bottom:4px">Chưa có sản phẩm</p>
+    <p style="font-size:12px">Bấm "+ Đơn" khi xem chi tiết sản phẩm</p>
   </div>
-  <div id="pitch-body" style="margin-top:4px"></div>
+  <div id="don-content" style="display:none">
+    <!-- Info khách -->
+    <div style="background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r12);padding:14px;margin-bottom:10px">
+      <p style="font-size:13px;font-weight:600;margin-bottom:10px">📋 Thông tin đơn hàng</p>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <input type="text" id="don-ten" placeholder="Tên khách hàng / đại lý *" style="font-size:13px"/>
+        <input type="text" id="don-cty" placeholder="Tên công ty (nếu có)" style="font-size:13px"/>
+        <input type="tel"  id="don-sdt" placeholder="Số điện thoại *" style="font-size:13px"/>
+        <input type="text" id="don-dc"  placeholder="Địa chỉ công trình / giao hàng" style="font-size:13px"/>
+        <textarea id="don-note" placeholder="Ghi chú thêm..." style="font-size:13px;min-height:60px;resize:vertical;border:1px solid var(--bd2);border-radius:var(--r8);padding:9px 12px;font-family:var(--f);background:var(--bg1)"></textarea>
+      </div>
+    </div>
+
+    <!-- Danh sách sản phẩm -->
+    <div id="don-list" style="margin-bottom:10px"></div>
+
+    <!-- Tổng kết -->
+    <div style="background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r12);padding:14px;margin-bottom:12px">
+      <!-- Chọn kiểu giao hàng -->
+      <p style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:8px">📦 Hình thức giao hàng:</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button id="btn-nhan-kho" onclick="setGiaoHang('nhan')"
+          style="flex:1;padding:8px;border-radius:var(--r8);border:2px solid #1B5E20;background:#E8F5E9;color:#1B5E20;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">
+          🏭 Nhận tại kho
+        </button>
+        <button id="btn-di-giao" onclick="setGiaoHang('giao')"
+          style="flex:1;padding:8px;border-radius:var(--r8);border:2px solid var(--bd2);background:var(--bg2);color:var(--t2);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">
+          🚚 Giao tận nơi
+        </button>
+      </div>
+      <!-- Tổng tiền -->
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13px;color:var(--t2)">Tổng giá lẻ (báo khách)</span>
+        <span id="don-total-le" style="font-size:14px;font-weight:700"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span id="lbl-giahangh" style="font-size:13px;color:#1B5E20">Chi phí vốn (nhận kho)</span>
+        <span id="don-total-dl" style="font-size:14px;font-weight:700;color:#1B5E20"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13px;color:var(--t2)">Tổng giá ĐL đi giao</span>
+        <span id="don-total-giao" style="font-size:14px;font-weight:700;color:#0D47A1"></span>
+      </div>
+      <!-- Lợi nhuận box -->
+      <div style="background:#E8F5E9;border:1.5px solid #4CAF50;border-radius:var(--r8);padding:10px 12px;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span id="lbl-margin" style="font-size:13px;font-weight:600;color:#1B5E20">💰 Lợi nhuận (nhận kho)</span>
+          <span id="don-margin" style="font-size:15px;font-weight:700;color:#1B5E20"></span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="font-size:11px;color:#2E7D32">= Tổng lẻ − Chi phí vốn</span>
+          <span id="don-margin-pct" style="font-size:12px;font-weight:600;color:#2E7D32"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nút xuất -->
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="export-btn" onclick="xuatPDF()" style="background:#C0232A;color:#fff">
+        📄 Xuất PDF báo giá
+      </button>
+      <button class="export-btn" onclick="xuatExcel()" style="background:#1B5E20;color:#fff">
+        📊 Xuất Excel
+      </button>
+    </div>
+    <button onclick="guiDonHang()" id="btn-gui-don" style="width:100%;padding:12px;border-radius:var(--r8);border:none;background:#C0232A;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--f);margin-bottom:8px">
+      📦 Đặt hàng – Gửi Sheet & Email
+    </button>
+    <div id="gui-don-status" style="display:none;text-align:center;padding:10px;font-size:13px;color:var(--t2);margin-bottom:8px">⏳ Đang gửi...</div>
+    <div id="gui-don-ok" style="display:none;background:#E8F5E9;border:1.5px solid #4CAF50;border-radius:var(--r8);padding:12px;text-align:center;margin-bottom:8px">
+      <p style="font-size:15px;margin-bottom:4px">🎉 Đã gửi đơn thành công!</p>
+      <p style="font-size:12px;color:#2E7D32">Đơn đã vào Google Sheet & gửi email thông báo</p>
+    </div>
+    <button onclick="xuatZalo()" style="width:100%;padding:11px;border-radius:var(--r8);border:none;background:#0068FF;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f);margin-bottom:8px">
+      💬 Gửi báo giá qua Zalo
+    </button>
+    <button onclick="clearDon()" style="width:100%;padding:10px;border-radius:var(--r8);border:1px solid var(--bd2);background:transparent;font-size:13px;color:var(--t2);cursor:pointer;font-family:var(--f)">
+      🗑 Xóa đơn hàng
+    </button>
+  </div>
 </div>
 
-</div>
 <script>
 const D1=[{ma:"3060CLOUD011",kc:"300x600",cat:"ceramic",gio:"\u2605",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"3060CLOUD012",kc:"300x600",cat:"ceramic",gio:"\u2605",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"3060HOABINH002",kc:"300x600",cat:"ceramic",gio:"\u2605",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"3060TRAVERTINE001",kc:"300x600",cat:"ceramic",gio:"\u2605",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"3060TRAVERTINE002",kc:"300x600",cat:"ceramic",gio:"\u2605",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"4080VAMCOTAY002-H+",kc:"400x800",cat:"ceramic",gio:"\u2605",le:353000,giao:293000,nhan:282000,gs:0,ns:0},{ma:"4080DONGVAN001-H+",kc:"400x800",cat:"ceramic",gio:"\u2605",le:353000,giao:293000,nhan:282000,gs:0,ns:0},{ma:"4080PHARAON001-H+",kc:"400x800",cat:"ceramic",gio:"\u2605",le:353000,giao:293000,nhan:282000,gs:0,ns:0},{ma:"4080HOABINH001-H+",kc:"400x800",cat:"ceramic",gio:"\u2605",le:353000,giao:293000,nhan:282000,gs:0,ns:0},{ma:"4080HOABINH002-H+",kc:"400x800",cat:"ceramic",gio:"\u2605",le:321000,giao:266000,nhan:257000,gs:0,ns:0},{ma:"100STONE001-FP-H+",kc:"1000x1000",cat:"porcelain",gio:"\u2605",le:562000,giao:466000,nhan:450000,gs:0,ns:0},{ma:"100MOMENT002-H+",kc:"1000x1000",cat:"porcelain",gio:"\u2605",le:535000,giao:444000,nhan:428000,gs:0,ns:0},{ma:"100MOMENT003-H+",kc:"1000x1000",cat:"porcelain",gio:"\u2605",le:535000,giao:444000,nhan:428000,gs:0,ns:0},{ma:"100MOMENT004-H+",kc:"1000x1000",cat:"porcelain",gio:"\u2605",le:589000,giao:489000,nhan:471000,gs:0,ns:0},{ma:"100MOMENT001-H+",kc:"1000x1000",cat:"porcelain",gio:"\u2605",le:535000,giao:444000,nhan:428000,gs:0,ns:0},{ma:"100CARARAS002-FP-H+",kc:"1000x1000",cat:"porcelain",gio:"\u2605",le:562000,giao:466000,nhan:450000,gs:0,ns:0},{ma:"100BARI002-H+",kc:"1000x1000",cat:"porcelain",gio:"\u2605",le:589000,giao:489000,nhan:471000,gs:0,ns:0},{ma:"100BARI001-H+",kc:"1000x1000",cat:"porcelain",gio:"\u2605",le:589000,giao:489000,nhan:471000,gs:0,ns:0},{ma:"3060NAPOLI001-H+",kc:"300x600",cat:"porcelain",gio:"\u2605",le:319000,giao:265000,nhan:255000,gs:0,ns:0},{ma:"3060NAPOLI003-H+",kc:"300x600",cat:"porcelain",gio:"\u2605",le:319000,giao:265000,nhan:255000,gs:0,ns:0},{ma:"3060NAPOLI004-H+",kc:"300x600",cat:"porcelain",gio:"\u2605",le:319000,giao:265000,nhan:255000,gs:0,ns:0},{ma:"3060MOMENT001",kc:"300x600",cat:"porcelain",gio:"\u2605",le:249000,giao:207000,nhan:199000,gs:0,ns:0},{ma:"3060HOABINH001",kc:"300x600",cat:"porcelain",gio:"\u2605",le:274000,giao:227000,nhan:219000,gs:0,ns:0},{ma:"3060VAMCOTAY008",kc:"300x600",cat:"porcelain",gio:"\u2605",le:249000,giao:207000,nhan:199000,gs:0,ns:0},{ma:"6060CATANIA001-FP-H+",kc:"600x600",cat:"porcelain",gio:"\u2605",le:367000,giao:305000,nhan:294000,gs:0,ns:0},{ma:"6060CATANIA002-FP-H+",kc:"600x600",cat:"porcelain",gio:"\u2605",le:367000,giao:305000,nhan:294000,gs:0,ns:0},{ma:"6060CATANIA004-FP-H+",kc:"600x600",cat:"porcelain",gio:"\u2605",le:367000,giao:305000,nhan:294000,gs:0,ns:0},{ma:"6060SICILY001-FP-H+",kc:"600x600",cat:"porcelain",gio:"\u2605",le:367000,giao:305000,nhan:294000,gs:0,ns:0},{ma:"6060SICILY002-FP-H+",kc:"600x600",cat:"porcelain",gio:"\u2605",le:367000,giao:305000,nhan:294000,gs:0,ns:0},{ma:"6060MOMENT013",kc:"600x600",cat:"porcelain",gio:"\u2605",le:287000,giao:238000,nhan:230000,gs:0,ns:0},{ma:"6060MOMENT012-FP",kc:"600x600",cat:"porcelain",gio:"\u2605",le:288000,giao:239000,nhan:230000,gs:0,ns:0},{ma:"6060HOABINH002-FP",kc:"600x600",cat:"porcelain",gio:"\u2605",le:301000,giao:250000,nhan:241000,gs:0,ns:0},{ma:"6060HOABINH001",kc:"600x600",cat:"porcelain",gio:"\u2605",le:287000,giao:238000,nhan:230000,gs:0,ns:0},{ma:"8080BARI003-H+",kc:"800X800",cat:"porcelain",gio:"\u2605",le:392000,giao:325000,nhan:314000,gs:0,ns:0},{ma:"2020MARINA001",kc:"200x200",cat:"ceramic",gio:"\u25cf",le:214000,giao:178000,nhan:171000,gs:151900,ns:145500},{ma:"3060DELUXE004",kc:"300x600",cat:"ceramic",gio:"\u25cf",le:258000,giao:214000,nhan:206000,gs:183200,ns:175400},{ma:"4080TRAVERTINE002-H+",kc:"400x800",cat:"ceramic",gio:"\u25cf",le:353000,giao:293000,nhan:282000,gs:250600,ns:240000},{ma:"4080FAME005-H+",kc:"400x800",cat:"ceramic",gio:"\u25cf",le:321000,giao:266000,nhan:257000,gs:227900,ns:218300},{ma:"4040GECKO005",kc:"400x400",cat:"porcelain",gio:"\u25cf",le:249000,giao:206670,nhan:199200,gs:176800,ns:169300},{ma:"4040GECKO007",kc:"400x400",cat:"porcelain",gio:"\u25cf",le:249000,giao:206670,nhan:199200,gs:176800,ns:169300},{ma:"4040LYSON001",kc:"400x400",cat:"porcelain",gio:"\u25cf",le:249000,giao:206670,nhan:199200,gs:176800,ns:169300},{ma:"4040LYSON004",kc:"400x400",cat:"porcelain",gio:"\u25cf",le:249000,giao:206670,nhan:199200,gs:176800,ns:169300},{ma:"4080SAPA005-H+",kc:"400x800",cat:"porcelain",gio:"\u25cf",le:356000,giao:295000,nhan:285000,gs:252800,ns:242100},{ma:"60120NILE003-H+",kc:"600x1200",cat:"porcelain",gio:"\u25cf",le:573000,giao:476000,nhan:458000,gs:406800,ns:389600},{ma:"60120NILE006-H+",kc:"600x1200",cat:"porcelain",gio:"\u25cf",le:748000,giao:621000,nhan:598000,gs:531100,ns:508600},{ma:"60120LANGBIANG004FP-H+",kc:"600x1200",cat:"porcelain",gio:"\u25cf",le:0,giao:558100,nhan:534500,gs:558100,ns:534500},{ma:"60120LANGBIANG005FP-H+",kc:"600x1200",cat:"porcelain",gio:"\u25cf",le:0,giao:722900,nhan:673200,gs:722900,ns:673200},{ma:"60120LANGBIANG006FP-H+",kc:"600x1200",cat:"porcelain",gio:"\u25cf",le:0,giao:702900,nhan:673200,gs:702900,ns:673200},{ma:"6060TRANGAN001-FP",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:262000,giao:217000,nhan:210000,gs:186000,ns:178200},{ma:"6060TRANGAN004-FP",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:262000,giao:217000,nhan:210000,gs:186000,ns:178200},{ma:"6060TRANGAN006-FP",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:262000,giao:217000,nhan:210000,gs:186000,ns:178200},{ma:"6060TRANGAN007-FP",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:262000,giao:217000,nhan:210000,gs:186000,ns:178200},{ma:"6060BINHTHUAN002",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:274000,giao:227000,nhan:219000,gs:194500,ns:186300},{ma:"6060PHARAON007-H+",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:274000,giao:227000,nhan:219000,gs:194500,ns:186300},{ma:"6060TRUONGSON004-FP",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:288000,giao:239000,nhan:230000,gs:204500,ns:195800},{ma:"6060TRANGAN003-FP",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:262000,giao:217000,nhan:210000,gs:186000,ns:178200},{ma:"6060PHARAON003-H+",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:324000,giao:269000,nhan:259000,gs:230000,ns:220300},{ma:"8080DONGVAN003-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:413000,giao:343000,nhan:330000,gs:293200,ns:280800},{ma:"8080DONGVAN007-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:431000,giao:358000,nhan:345000,gs:306000,ns:293100},{ma:"8080NAPOLEON011-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:392000,giao:325000,nhan:314000,gs:278300,ns:266600},{ma:"8080ROME004-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:356000,giao:295000,nhan:285000,gs:252800,ns:242100},{ma:"8080THIENTHACH002-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:392000,giao:325000,nhan:314000,gs:278300,ns:266600},{ma:"8080THUTHIEM001-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:375000,giao:311000,nhan:300000,gs:266200,ns:255000},{ma:"8080TRUONGSON003-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:413000,giao:343000,nhan:330000,gs:264800,ns:253600},{ma:"8080PHARAON001-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:356000,giao:295000,nhan:285000,gs:252800,ns:242100},{ma:"2020MARINA002",kc:"200x200",cat:"ceramic",gio:"\u25cf",le:214000,giao:178000,nhan:171000,gs:0,ns:0},{ma:"TL01",kc:"200x200",cat:"ceramic",gio:"\u25cf",le:214000,giao:178000,nhan:171000,gs:0,ns:0},{ma:"2540CARARAS001",kc:"250x400",cat:"ceramic",gio:"\u25cf",le:175000,giao:145000,nhan:140000,gs:0,ns:0},{ma:"3060AMBER007",kc:"300x600",cat:"ceramic",gio:"\u25cf",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"3060CARARAS001",kc:"300x600",cat:"ceramic",gio:"\u25cf",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"3060CLOUD001",kc:"300x600",cat:"ceramic",gio:"\u25cf",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"3060CLOUD009",kc:"300x600",cat:"ceramic",gio:"\u25cf",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"3060DELUXE001",kc:"300x600",cat:"ceramic",gio:"\u25cf",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"3060DELUXE002",kc:"300x600",cat:"ceramic",gio:"\u25cf",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"3060DELUXE005",kc:"300x600",cat:"ceramic",gio:"\u25cf",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"3060ROXY001",kc:"300x600",cat:"ceramic",gio:"\u25cf",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"3060ROXY005",kc:"300x600",cat:"ceramic",gio:"\u25cf",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"3060SNOW001",kc:"300x600",cat:"ceramic",gio:"\u25cf",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"3060CLOUD006",kc:"300x600",cat:"ceramic",gio:"\u25cf",le:258000,giao:214000,nhan:206000,gs:0,ns:0},{ma:"4080CARARAS004-H+",kc:"400x800",cat:"ceramic",gio:"\u25cf",le:321000,giao:266000,nhan:257000,gs:0,ns:0},{ma:"4080CARARAS005-H+",kc:"400x800",cat:"ceramic",gio:"\u25cf",le:321000,giao:266000,nhan:257000,gs:0,ns:0},{ma:"4080TRAVERTINE003-H+",kc:"400x800",cat:"ceramic",gio:"\u25cf",le:353000,giao:293000,nhan:282000,gs:0,ns:0},{ma:"4080CARARAS001-H+",kc:"400x800",cat:"ceramic",gio:"\u25cf",le:353000,giao:293000,nhan:282000,gs:0,ns:0},{ma:"4080CLOUD001-H+",kc:"400x800",cat:"ceramic",gio:"\u25cf",le:297000,giao:247000,nhan:238000,gs:0,ns:0},{ma:"4080CLOUD003-H+",kc:"400x800",cat:"ceramic",gio:"\u25cf",le:297000,giao:247000,nhan:238000,gs:0,ns:0},{ma:"4080CLOUD004-H+",kc:"400x800",cat:"ceramic",gio:"\u25cf",le:297000,giao:247000,nhan:238000,gs:0,ns:0},{ma:"4080FAME001-H+",kc:"400x800",cat:"ceramic",gio:"\u25cf",le:321000,giao:266000,nhan:257000,gs:0,ns:0},{ma:"4080ROXY001-H+",kc:"400x800",cat:"ceramic",gio:"\u25cf",le:321000,giao:266000,nhan:257000,gs:0,ns:0},{ma:"4080SNOW001-H+",kc:"400x800",cat:"ceramic",gio:"\u25cf",le:353000,giao:293000,nhan:282000,gs:0,ns:0},{ma:"100DB038",kc:"1000x1000",cat:"porcelain",gio:"\u25cf",le:715000,giao:593000,nhan:572000,gs:0,ns:0},{ma:"100DONGVAN001-FP-H+",kc:"1000x1000",cat:"porcelain",gio:"\u25cf",le:562000,giao:466000,nhan:450000,gs:0,ns:0},{ma:"100DONGVAN002-FP-H+",kc:"1000x1000",cat:"porcelain",gio:"\u25cf",le:562000,giao:466000,nhan:450000,gs:0,ns:0},{ma:"100DONGVAN003-FP-H+",kc:"1000x1000",cat:"porcelain",gio:"\u25cf",le:562000,giao:466000,nhan:450000,gs:0,ns:0},{ma:"100DONGVAN008-FP-H+",kc:"1000x1000",cat:"porcelain",gio:"\u25cf",le:562000,giao:466000,nhan:450000,gs:0,ns:0},{ma:"100MARMOL005",kc:"1000x1000",cat:"porcelain",gio:"\u25cf",le:715000,giao:593000,nhan:572000,gs:0,ns:0},{ma:"20120BANYAN003-H+",kc:"200x1200",cat:"porcelain",gio:"\u25cf",le:649000,giao:539000,nhan:519000,gs:0,ns:0},{ma:"20120BANYAN005-H+",kc:"200x1200",cat:"porcelain",gio:"\u25cf",le:649000,giao:539000,nhan:519000,gs:0,ns:0},{ma:"20120BANYAN001-H+",kc:"200x1200",cat:"porcelain",gio:"\u25cf",le:649000,giao:539000,nhan:519000,gs:0,ns:0},{ma:"20120BANYAN002-H+",kc:"200x1200",cat:"porcelain",gio:"\u25cf",le:649000,giao:539000,nhan:519000,gs:0,ns:0},{ma:"20120BANYAN004-H+",kc:"200x1200",cat:"porcelain",gio:"\u25cf",le:649000,giao:539000,nhan:519000,gs:0,ns:0},{ma:"2080BANYAN003-H+",kc:"200x800",cat:"porcelain",gio:"\u25cf",le:450000,giao:374000,nhan:360000,gs:0,ns:0},{ma:"2080BANYAN004-H+",kc:"200x800",cat:"porcelain",gio:"\u25cf",le:450000,giao:374000,nhan:360000,gs:0,ns:0},{ma:"2080BANYAN005-H+",kc:"200x800",cat:"porcelain",gio:"\u25cf",le:450000,giao:374000,nhan:360000,gs:0,ns:0},{ma:"2080BANYAN001-H+",kc:"200x800",cat:"porcelain",gio:"\u25cf",le:450000,giao:374000,nhan:360000,gs:0,ns:0},{ma:"2080BANYAN002-H+",kc:"200x800",cat:"porcelain",gio:"\u25cf",le:450000,giao:374000,nhan:360000,gs:0,ns:0},{ma:"3030GECKO006",kc:"300x300",cat:"porcelain",gio:"\u25cf",le:249000,giao:207000,nhan:199000,gs:0,ns:0},{ma:"3030GECKO011",kc:"300x300",cat:"porcelain",gio:"\u25cf",le:249000,giao:207000,nhan:199000,gs:0,ns:0},{ma:"3030GECKO001",kc:"300x300",cat:"porcelain",gio:"\u25cf",le:227000,giao:188000,nhan:182000,gs:0,ns:0},{ma:"3030GECKO002",kc:"300x300",cat:"porcelain",gio:"\u25cf",le:227000,giao:188000,nhan:182000,gs:0,ns:0},{ma:"3060NAPOLI002-H+",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:319000,giao:265000,nhan:255000,gs:0,ns:0},{ma:"3060GECKO010",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:274000,giao:227000,nhan:219000,gs:0,ns:0},{ma:"3060GECKO011",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:287000,giao:238000,nhan:230000,gs:0,ns:0},{ma:"3060SAHARA011",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:274000,giao:227000,nhan:219000,gs:0,ns:0},{ma:"3060SAHARA012",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:274000,giao:227000,nhan:219000,gs:0,ns:0},{ma:"3060VICTORIA008",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:427000,giao:354000,nhan:342000,gs:0,ns:0},{ma:"3060VAMCOTAY001",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:238000,giao:198000,nhan:190000,gs:0,ns:0},{ma:"3060VAMCOTAY002",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:238000,giao:198000,nhan:190000,gs:0,ns:0},{ma:"3060VAMCOTAY003",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:238000,giao:198000,nhan:190000,gs:0,ns:0},{ma:"3060VAMCOTAY004",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:238000,giao:198000,nhan:190000,gs:0,ns:0},{ma:"3060VAMCOTAY005",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:238000,giao:198000,nhan:190000,gs:0,ns:0},{ma:"3060VAMCOTAY007",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:238000,giao:198000,nhan:190000,gs:0,ns:0},{ma:"3060NOBLE001-H+",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:375000,giao:311000,nhan:300000,gs:0,ns:0},{ma:"3060NOBLE002-H+",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:375000,giao:311000,nhan:300000,gs:0,ns:0},{ma:"3060NOBLE004-H+",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:375000,giao:311000,nhan:300000,gs:0,ns:0},{ma:"3060SAHARA005",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:274000,giao:227000,nhan:219000,gs:0,ns:0},{ma:"3060VICTORIA005",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:427000,giao:354000,nhan:342000,gs:0,ns:0},{ma:"3060NOBLE005-H+",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:375000,giao:311000,nhan:300000,gs:0,ns:0},{ma:"3060NOBLE003-H+",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:375000,giao:311000,nhan:300000,gs:0,ns:0},{ma:"3060NOBLE006-H+",kc:"300x600",cat:"porcelain",gio:"\u25cf",le:375000,giao:311000,nhan:300000,gs:0,ns:0},{ma:"4080GECKO003",kc:"400x800",cat:"porcelain",gio:"\u25cf",le:392000,giao:325000,nhan:314000,gs:0,ns:0},{ma:"4080GECKO004",kc:"400x800",cat:"porcelain",gio:"\u25cf",le:392000,giao:325000,nhan:314000,gs:0,ns:0},{ma:"4080SAPA001-H+",kc:"400x800",cat:"porcelain",gio:"\u25cf",le:356000,giao:295000,nhan:285000,gs:0,ns:0},{ma:"4080SAPA002-H+",kc:"400x800",cat:"porcelain",gio:"\u25cf",le:356000,giao:295000,nhan:285000,gs:0,ns:0},{ma:"4080SAPA003-H+",kc:"400x800",cat:"porcelain",gio:"\u25cf",le:356000,giao:295000,nhan:285000,gs:0,ns:0},{ma:"60120NILE001-H+",kc:"600x1200",cat:"porcelain",gio:"\u25cf",le:573000,giao:476000,nhan:458000,gs:0,ns:0},{ma:"60120NILE002-H+",kc:"600x1200",cat:"porcelain",gio:"\u25cf",le:535000,giao:444000,nhan:428000,gs:0,ns:0},{ma:"60120NILE004-H+",kc:"600x1200",cat:"porcelain",gio:"\u25cf",le:535000,giao:444000,nhan:428000,gs:0,ns:0},{ma:"60120SNOW001-FP-H+",kc:"600x1200",cat:"porcelain",gio:"\u25cf",le:603000,giao:500000,nhan:482000,gs:0,ns:0},{ma:"60120STONE003-FP-H+",kc:"600x1200",cat:"porcelain",gio:"\u25cf",le:603000,giao:500000,nhan:482000,gs:0,ns:0},{ma:"6060CATANIA003-FP-H+",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:367000,giao:305000,nhan:294000,gs:0,ns:0},{ma:"6060VAMCODONG001-FP",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:262000,giao:217000,nhan:210000,gs:0,ns:0},{ma:"6060VAMCODONG002-FP",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:262000,giao:217000,nhan:210000,gs:0,ns:0},{ma:"6060VAMCODONG003-FP",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:262000,giao:217000,nhan:210000,gs:0,ns:0},{ma:"6060VAMCODONG004-FP",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:262000,giao:217000,nhan:210000,gs:0,ns:0},{ma:"6060VAMCODONG005-FP",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:262000,giao:217000,nhan:210000,gs:0,ns:0},{ma:"6060VAMCODONG006-FP",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:262000,giao:217000,nhan:210000,gs:0,ns:0},{ma:"6060VAMCOTAY001",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:261000,giao:217000,nhan:209000,gs:0,ns:0},{ma:"6060VAMCOTAY002",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:249000,giao:207000,nhan:199000,gs:0,ns:0},{ma:"6060VAMCOTAY003",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:261000,giao:217000,nhan:209000,gs:0,ns:0},{ma:"6060VAMCOTAY004",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:249000,giao:207000,nhan:199000,gs:0,ns:0},{ma:"6060VAMCOTAY005",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:261000,giao:217000,nhan:209000,gs:0,ns:0},{ma:"6060DB032",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:343000,giao:285000,nhan:274000,gs:0,ns:0},{ma:"6060DB038",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:356000,giao:295000,nhan:285000,gs:0,ns:0},{ma:"6060DONGVAN001-FP-H+",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:288000,giao:239000,nhan:230000,gs:0,ns:0},{ma:"6060DONGVAN002-FP-H+",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:288000,giao:239000,nhan:230000,gs:0,ns:0},{ma:"6060MARMOL005",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:373000,giao:310000,nhan:298000,gs:0,ns:0},{ma:"6060PHARAON008-H+",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:274000,giao:227000,nhan:219000,gs:0,ns:0},{ma:"6060PHARAON009-H+",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:274000,giao:227000,nhan:219000,gs:0,ns:0},{ma:"6060SNOW001-FP",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:301000,giao:250000,nhan:241000,gs:0,ns:0},{ma:"6060VICTORIA005",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:438000,giao:364000,nhan:350000,gs:0,ns:0},{ma:"6060TRUONGSON002-FP",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:288000,giao:239000,nhan:230000,gs:0,ns:0},{ma:"6060VICTORIA007",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:438000,giao:364000,nhan:350000,gs:0,ns:0},{ma:"6060VICTORIA008",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:438000,giao:364000,nhan:350000,gs:0,ns:0},{ma:"6060PHARAON002-H+",kc:"600x600",cat:"porcelain",gio:"\u25cf",le:324000,giao:269000,nhan:259000,gs:0,ns:0},{ma:"8080BARI001-H+",kc:"800X800",cat:"porcelain",gio:"\u25cf",le:410000,giao:340000,nhan:328000,gs:0,ns:0},{ma:"8080CATANIA001-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:431000,giao:358000,nhan:345000,gs:0,ns:0},{ma:"8080CATANIA002-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:431000,giao:358000,nhan:345000,gs:0,ns:0},{ma:"8080CATANIA003-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:431000,giao:358000,nhan:345000,gs:0,ns:0},{ma:"8080CATANIA004-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:431000,giao:358000,nhan:345000,gs:0,ns:0},{ma:"8080CARARAS001-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:431000,giao:358000,nhan:345000,gs:0,ns:0},{ma:"8080CARARAS002-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:413000,giao:343000,nhan:330000,gs:0,ns:0},{ma:"8080DB032",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:493000,giao:409000,nhan:394000,gs:0,ns:0},{ma:"8080DB038",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:513000,giao:426000,nhan:410000,gs:0,ns:0},{ma:"8080DONGVAN001-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:431000,giao:358000,nhan:345000,gs:0,ns:0},{ma:"8080DONGVAN002-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:413000,giao:343000,nhan:330000,gs:0,ns:0},{ma:"8080DONGVAN008-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:431000,giao:358000,nhan:345000,gs:0,ns:0},{ma:"8080DONGVAN009-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:431000,giao:358000,nhan:345000,gs:0,ns:0},{ma:"8080FANSIPAN002-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:375000,giao:311000,nhan:300000,gs:0,ns:0},{ma:"8080FANSIPAN004-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:375000,giao:311000,nhan:300000,gs:0,ns:0},{ma:"8080FANSIPAN005-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:413000,giao:343000,nhan:330000,gs:0,ns:0},{ma:"8080FANSIPAN006-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:413000,giao:343000,nhan:330000,gs:0,ns:0},{ma:"8080FANSIPAN007-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:413000,giao:343000,nhan:330000,gs:0,ns:0},{ma:"8080MARMOL005",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:513000,giao:426000,nhan:410000,gs:0,ns:0},{ma:"8080NAPOLEON009-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:392000,giao:325000,nhan:314000,gs:0,ns:0},{ma:"8080NAPOLEON014-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:392000,giao:325000,nhan:314000,gs:0,ns:0},{ma:"8080PHARAON003-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:356000,giao:295000,nhan:285000,gs:0,ns:0},{ma:"8080PHARAON006-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:392000,giao:325000,nhan:314000,gs:0,ns:0},{ma:"8080PHARAON008-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:392000,giao:325000,nhan:314000,gs:0,ns:0},{ma:"8080PLATINUM001",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:696000,giao:578000,nhan:557000,gs:0,ns:0},{ma:"8080PLATINUM003",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:648000,giao:538000,nhan:518000,gs:0,ns:0},{ma:"8080PLATINUM004",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:648000,giao:538000,nhan:518000,gs:0,ns:0},{ma:"8080ROME002-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:356000,giao:295000,nhan:285000,gs:0,ns:0},{ma:"8080ROME003-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:392000,giao:325000,nhan:314000,gs:0,ns:0},{ma:"8080ROME005-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:392000,giao:325000,nhan:314000,gs:0,ns:0},{ma:"8080SNOW001-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:413000,giao:343000,nhan:330000,gs:0,ns:0},{ma:"8080STONE003-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:413000,giao:343000,nhan:330000,gs:0,ns:0},{ma:"8080FANSIPAN001-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:413000,giao:343000,nhan:330000,gs:0,ns:0},{ma:"8080NAPOLEON004-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:356000,giao:295000,nhan:285000,gs:0,ns:0},{ma:"8080TRUONGSON002-FP-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:413000,giao:343000,nhan:330000,gs:0,ns:0},{ma:"8080ROME006-H+",kc:"800x800",cat:"porcelain",gio:"\u25cf",le:356000,giao:295000,nhan:285000,gs:0,ns:0},{ma:"CER 100x200, 1020CLOUR009",kc:"100x200",cat:"ceramic",gio:"",le:0,giao:277600,nhan:265900,gs:277600,ns:265900},{ma:"1020ROCK005",kc:"100x200",cat:"ceramic",gio:"",le:216000,giao:179280,nhan:172800,gs:153400,ns:146900},{ma:"1020MNDA001",kc:"100x200",cat:"ceramic",gio:"",le:216000,giao:179280,nhan:172800,gs:153400,ns:146900},{ma:"1020ROCK011",kc:"100x200",cat:"ceramic",gio:"",le:216000,giao:179280,nhan:172800,gs:153400,ns:146900},{ma:"1020ROCK015",kc:"100x200",cat:"ceramic",gio:"",le:216000,giao:179280,nhan:172800,gs:153400,ns:146900},{ma:"1020MNDA002",kc:"100x200",cat:"ceramic",gio:"",le:216000,giao:179280,nhan:172800,gs:153400,ns:146900},{ma:"1260CLASSIC009",kc:"120x600",cat:"ceramic",gio:"",le:0,giao:233600,nhan:223700,gs:233600,ns:223700},{ma:"1380GOSAN004-FP",kc:"130x800",cat:"ceramic",gio:"",le:0,giao:285400,nhan:273400,gs:285400,ns:273400},{ma:"L1380DB032",kc:"130x800",cat:"ceramic",gio:"",le:624000,giao:517920,nhan:499200,gs:443000,ns:424300},{ma:"1380GOSAN002-FP",kc:"130x800",cat:"ceramic",gio:"",le:558000,giao:463140,nhan:446400,gs:396200,ns:379400},{ma:"1380GOSAN001-FP",kc:"130x800",cat:"ceramic",gio:"",le:558000,giao:463140,nhan:446400,gs:396200,ns:379400},{ma:"1530DIAMOND003",kc:"150x300",cat:"ceramic",gio:"",le:313000,giao:259790,nhan:250400,gs:222200,ns:212800},{ma:"1530DIAMOND010",kc:"150x300",cat:"ceramic",gio:"",le:313000,giao:259790,nhan:250400,gs:222200,ns:212800},{ma:"1530STONE008",kc:"150x300",cat:"ceramic",gio:"",le:590000,giao:489700,nhan:472000,gs:418900,ns:401200},{ma:"1530STONE009",kc:"150x300",cat:"ceramic",gio:"",le:590000,giao:489700,nhan:472000,gs:418900,ns:401200},{ma:"1530STONE001",kc:"150x300",cat:"ceramic",gio:"",le:590000,giao:489700,nhan:472000,gs:418900,ns:401200},{ma:"1530DIAMOND004",kc:"150x300",cat:"ceramic",gio:"",le:313000,giao:259790,nhan:250400,gs:222200,ns:212800},{ma:"1530DIAMOND009",kc:"150x300",cat:"ceramic",gio:"",le:313000,giao:259790,nhan:250400,gs:222200,ns:212800}];
 const D2=[{ma:"2020MARINA004",kc:"200x200",cat:"ceramic",gio:"",le:214000,giao:178000,nhan:171000,gs:151900,ns:145500},{ma:"D-M4B003",kc:"200x200",cat:"ceramic",gio:"",le:321000,giao:266430,nhan:256800,gs:227900,ns:218300},{ma:"2560TREVN001",kc:"250x600",cat:"ceramic",gio:"",le:227000,giao:188410,nhan:181600,gs:161200,ns:154400},{ma:"2560TIENSA007",kc:"250x600",cat:"ceramic",gio:"",le:227000,giao:188410,nhan:181600,gs:161200,ns:154400},{ma:"D2560WAVE002",kc:"250x600",cat:"ceramic",gio:"",le:227000,giao:188410,nhan:181600,gs:161200,ns:154400},{ma:"2560HOIAN002",kc:"250x600",cat:"ceramic",gio:"",le:196000,giao:162680,nhan:156800,gs:139200,ns:133300},{ma:"2560LILY002",kc:"250x600",cat:"ceramic",gio:"",le:196000,giao:162680,nhan:156800,gs:139200,ns:133300},{ma:"77326",kc:"300x300",cat:"ceramic",gio:"",le:0,giao:2556000,nhan:2448000,gs:2556000,ns:2448000},{ma:"3030MOSAIC009",kc:"300x300",cat:"ceramic",gio:"",le:408000,giao:338640,nhan:326400,gs:289700,ns:277400},{ma:"3045COTTON004",kc:"300x450",cat:"ceramic",gio:"",le:164000,giao:136120,nhan:131200,gs:116400,ns:111500},{ma:"3045COTTON003",kc:"300x450",cat:"ceramic",gio:"",le:164000,giao:136120,nhan:131200,gs:116400,ns:111500},{ma:"3045WOOD002",kc:"300x450",cat:"ceramic",gio:"",le:180000,giao:149400,nhan:144000,gs:127800,ns:122400},{ma:"3045HAIVAN001",kc:"300x450",cat:"ceramic",gio:"",le:180000,giao:149400,nhan:144000,gs:127800,ns:122400},{ma:"3045COTTON002",kc:"300x450",cat:"ceramic",gio:"",le:180000,giao:149400,nhan:144000,gs:127800,ns:122400},{ma:"3045ONIX006",kc:"300x450",cat:"ceramic",gio:"",le:180000,giao:149400,nhan:144000,gs:127800,ns:122400},{ma:"3045BLACK001",kc:"300x450",cat:"ceramic",gio:"",le:180000,giao:149400,nhan:144000,gs:127800,ns:122400},{ma:"3060SAHARA-008",kc:"300x600",cat:"ceramic",gio:"",le:0,giao:194600,nhan:186400,gs:194600,ns:186400},{ma:"3060DELUXE007",kc:"300x600",cat:"ceramic",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"3060VICTORIA003",kc:"300x600",cat:"ceramic",gio:"",le:388000,giao:322040,nhan:310400,gs:275500,ns:263800},{ma:"3060GECKO013",kc:"300x600",cat:"ceramic",gio:"",le:287000,giao:238210,nhan:229600,gs:203800,ns:195200},{ma:"3060GECKO015",kc:"300x600",cat:"ceramic",gio:"",le:287000,giao:238210,nhan:229600,gs:203800,ns:195200},{ma:"3060CLOUD007",kc:"300x600",cat:"ceramic",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"3060HOANGLIENSON006",kc:"300x600",cat:"ceramic",gio:"",le:249000,giao:206670,nhan:199200,gs:176800,ns:169300},{ma:"3060HOANGLIENSON004",kc:"300x600",cat:"ceramic",gio:"",le:287000,giao:238210,nhan:229600,gs:203800,ns:195200},{ma:"3060HOANGLIENSON016",kc:"300x600",cat:"ceramic",gio:"",le:287000,giao:238210,nhan:229600,gs:203800,ns:195200},{ma:"3060ROXY004",kc:"300x600",cat:"ceramic",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"3060THACHDONG001-H+",kc:"300x600",cat:"ceramic",gio:"",le:388000,giao:322040,nhan:310400,gs:275500,ns:263800},{ma:"3060THACHDONG002-H+",kc:"300x600",cat:"ceramic",gio:"",le:388000,giao:322040,nhan:310400,gs:275500,ns:263800},{ma:"3060AMBER005",kc:"300x600",cat:"ceramic",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"3060COTTON006",kc:"300x600",cat:"ceramic",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"D3060AROXY003",kc:"300x600",cat:"ceramic",gio:"",le:281000,giao:233230,nhan:224800,gs:199500,ns:191100},{ma:"3060DELUXE009",kc:"300x600",cat:"ceramic",gio:"",le:0,giao:187400,nhan:179500,gs:187400,ns:179500},{ma:"3060VICTORIA001",kc:"300x600",cat:"ceramic",gio:"",le:388000,giao:322040,nhan:310400,gs:275500,ns:263800},{ma:"3060THACHDONG005-H+",kc:"300x600",cat:"ceramic",gio:"",le:388000,giao:322040,nhan:310400,gs:275500,ns:263800},{ma:"D3060ROXY007",kc:"300x600",cat:"ceramic",gio:"",le:281000,giao:233230,nhan:224800,gs:187400,ns:179500},{ma:"3060GECKO002",kc:"300x600",cat:"ceramic",gio:"",le:323000,giao:268090,nhan:258400,gs:229300,ns:219600},{ma:"D3060RETRO001",kc:"300x600",cat:"ceramic",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"D3060ROXY005",kc:"300x600",cat:"ceramic",gio:"",le:281000,giao:233230,nhan:224800,gs:199500,ns:191100},{ma:"3060GECKO004",kc:"300x600",cat:"ceramic",gio:"",le:323000,giao:268090,nhan:258400,gs:229300,ns:219600},{ma:"3060THACHDONG003-H+",kc:"300x600",cat:"ceramic",gio:"",le:388000,giao:322040,nhan:310400,gs:275500,ns:263800},{ma:"3060NHATRANG002",kc:"300x600",cat:"ceramic",gio:"",le:0,giao:176400,nhan:168900,gs:176400,ns:168900},{ma:"3060CLOUD002",kc:"300x600",cat:"ceramic",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"60TP001",kc:"300x600",cat:"ceramic",gio:"",le:0,giao:176800,nhan:169300,gs:176800,ns:169300},{ma:"60PHIJQUY004QN",kc:"300x600",cat:"ceramic",gio:"",le:0,giao:191700,nhan:183600,gs:191700,ns:183600},{ma:"3060HOANGLIENSON002",kc:"300x600",cat:"ceramic",gio:"",le:249000,giao:206670,nhan:199200,gs:176800,ns:169300},{ma:"3060HOANGLIENSON013",kc:"300x600",cat:"ceramic",gio:"",le:249000,giao:206670,nhan:199200,gs:176800,ns:169300},{ma:"3060HOANGLIENSON014",kc:"300x600",cat:"ceramic",gio:"",le:249000,giao:206670,nhan:199200,gs:176800,ns:169300},{ma:"3060HOANGLIENSON012",kc:"300x600",cat:"ceramic",gio:"",le:249000,giao:206670,nhan:199200,gs:176800,ns:169300},{ma:"3060HOANGLIENSON003",kc:"300x600",cat:"ceramic",gio:"",le:249000,giao:206670,nhan:199200,gs:176800,ns:169300},{ma:"3060HOANGLIENSON010",kc:"300x600",cat:"ceramic",gio:"",le:287000,giao:238210,nhan:229600,gs:203800,ns:195200},{ma:"3060VICTORIA004",kc:"300x600",cat:"ceramic",gio:"",le:388000,giao:322040,nhan:310400,gs:275500,ns:263800},{ma:"3060VICTORIA002",kc:"300x600",cat:"ceramic",gio:"",le:388000,giao:322040,nhan:310400,gs:275500,ns:263800},{ma:"3060COTTON004",kc:"300x600",cat:"ceramic",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"3060COTTON001",kc:"300x600",cat:"ceramic",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"3060GECKO003",kc:"300x600",cat:"ceramic",gio:"",le:323000,giao:268090,nhan:258400,gs:229300,ns:219600},{ma:"60ROXY006",kc:"300x600",cat:"ceramic",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"60TIENSA003",kc:"300x600",cat:"ceramic",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"60VENU001",kc:"300x600",cat:"ceramic",gio:"",le:233000,giao:193390,nhan:186400,gs:165400,ns:158400},{ma:"4040LYSON009",kc:"400x400",cat:"ceramic",gio:"",le:249000,giao:206670,nhan:199200,gs:176800,ns:169300},{ma:"484",kc:"400x400",cat:"ceramic",gio:"",le:171000,giao:141930,nhan:136800,gs:121400,ns:116300},{ma:"4080CARARAS006-H+",kc:"400x800",cat:"ceramic",gio:"",le:321000,giao:266000,nhan:257000,gs:227900,ns:218300},{ma:"4080TRAVERTINE001-H+",kc:"400x800",cat:"ceramic",gio:"",le:321000,giao:266000,nhan:257000,gs:227900,ns:218300},{ma:"4080REGAL014-H+",kc:"400x800",cat:"ceramic",gio:"",le:0,giao:226400,nhan:216900,gs:226400,ns:216900},{ma:"D4080CARARAS002-H+",kc:"400x800",cat:"ceramic",gio:"",le:0,giao:250400,nhan:239800,gs:250400,ns:239800},{ma:"4080FAME002-H+",kc:"400x800",cat:"ceramic",gio:"",le:319000,giao:264770,nhan:255200,gs:226500,ns:216900},{ma:"4080FAME003-H+",kc:"400x800",cat:"ceramic",gio:"",le:321000,giao:266430,nhan:256800,gs:227900,ns:218300},{ma:"4080FAME004-H+",kc:"400x800",cat:"ceramic",gio:"",le:319000,giao:264770,nhan:255200,gs:226500,ns:216900},{ma:"4080FAME006-H+",kc:"400x800",cat:"ceramic",gio:"",le:319000,giao:264770,nhan:255200,gs:226500,ns:216900},{ma:"4080FAME010-H+",kc:"400x800",cat:"ceramic",gio:"",le:319000,giao:264770,nhan:255200,gs:226500,ns:216900},{ma:"4080FAME011-H+",kc:"400x800",cat:"ceramic",gio:"",le:321000,giao:266430,nhan:256800,gs:227900,ns:218300},{ma:"4080FAME014-H+",kc:"400x800",cat:"ceramic",gio:"",le:319000,giao:264770,nhan:255200,gs:226500,ns:216900},{ma:"4080CARARAS003-H+",kc:"400x800",cat:"ceramic",gio:"",le:321000,giao:266430,nhan:256800,gs:227900,ns:218300},{ma:"4080REGAL015-H+",kc:"400x800",cat:"ceramic",gio:"",le:319000,giao:264770,nhan:255200,gs:226500,ns:216900},{ma:"4080CLASSIC002-H+",kc:"400x800",cat:"ceramic",gio:"",le:319000,giao:264770,nhan:255200,gs:226500,ns:216900},{ma:"4080REGAL008-H+",kc:"400x800",cat:"ceramic",gio:"",le:319000,giao:264770,nhan:255200,gs:226500,ns:216900},{ma:"4080REGAL003-H+",kc:"400x800",cat:"ceramic",gio:"",le:319000,giao:264770,nhan:255200,gs:226500,ns:216900},{ma:"4080REGAL011-H+",kc:"400x800",cat:"ceramic",gio:"",le:319000,giao:264770,nhan:255200,gs:226500,ns:216900},{ma:"D4080URBAN001-H+",kc:"400x800",cat:"ceramic",gio:"",le:353000,giao:292990,nhan:282400,gs:250600,ns:240000},{ma:"4080REGAL013-H+",kc:"400x800",cat:"ceramic",gio:"",le:319000,giao:264770,nhan:255200,gs:226500,ns:216900},{ma:"4080REGAL001-H+",kc:"400x800",cat:"ceramic",gio:"",le:319000,giao:264770,nhan:255200,gs:226500,ns:216900},{ma:"4080REGAL016-H+",kc:"400x800",cat:"ceramic",gio:"",le:319000,giao:264770,nhan:255200,gs:226500,ns:216900},{ma:"4080GECKO005",kc:"400x800",cat:"ceramic",gio:"",le:355000,giao:294650,nhan:284000,gs:252000,ns:241400},{ma:"60120LANGBIANG002FP-H+",kc:"600x1200",cat:"ceramic",gio:"",le:720000,giao:597600,nhan:576000,gs:511200,ns:489600},{ma:"6060TRUONGSON005-FP",kc:"600x600",cat:"ceramic",gio:"",le:0,giao:197700,nhan:189400,gs:197700,ns:189400},{ma:"6060PLATINUM003",kc:"600x600",cat:"ceramic",gio:"",le:452000,giao:375160,nhan:361600,gs:320900,ns:307400},{ma:"6060TRANGAN005-FP",kc:"600x600",cat:"ceramic",gio:"",le:238000,giao:197540,nhan:190400,gs:169000,ns:161800},{ma:"6060MOMENT002",kc:"600x600",cat:"ceramic",gio:"",le:267000,giao:221610,nhan:213600,gs:189600,ns:181600},{ma:"6060BINHTHUAN005",kc:"600x600",cat:"ceramic",gio:"",le:252000,giao:209160,nhan:201600,gs:178900,ns:171400},{ma:"6060VENUS001",kc:"600x600",cat:"ceramic",gio:"",le:252000,giao:209160,nhan:201600,gs:178900,ns:171400},{ma:"6060HAIVAN006-FP",kc:"600x600",cat:"ceramic",gio:"",le:308000,giao:255640,nhan:246400,gs:218700,ns:209400},{ma:"6060VICTORIA002",kc:"600x600",cat:"ceramic",gio:"",le:398000,giao:330340,nhan:318400,gs:282600,ns:270600},{ma:"60CHAMPA001",kc:"600x600",cat:"ceramic",gio:"",le:267000,giao:221610,nhan:213600,gs:189600,ns:181600},{ma:"60MOMENT007QN",kc:"600x600",cat:"ceramic",gio:"",le:252000,giao:209160,nhan:201600,gs:178900,ns:171400},{ma:"6060VICTORIA003",kc:"600x600",cat:"ceramic",gio:"",le:398000,giao:330340,nhan:318400,gs:282600,ns:270600},{ma:"6060TRUONGSON001-FP",kc:"600x600",cat:"ceramic",gio:"",le:308000,giao:255640,nhan:246400,gs:218700,ns:209400},{ma:"6060CARARAS002-FP",kc:"600x600",cat:"ceramic",gio:"",le:278000,giao:230740,nhan:222400,gs:197400,ns:189000},{ma:"6060HAIVAN004-FP",kc:"600x600",cat:"ceramic",gio:"",le:278000,giao:230740,nhan:222400,gs:197400,ns:189000},{ma:"6060PHARAON012-H+",kc:"600x600",cat:"ceramic",gio:"",le:301000,giao:249830,nhan:240800,gs:213700,ns:204700},{ma:"6060DONGVAN007-FP-H+",kc:"600x600",cat:"ceramic",gio:"",le:334000,giao:277220,nhan:267200,gs:237100,ns:227100},{ma:"6060PLATINUM002",kc:"600x600",cat:"ceramic",gio:"",le:452000,giao:375160,nhan:361600,gs:320900,ns:307400},{ma:"6060VICTORIA001",kc:"600x600",cat:"ceramic",gio:"",le:398000,giao:330340,nhan:318400,gs:282600,ns:270600},{ma:"6060STONE005-FP",kc:"600x600",cat:"ceramic",gio:"",le:238000,giao:197540,nhan:190400,gs:169000,ns:161800},{ma:"6060VICTORIA006",kc:"600x600",cat:"ceramic",gio:"",le:398000,giao:330340,nhan:318400,gs:282600,ns:270600},{ma:"6060DA012QN-FP",kc:"600x600",cat:"ceramic",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"6060DA012-FP",kc:"600x600",cat:"ceramic",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"6060MOMENT004",kc:"600x600",cat:"ceramic",gio:"",le:252000,giao:209160,nhan:201600,gs:178900,ns:171400},{ma:"60MNDA006",kc:"600x600",cat:"ceramic",gio:"",le:0,giao:177500,nhan:170000,gs:177500,ns:170000},{ma:"60MNDA008",kc:"600x600",cat:"ceramic",gio:"",le:0,giao:177500,nhan:170000,gs:177500,ns:170000},{ma:"6060MOMENT003",kc:"600x600",cat:"ceramic",gio:"",le:252000,giao:209160,nhan:201600,gs:178900,ns:171400},{ma:"6060DA004-FP",kc:"600x600",cat:"ceramic",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"6060MOMENT006",kc:"600x600",cat:"ceramic",gio:"",le:252000,giao:209160,nhan:201600,gs:178900,ns:171400},{ma:"6060TAMDAO001QN",kc:"600x600",cat:"ceramic",gio:"",le:252000,giao:209160,nhan:201600,gs:178900,ns:171400},{ma:"6060CHAMPA003",kc:"600x600",cat:"ceramic",gio:"",le:267000,giao:221610,nhan:213600,gs:189600,ns:181600},{ma:"6060PLATINUM005",kc:"600x600",cat:"ceramic",gio:"",le:481000,giao:399230,nhan:384800,gs:341500,ns:327100},{ma:"6060DA009-FP",kc:"600x600",cat:"ceramic",gio:"",le:255000,giao:211650,nhan:204000,gs:181000,ns:173400},{ma:"60DA008-FP",kc:"600x600",cat:"ceramic",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"60DA010-FP",kc:"600x600",cat:"ceramic",gio:"",le:255000,giao:211650,nhan:204000,gs:181000,ns:173400},{ma:"60MEKONG005",kc:"600x600",cat:"ceramic",gio:"",le:267000,giao:221610,nhan:213600,gs:189600,ns:181600},{ma:"8080NAPOLEON012-H+",kc:"800x800",cat:"ceramic",gio:"",le:340000,giao:282200,nhan:272000,gs:241400,ns:231200},{ma:"POR 800x800, 8080NAPOLEON008-H+, AA",kc:"800x800",cat:"ceramic",gio:"",le:340000,giao:282200,nhan:272000,gs:241400,ns:231200},{ma:"80DIAMOND002",kc:"800x800",cat:"ceramic",gio:"",le:373000,giao:309590,nhan:298400,gs:264800,ns:253600},{ma:"POR 800x800, 8080TRUONGSON005-FP, AA",kc:"800x800",cat:"ceramic",gio:"",le:343000,giao:284690,nhan:274400,gs:243500,ns:233200},{ma:"80DIAMOND003",kc:"800x800",cat:"ceramic",gio:"",le:373000,giao:309590,nhan:298400,gs:264800,ns:253600},{ma:"8080DB006",kc:"800x800",cat:"ceramic",gio:"",le:388000,giao:322040,nhan:310400,gs:275500,ns:263800},{ma:"8080NAPOLEON002-H+",kc:"800x800",cat:"ceramic",gio:"",le:340000,giao:282200,nhan:272000,gs:241400,ns:231200},{ma:"8080PHARAON007-H+",kc:"800x800",cat:"ceramic",gio:"",le:339000,giao:281370,nhan:271200,gs:240700,ns:230500},{ma:"8080THIENTHACH001-H+",kc:"800x800",cat:"ceramic",gio:"",le:392000,giao:325360,nhan:313600,gs:278300,ns:266600},{ma:"8080NAPOLEON003-H+",kc:"800x800",cat:"ceramic",gio:"",le:340000,giao:282200,nhan:272000,gs:241400,ns:231200},{ma:"8080PHARAON010-H+",kc:"800x800",cat:"ceramic",gio:"",le:375000,giao:311250,nhan:300000,gs:266200,ns:255000},{ma:"8080PHARAON009-H+",kc:"800x800",cat:"ceramic",gio:"",le:375000,giao:311250,nhan:300000,gs:266200,ns:255000},{ma:"8080NAPOLEON001-H+",kc:"800x800",cat:"ceramic",gio:"",le:340000,giao:282200,nhan:272000,gs:241400,ns:231200},{ma:"8080PLATINUM002",kc:"800x800",cat:"ceramic",gio:"",le:648000,giao:537840,nhan:518400,gs:460100,ns:440600},{ma:"8080PLATINUM005",kc:"800x800",cat:"ceramic",gio:"",le:713000,giao:591790,nhan:570400,gs:506200,ns:484800},{ma:"8080DIAMOND001",kc:"800x800",cat:"ceramic",gio:"",le:373000,giao:309590,nhan:298400,gs:264800,ns:253600},{ma:"8080DONGVAN005-FP-H+",kc:"800x800",cat:"ceramic",gio:"",le:463000,giao:384290,nhan:370400,gs:328700,ns:314800},{ma:"POR 300x600, 3060DAMT006, AA",kc:"300x600",cat:"ngoi",gio:"",le:0,giao:195200,nhan:187000,gs:195200,ns:187000},{ma:"CER 300x600, 3060AMBER003, AA",kc:"300x600",cat:"ngoi",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"CER 300x600, 3060THACHMOC001, AA",kc:"300x600",cat:"ngoi",gio:"",le:249000,giao:206670,nhan:199200,gs:176800,ns:169300},{ma:"CER 300x600, 3060VENU003, AA",kc:"300x600",cat:"ngoi",gio:"",le:233000,giao:193390,nhan:186400,gs:165400,ns:158400},{ma:"CROCODILE03",kc:"300x600",cat:"ngoi",gio:"",le:212000,giao:175960,nhan:169600,gs:150500,ns:144200},{ma:"CER 300x600, 3060THACHMOC002, AA",kc:"300x600",cat:"ngoi",gio:"",le:249000,giao:206670,nhan:199200,gs:176800,ns:169300},{ma:"CER 300x600, 3060VENU002, AA",kc:"300x600",cat:"ngoi",gio:"",le:233000,giao:193390,nhan:186400,gs:165400,ns:158400},{ma:"3060TAYBAC008",kc:"300x600",cat:"ngoi",gio:"",le:270000,giao:224100,nhan:216000,gs:191700,ns:183600},{ma:"POR 300x600, 3060NHATRANG004, AA",kc:"300x600",cat:"ngoi",gio:"",le:270000,giao:224100,nhan:216000,gs:191700,ns:183600},{ma:"POR 300x600, 3060GREENERY006, AA",kc:"300x600",cat:"ngoi",gio:"",le:270000,giao:224100,nhan:216000,gs:191700,ns:183600},{ma:"POR 300x600, 3060HOKUAO001, AA",kc:"300x600",cat:"ngoi",gio:"",le:388000,giao:322040,nhan:310400,gs:275500,ns:263800},{ma:"3060SAHARA006",kc:"300x600",cat:"ngoi",gio:"",le:274000,giao:227420,nhan:219200,gs:194500,ns:186300},{ma:"3060THACHDONG006-H+",kc:"300x600",cat:"ngoi",gio:"",le:388000,giao:322040,nhan:310400,gs:275500,ns:263800},{ma:"3060ROXY003",kc:"300x600",cat:"ngoi",gio:"",le:264000,giao:219120,nhan:211200,gs:187400,ns:179500},{ma:"3060VAMCOTAY006",kc:"300x600",cat:"ngoi",gio:"",le:216000,giao:179280,nhan:172800,gs:153400,ns:146900},{ma:"3060GECKO016",kc:"300x600",cat:"ngoi",gio:"",le:287000,giao:238210,nhan:229600,gs:203800,ns:195200},{ma:"3060GECKO007",kc:"300x600",cat:"ngoi",gio:"",le:323000,giao:268090,nhan:258400,gs:229300,ns:219600},{ma:"3060GECKO009",kc:"300x600",cat:"ngoi",gio:"",le:323000,giao:268090,nhan:258400,gs:229300,ns:219600},{ma:"3060SAHARA010",kc:"300x600",cat:"ngoi",gio:"",le:270000,giao:224100,nhan:216000,gs:191700,ns:183600},{ma:"3060HOANGLIENSON015",kc:"300x600",cat:"ngoi",gio:"",le:249000,giao:206670,nhan:199200,gs:176800,ns:169300},{ma:"100DONGVAN007-FP-H+",kc:"1000x1000",cat:"porcelain",gio:"",le:562000,giao:466460,nhan:449600,gs:399000,ns:382200},{ma:"100DONGVAN005-FP-H+",kc:"1000x1000",cat:"porcelain",gio:"",le:618000,giao:512940,nhan:494400,gs:438800,ns:420200},{ma:"100VICTORIA005",kc:"1000x1000",cat:"porcelain",gio:"",le:713000,giao:591790,nhan:570400,gs:506200,ns:484800},{ma:"100DONGVAN004-FP-H+",kc:"1000x1000",cat:"porcelain",gio:"",le:618000,giao:512940,nhan:494400,gs:438800,ns:420200},{ma:"1020COLOUR019",kc:"100x200",cat:"porcelain",gio:"",le:391000,giao:324530,nhan:312800,gs:277600,ns:265900},{ma:"1020ROCK014",kc:"100x200",cat:"porcelain",gio:"",le:216000,giao:179280,nhan:172800,gs:153400,ns:146900},{ma:"1020ROCK012",kc:"100x200",cat:"porcelain",gio:"",le:216000,giao:179280,nhan:172800,gs:153400,ns:146900},{ma:"1020ROCK002",kc:"100x200",cat:"porcelain",gio:"",le:216000,giao:179280,nhan:172800,gs:153400,ns:146900},{ma:"1020COLOUR002",kc:"100x200",cat:"porcelain",gio:"",le:391000,giao:324530,nhan:312800,gs:277600,ns:265900},{ma:"1020COLOUR012",kc:"100x200",cat:"porcelain",gio:"",le:391000,giao:324530,nhan:312800,gs:277600,ns:265900},{ma:"1020COLOUR006",kc:"100x200",cat:"porcelain",gio:"",le:391000,giao:324530,nhan:312800,gs:277600,ns:265900},{ma:"1020COLOUR003",kc:"100x200",cat:"porcelain",gio:"",le:391000,giao:324530,nhan:312800,gs:277600,ns:265900},{ma:"1020COLOUR016",kc:"100x200",cat:"porcelain",gio:"",le:470000,giao:390100,nhan:376000,gs:333700,ns:319600},{ma:"1020COLOUR010",kc:"100x200",cat:"porcelain",gio:"",le:470000,giao:390100,nhan:376000,gs:333700,ns:319600},{ma:"1020COLOUR013",kc:"100x200",cat:"porcelain",gio:"",le:391000,giao:324530,nhan:312800,gs:277600,ns:265900},{ma:"1020COLOUR018",kc:"100x200",cat:"porcelain",gio:"",le:391000,giao:324530,nhan:312800,gs:277600,ns:265900},{ma:"1530STONE003",kc:"150x300",cat:"porcelain",gio:"",le:590000,giao:489700,nhan:472000,gs:418900,ns:401200},{ma:"1530DIAMOND001",kc:"150x300",cat:"porcelain",gio:"",le:313000,giao:259790,nhan:250400,gs:222200,ns:212800},{ma:"1530DIAMOND002",kc:"150x300",cat:"porcelain",gio:"",le:313000,giao:259790,nhan:250400,gs:222200,ns:212800},{ma:"1530DIAMOND006",kc:"150x300",cat:"porcelain",gio:"",le:313000,giao:259790,nhan:250400,gs:222200,ns:212800},{ma:"1530STONE006",kc:"150x300",cat:"porcelain",gio:"",le:590000,giao:489700,nhan:472000,gs:418900,ns:401200},{ma:"1530STONE005",kc:"150x300",cat:"porcelain",gio:"",le:590000,giao:489700,nhan:472000,gs:418900,ns:401200},{ma:"1530STONE002",kc:"150x300",cat:"porcelain",gio:"",le:590000,giao:489700,nhan:472000,gs:418900,ns:401200},{ma:"1530STONE007",kc:"150x300",cat:"porcelain",gio:"",le:590000,giao:489700,nhan:472000,gs:418900,ns:401200},{ma:"1530DIAMOND005",kc:"150x300",cat:"porcelain",gio:"",le:313000,giao:259790,nhan:250400,gs:222200,ns:212800},{ma:"1530STONE011",kc:"150x300",cat:"porcelain",gio:"",le:590000,giao:489700,nhan:472000,gs:418900,ns:401200},{ma:"1560WOOD008",kc:"150x600",cat:"porcelain",gio:"",le:304000,giao:252320,nhan:243200,gs:215800,ns:206700},{ma:"1560WOOD012",kc:"150x600",cat:"porcelain",gio:"",le:304000,giao:252320,nhan:243200,gs:215800,ns:206700},{ma:"1560WOOD009",kc:"150x600",cat:"porcelain",gio:"",le:304000,giao:252320,nhan:243200,gs:215800,ns:206700},{ma:"1560WOOD011",kc:"150x600",cat:"porcelain",gio:"",le:304000,giao:252320,nhan:243200,gs:215800,ns:206700},{ma:"2020MODERN004",kc:"200x200",cat:"porcelain",gio:"",le:0,giao:218000,nhan:208800,gs:218000,ns:208800},{ma:"2020HOAMY001",kc:"200x200",cat:"porcelain",gio:"",le:706000,giao:585980,nhan:564800,gs:501300,ns:480100},{ma:"2020HOAMY011",kc:"200x200",cat:"porcelain",gio:"",le:706000,giao:585980,nhan:564800,gs:501300,ns:480100},{ma:"2020VINTAGE003",kc:"200x200",cat:"porcelain",gio:"",le:405000,giao:336150,nhan:324000,gs:287600,ns:275400},{ma:"2020MODERN001",kc:"200x200",cat:"porcelain",gio:"",le:307000,giao:254810,nhan:245600,gs:218000,ns:208800},{ma:"2020MODERN002",kc:"200x200",cat:"porcelain",gio:"",le:307000,giao:254810,nhan:245600,gs:218000,ns:208800},{ma:"2020MODERN006",kc:"200x200",cat:"porcelain",gio:"",le:307000,giao:254810,nhan:245600,gs:218000,ns:208800},{ma:"2020HOAMY009",kc:"200x200",cat:"porcelain",gio:"",le:706000,giao:585980,nhan:564800,gs:501300,ns:480100},{ma:"2020VINTAGE002",kc:"200x200",cat:"porcelain",gio:"",le:405000,giao:336150,nhan:324000,gs:287600,ns:275400},{ma:"2020VINTAGE001",kc:"200x200",cat:"porcelain",gio:"",le:405000,giao:336150,nhan:324000,gs:287600,ns:275400},{ma:"2020HOAMY007",kc:"200x200",cat:"porcelain",gio:"",le:706000,giao:585980,nhan:564800,gs:501300,ns:480100},{ma:"2020MODERN007",kc:"200x200",cat:"porcelain",gio:"",le:307000,giao:254810,nhan:245600,gs:218000,ns:208800},{ma:"2020MODERN005",kc:"200x200",cat:"porcelain",gio:"",le:307000,giao:254810,nhan:245600,gs:218000,ns:208800},{ma:"2020HOAMY006",kc:"200x200",cat:"porcelain",gio:"",le:706000,giao:585980,nhan:564800,gs:501300,ns:480100},{ma:"2020VINTAGE007",kc:"200x200",cat:"porcelain",gio:"",le:405000,giao:336150,nhan:324000,gs:287600,ns:275400},{ma:"2020MARINA003",kc:"200x200",cat:"porcelain",gio:"",le:192000,giao:159360,nhan:153600,gs:136300,ns:130600},{ma:"2020MODERN008",kc:"200x200",cat:"porcelain",gio:"",le:307000,giao:254810,nhan:245600,gs:218000,ns:208800},{ma:"2020HOAMY004",kc:"200x200",cat:"porcelain",gio:"",le:706000,giao:585980,nhan:564800,gs:501300,ns:480100},{ma:"2020VINTAGE006",kc:"200x200",cat:"porcelain",gio:"",le:405000,giao:336150,nhan:324000,gs:287600,ns:275400},{ma:"2020VINTAGE004",kc:"200x200",cat:"porcelain",gio:"",le:405000,giao:336150,nhan:324000,gs:287600,ns:275400},{ma:"2020MODERN003",kc:"200x200",cat:"porcelain",gio:"",le:307000,giao:254810,nhan:245600,gs:218000,ns:208800},{ma:"2020VINTAGE008",kc:"200x200",cat:"porcelain",gio:"",le:405000,giao:336150,nhan:324000,gs:287600,ns:275400},{ma:"2020VINTAGE005",kc:"200x200",cat:"porcelain",gio:"",le:405000,giao:336150,nhan:324000,gs:287600,ns:275400},{ma:"2020HOAMY010",kc:"200x200",cat:"porcelain",gio:"",le:706000,giao:585980,nhan:564800,gs:501300,ns:480100},{ma:"2020HOAMY003",kc:"200x200",cat:"porcelain",gio:"",le:707000,giao:586810,nhan:565600,gs:502000,ns:480800},{ma:"2020HOAMY002",kc:"200x200",cat:"porcelain",gio:"",le:706000,giao:585980,nhan:564800,gs:501300,ns:480100},{ma:"2020HOAMY012",kc:"200x200",cat:"porcelain",gio:"",le:707000,giao:586810,nhan:565600,gs:502000,ns:480800},{ma:"D-M4B004B",kc:"200x200",cat:"porcelain",gio:"",le:321000,giao:266430,nhan:256800,gs:227900,ns:218300},{ma:"D-M4B002",kc:"200x200",cat:"porcelain",gio:"",le:321000,giao:266430,nhan:256800,gs:227900,ns:218300},{ma:"D-M4B005A",kc:"200x200",cat:"porcelain",gio:"",le:321000,giao:266430,nhan:256800,gs:227900,ns:218300}];
@@ -307,16 +415,17 @@ function setSize(sz){
 function fmt(n){ return (!n||n===0)?'–':n.toLocaleString('vi-VN')+'đ'; }
 
 function swTab(t){
-  ['tra','sale','ngoi','keo','pitch'].forEach(function(x){
-    document.getElementById('tab-'+x).classList.toggle('on',x===t);
+  ['tra','sale','ngoi','keo','don'].forEach(function(x){
+    var el=document.getElementById('tab-'+x);
+    if(el) el.classList.toggle('on',x===t);
   });
   document.querySelectorAll('.tb').forEach(function(b,i){
-    b.classList.toggle('on',['tra','sale','ngoi','keo','pitch'][i]===t);
+    b.classList.toggle('on',['tra','sale','ngoi','keo','don'][i]===t);
   });
   if(t==='sale') renderSale();
   if(t==='ngoi') renderNgoi();
   if(t==='keo')  renderKeo();
-  if(t==='pitch') showP('gia');
+  if(t==='don')  renderDon();
 }
 
 // --- TAB 1 ---
@@ -487,6 +596,7 @@ function renderNgoi(){
   });
 }
 function showNgoi(ma){
+  curNgoiMa=ma;
   var p=NGOI.find(function(x){return x.ma===ma;}); if(!p) return;
   document.getElementById('nd-ten').textContent=p.ten;
   document.getElementById('nd-kc').textContent=p.kc+' · '+p.dong_goi;
@@ -497,6 +607,51 @@ function showNgoi(ma){
   // giao2 not stored for ≥1500, estimate from pattern (not shown in data) 
   document.getElementById('nd-giao2').textContent='Liên hệ báo giá';
   document.getElementById('ngoi-detail').style.display='block';
+  document.getElementById('nd-soluong').value=100;
+  tinhTienNgoi();
+}
+
+var curNgoiMa = null;
+function showNgoi_orig(ma){ curNgoiMa=ma; }
+
+function chinhSLNgoi(d){
+  var inp=document.getElementById('nd-soluong');
+  inp.value=Math.max(1,(parseInt(inp.value)||0)+d);
+  tinhTienNgoi();
+}
+
+function tinhTienNgoi(){
+  var p=NGOI.find(function(x){return x.ma===curNgoiMa;}); if(!p) return;
+  var sl=parseInt(document.getElementById('nd-soluong').value)||0;
+  var useLevel2 = sl>=1500;
+  var nhanVal = useLevel2 ? p.nhan2 : p.nhan;
+  var giaoVal = useLevel2 ? (p.giao2||p.giao) : p.giao;
+  var f=function(n){return n>0?(n*sl).toLocaleString('vi-VN')+'đ':'–';};
+  document.getElementById('nd-tien-le').textContent=f(p.le);
+  document.getElementById('nd-tien-nhan').textContent=f(nhanVal)+' ('+(useLevel2?'≥1.500v':'<1.500v')+')';
+  document.getElementById('nd-tien-giao').textContent=f(giaoVal)+' ('+(useLevel2?'≥1.500v':'<1.500v')+')';
+}
+
+function themNgoiVaoDon(){
+  var p=NGOI.find(function(x){return x.ma===curNgoiMa;}); if(!p) return;
+  var sl=parseInt(document.getElementById('nd-soluong').value)||0;
+  if(sl<=0){alert('Vui lòng nhập số lượng!');return;}
+  var useLevel2=sl>=1500;
+  var nhanVal=useLevel2?p.nhan2:p.nhan;
+  var giaoVal=useLevel2?(p.giao2||p.giao):p.giao;
+  var exist=donItems.find(function(x){return x.ma===p.ma;});
+  if(exist){
+    exist.qty+=sl;
+  } else {
+    donItems.push({
+      ma:p.ma, ten:p.ten, kc:p.kc, unit:'viên',
+      le:p.le||0, nhan:nhanVal||0, giao:giaoVal||0,
+      ns:0, gs:0, qty:sl, loai:'ngoi'
+    });
+  }
+  updateDonBadge();
+  showToast('✓ Đã thêm '+sl+' viên '+p.ten+' vào đơn!');
+  document.getElementById('ngoi-detail').style.display='none';
 }
 
 // --- TAB 4 Keo ---
@@ -513,6 +668,11 @@ function renderKeo(){
       +'<div class="tier-row"><span style="font-size:12px;color:var(--t2)">Giao hàng &lt;50 bao</span><span style="font-size:13px;font-weight:700;color:#7B1FA2">'+p.giao.toLocaleString('vi-VN')+'đ</span></div>'
       +'<div class="tier-row"><span style="font-size:12px;color:var(--t2)">Nhận kho ≥50 bao</span><span style="font-size:13px;font-weight:700;color:#388E3C">'+p.nhan2.toLocaleString('vi-VN')+'đ</span></div>'
       +'<div class="tier-row"><span style="font-size:12px;color:var(--t2)">Giao hàng ≥50 bao</span><span style="font-size:13px;font-weight:700;color:#388E3C">'+p.giao2.toLocaleString('vi-VN')+'đ</span></div>';
+    var btnK=document.createElement('button');
+    btnK.textContent='🛒 + Thêm vào đơn';
+    btnK.style.cssText='width:100%;margin-top:8px;padding:7px;border:none;border-radius:var(--r8);background:#7B1FA2;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)';
+    btnK.onclick=function(ma){return function(){addToDonKeo(ma);};}(p.ma);
+    div.appendChild(btnK);
     el.appendChild(div);
   });
 }
@@ -536,40 +696,6 @@ var PITCHES={
     {icon:'→',col:'#C0232A',t:'Chốt bước tiếp theo',b:'"Form đăng ký đơn giản – em gửi qua Zalo, anh/chị điền 5 phút. Tuần tới em ghé hỗ trợ trưng bày?"'}
   ]}
 };
-function showP(k){
-  ['gia','luoi','len'].forEach(function(x){ var b=document.getElementById('p-'+x); if(b) b.classList.toggle('on',x===k); });
-  var d=PITCHES[k]; var pb=document.getElementById('pitch-body');
-  pb.innerHTML='<p style="font-size:12px;color:var(--t2);margin-bottom:8px">'+d.title+'</p>';
-  d.items.forEach(function(item){
-    var div=document.createElement('div'); div.className='pb';
-    var h4=document.createElement('h4'); h4.innerHTML='<span style="color:'+item.col+';margin-right:6px">'+item.icon+'</span>'+item.t;
-    var pp=document.createElement('p'); pp.textContent=item.b;
-    div.appendChild(h4); div.appendChild(pp); pb.appendChild(div);
-  });
-}
-
-// Init
-var hdrCount=document.getElementById('hdr-count')||document.getElementById('hdr-user');
-if(hdrCount) hdrCount.textContent=DATA.length+' mã gạch · '+NGOI.length+' ngói · '+KEO.length+' keo';
-
-// Image storage
-var imgStore = {};
-try { var saved = localStorage.getItem('dt_imgs'); if(saved) imgStore = JSON.parse(saved); } catch(e){}
-
-// Load ảnh từ Google Sheet
-(function loadSheetImages(){
-  fetch('https://script.google.com/macros/s/AKfycby7iML1PrTBwlRxdpR7rdKTX8smflwcus4VxawzYH6s4hvDRiOlc5kB-uwIGkN07h5d7g/exec?action=getImages')
-    .then(function(r){return r.json();})
-    .then(function(res){
-      if(res.status==='ok' && res.images){
-        Object.keys(res.images).forEach(function(ma){
-          if(res.images[ma] && !imgStore[ma]) imgStore[ma] = res.images[ma];
-        });
-        if(curP_ma) loadImg(curP_ma);
-      }
-    }).catch(function(){});
-})();
-
 function saveImgStore(){ try{ localStorage.setItem('dt_imgs', JSON.stringify(imgStore)); }catch(e){} }
 
 function driveLink(url){
@@ -851,6 +977,338 @@ function doLogout(){
     }, 300);
   }
 })();
+
+
+// ===== GIỎ HÀNG / ĐƠN HÀNG =====
+var donItems = [];
+var curGiaoHang = 'nhan'; // 'nhan' = nhận kho, 'giao' = giao tận nơi
+
+function setGiaoHang(type){
+  curGiaoHang = type;
+  var btnNhan = document.getElementById('btn-nhan-kho');
+  var btnGiao = document.getElementById('btn-di-giao');
+  if(type === 'nhan'){
+    btnNhan.style.cssText = btnNhan.style.cssText.replace('var(--bd2)','#1B5E20').replace('var(--bg2)','#E8F5E9').replace('var(--t2)','#1B5E20');
+    btnNhan.style.borderColor='#1B5E20'; btnNhan.style.background='#E8F5E9'; btnNhan.style.color='#1B5E20';
+    btnGiao.style.borderColor='var(--bd2)'; btnGiao.style.background='var(--bg2)'; btnGiao.style.color='var(--t2)';
+  } else {
+    btnGiao.style.borderColor='#0D47A1'; btnGiao.style.background='#E3F2FD'; btnGiao.style.color='#0D47A1';
+    btnNhan.style.borderColor='var(--bd2)'; btnNhan.style.background='var(--bg2)'; btnNhan.style.color='var(--t2)';
+  }
+  renderDon();
+}
+
+function addToDon(ma){
+  if(!ma) return;
+  var p = DATA.find(function(x){return x.ma===ma;});
+  if(!p) return;
+  var exist = donItems.find(function(x){return x.ma===ma;});
+  if(exist){ exist.qty++; }
+  else {
+    donItems.push({ma:p.ma,kc:p.kc,le:p.le||0,nhan:p.nhan||0,ns:p.ns||0,qty:1});
+  }
+  updateDonBadge();
+  showToast('✓ Đã thêm vào đơn!');
+}
+
+function addToDonNgoi(ma){
+  var p=NGOI.find(function(x){return x.ma===ma;}); if(!p) return;
+  var exist=donItems.find(function(x){return x.ma===ma;});
+  if(exist){exist.qty++;}
+  else{
+    donItems.push({
+      ma:p.ma, ten:p.ten, kc:p.kc, unit:'viên',
+      le:p.le||0,       // giá lẻ/viên
+      nhan:p.nhan||0,   // giá nhận kho/viên
+      giao:p.giao||0,   // giá giao/viên
+      nhan2:p.nhan2||0, // giá nhận ≥1500v
+      giao2:p.giao2||0, // giá giao ≥1500v (nếu có)
+      ns:0, gs:0,
+      qty:1, loai:'ngoi'
+    });
+  }
+  updateDonBadge();
+  showToast('✓ Đã thêm ngói vào đơn!');
+}
+
+function addToDonKeo(ma){
+  var p=KEO.find(function(x){return x.ma===ma;}); if(!p) return;
+  var exist=donItems.find(function(x){return x.ma===ma;});
+  if(exist){exist.qty++;}
+  else{
+    donItems.push({
+      ma:p.ma, ten:p.ten, kc:'–', unit:'bao',
+      le:p.le||0,
+      nhan:p.nhan||0,   // giá nhận <50 bao
+      giao:p.giao||0,   // giá giao <50 bao
+      nhan2:p.nhan2||0, // giá nhận ≥50 bao
+      giao2:p.giao2||0, // giá giao ≥50 bao
+      ns:0, gs:0,
+      qty:1, loai:'keo'
+    });
+  }
+  updateDonBadge();
+  showToast('✓ Đã thêm keo vào đơn!');
+}
+
+function showToast(msg){
+  var t=document.createElement('div');
+  t.textContent=msg;
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1B8A3C;color:#fff;padding:9px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap';
+  document.body.appendChild(t);
+  setTimeout(function(){t.remove();},2000);
+}
+
+function updateDonBadge(){
+  var badge=document.getElementById('don-badge');
+  var total=donItems.reduce(function(s,x){return s+x.qty;},0);
+  if(badge){badge.textContent=total;badge.style.display=total>0?'inline':'none';}
+}
+
+function renderDon(){
+  var isEmpty=donItems.length===0;
+  document.getElementById('don-empty').style.display=isEmpty?'block':'none';
+  document.getElementById('don-content').style.display=isEmpty?'none':'block';
+  if(isEmpty) return;
+  var el=document.getElementById('don-list'); el.innerHTML='';
+  var totalLe=0,totalNhan=0,totalGiao=0;
+
+  donItems.forEach(function(item){
+    var unit=item.unit||'m²';
+    var loai=item.loai||'gach';
+    var le=item.le*item.qty;
+    var nhanVal=item.ns>0?item.ns:item.nhan;
+    var giaoVal=item.gs>0?item.gs:item.giao;
+    totalLe+=le;
+    totalNhan+=nhanVal*item.qty;
+    totalGiao+=giaoVal*item.qty;
+
+    var div=document.createElement('div'); div.className='cart-item';
+    var label = loai==='ngoi'?'🏠 Ngói': loai==='keo'?'🧱 Keo':'🏗️ Gạch';
+    div.innerHTML=
+      '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">'
+      +'<div>'
+      +'<p style="font-size:12px;color:var(--t2);margin-bottom:1px">'+label+'</p>'
+      +'<p style="font-size:13px;font-weight:700;margin-bottom:2px">'+(item.ten||item.ma)+'</p>'
+      +'<p style="font-size:11px;color:var(--t2)">'+item.ma+(item.kc&&item.kc!=='–'?' · '+item.kc:'')+'</p>'
+      +(item.ns>0?'<span style="font-size:10px;background:#FDECEA;color:#8B0000;padding:1px 6px;border-radius:4px;font-weight:600">🔥 SALE</span>':'')
+      +'</div>'
+      +'<button data-rm="'+item.ma+'" style="color:var(--t3);border:none;background:transparent;font-size:18px;cursor:pointer;flex-shrink:0">✕</button>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+      +'<button data-qty="'+item.ma+'" data-d="-1" class="qty-btn">−</button>'
+      +'<span style="font-size:15px;font-weight:700;min-width:28px;text-align:center">'+item.qty+'</span>'
+      +'<button data-qty="'+item.ma+'" data-d="1" class="qty-btn">+</button>'
+      +'<span style="font-size:11px;color:var(--t2)">'+unit+'</span>'
+      +'</div>'
+      // Bảng giá 3 hàng
+      +'<div style="background:var(--bg2);border-radius:var(--r8);padding:8px 10px;font-size:12px">'
+      +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:0.5px solid var(--bd)">'
+      +'<span style="color:var(--t2)">Giá lẻ (KH)</span>'
+      +'<span style="font-weight:600">'+(item.le>0?item.le.toLocaleString('vi-VN')+'đ/'+unit+' → '+(item.le*item.qty).toLocaleString('vi-VN')+'đ':'Liên hệ')+'</span>'
+      +'</div>'
+      +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:0.5px solid var(--bd)">'
+      +'<span style="color:#1B5E20">Giá ĐL nhận kho</span>'
+      +'<span style="font-weight:700;color:#1B5E20">'+(nhanVal>0?nhanVal.toLocaleString('vi-VN')+'đ/'+unit+' → '+(nhanVal*item.qty).toLocaleString('vi-VN')+'đ':'–')+'</span>'
+      +'</div>'
+      +'<div style="display:flex;justify-content:space-between;padding:3px 0">'
+      +'<span style="color:#0D47A1">Giá ĐL đi giao</span>'
+      +'<span style="font-weight:700;color:#0D47A1">'+(giaoVal>0?giaoVal.toLocaleString('vi-VN')+'đ/'+unit+' → '+(giaoVal*item.qty).toLocaleString('vi-VN')+'đ':'–')+'</span>'
+      +'</div>'
+      +'</div>';
+    el.appendChild(div);
+  });
+
+  // Event delegation
+  el.onclick=function(e){
+    var rm=e.target.closest('[data-rm]');
+    if(rm){removeDon(rm.dataset.rm);return;}
+    var qb=e.target.closest('[data-qty]');
+    if(qb){updateDonQty(qb.dataset.qty,parseInt(qb.dataset.d));return;}
+  };
+
+  document.getElementById('don-total-le').textContent=totalLe>0?totalLe.toLocaleString('vi-VN')+'đ':'–';
+  document.getElementById('don-total-dl').textContent=totalNhan>0?totalNhan.toLocaleString('vi-VN')+'đ':'–';
+  var donTotalGiao=document.getElementById('don-total-giao');
+  if(donTotalGiao) donTotalGiao.textContent=totalGiao>0?totalGiao.toLocaleString('vi-VN')+'đ':'–';
+
+  // Tính lợi nhuận theo hình thức giao hàng
+  var vonPhai = curGiaoHang==='nhan' ? totalNhan : totalGiao;
+  var m = totalLe - vonPhai;
+  var pct = totalLe>0 ? (m/totalLe*100).toFixed(1) : 0;
+
+  var lblMargin = document.getElementById('lbl-margin');
+  var lblGH = document.getElementById('lbl-giahangh');
+  if(lblMargin) lblMargin.textContent = '💰 Lợi nhuận (' + (curGiaoHang==='nhan'?'nhận kho':'giao tận nơi') + ')';
+  if(lblGH) lblGH.textContent = 'Chi phí vốn (' + (curGiaoHang==='nhan'?'nhận kho':'đi giao') + ')';
+
+  document.getElementById('don-margin').textContent=m>0?'+'+m.toLocaleString('vi-VN')+'đ':'–';
+  var pctEl=document.getElementById('don-margin-pct');
+  if(pctEl) pctEl.textContent=m>0?'Margin: '+pct+'%':'–';
+
+  // Màu box theo LN
+  var box=document.getElementById('don-margin').closest('div[style*="E8F5E9"]');
+  if(box){
+    var color = m>0 ? '#E8F5E9' : '#FDECEA';
+    var border = m>0 ? '#4CAF50' : '#C0232A';
+    box.style.background=color; box.style.borderColor=border;
+  }
+}
+
+function updateDonQty(ma,d){
+  var item=donItems.find(function(x){return x.ma===ma;});
+  if(!item) return;
+  item.qty=Math.max(1,item.qty+d);
+  updateDonBadge(); renderDon();
+}
+function removeDon(ma){donItems=donItems.filter(function(x){return x.ma!==ma;});updateDonBadge();renderDon();}
+function guiDonHang(){
+  if(donItems.length===0){alert('Chưa có sản phẩm trong đơn!');return;}
+  var ten=document.getElementById('don-ten').value.trim();
+  var sdt=document.getElementById('don-sdt').value.trim();
+  if(!ten){alert('Vui lòng nhập tên khách hàng!');document.getElementById('don-ten').focus();return;}
+  if(!sdt){alert('Vui lòng nhập số điện thoại!');document.getElementById('don-sdt').focus();return;}
+
+  document.getElementById('btn-gui-don').style.display='none';
+  document.getElementById('gui-don-status').style.display='block';
+  document.getElementById('gui-don-ok').style.display='none';
+
+  // Lấy thông tin user đang đăng nhập
+  var sess=checkSession();
+  var nguoiLap=sess?sess.name:'Sales Tool';
+
+  var orderData={
+    ten:ten,
+    sdt:sdt,
+    diachi:document.getElementById('don-dc').value.trim(),
+    ghichu:document.getElementById('don-note').value.trim()+
+      (document.getElementById('don-cty').value.trim()?' | Cty: '+document.getElementById('don-cty').value.trim():''),
+    ngay:new Date().toLocaleString('vi-VN'),
+    nguoi_lap:nguoiLap,
+    giao_hang:curGiaoHang==='nhan'?'Nhận tại kho':'Giao tận nơi',
+    items:donItems.map(function(c){
+      var nhanVal=c.ns>0?c.ns:c.nhan;
+      var giaoVal=c.gs>0?c.gs:c.giao;
+      return {
+        ma:c.ma,
+        ten_sp:c.ten||c.ma,
+        kc:c.kc||'–',
+        unit:c.unit||'m²',
+        so_luong:c.qty,
+        gia_le:c.le||0,
+        gia_nhan:nhanVal||0,
+        gia_giao:giaoVal||0
+      };
+    })
+  };
+
+  var encoded=encodeURIComponent(JSON.stringify(orderData));
+  var url='https://script.google.com/macros/s/AKfycby7iML1PrTBwlRxdpR7rdKTX8smflwcus4VxawzYH6s4hvDRiOlc5kB-uwIGkN07h5d7g/exec?data='+encoded;
+
+  // Dùng Image trick để tránh CORS
+  var img=new Image();
+  img.onload=img.onerror=function(){
+    document.getElementById('gui-don-status').style.display='none';
+    document.getElementById('gui-don-ok').style.display='block';
+    document.getElementById('btn-gui-don').style.display='none';
+  };
+  img.src=url;
+
+  // Timeout fallback 5 giây
+  setTimeout(function(){
+    document.getElementById('gui-don-status').style.display='none';
+    document.getElementById('gui-don-ok').style.display='block';
+  },5000);
+}
+
+function clearDon(){
+  if(!confirm('Xóa toàn bộ đơn hàng?')) return;
+  donItems=[];updateDonBadge();renderDon();
+  ['don-ten','don-cty','don-sdt','don-dc','don-note'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+}
+
+function xuatPDF(){
+  if(donItems.length===0){alert('Chưa có sản phẩm!');return;}
+  var ten=document.getElementById('don-ten').value.trim()||'Quý khách';
+  var cty=document.getElementById('don-cty').value.trim();
+  var sdt=document.getElementById('don-sdt').value.trim();
+  var dc=document.getElementById('don-dc').value.trim();
+  var note=document.getElementById('don-note').value.trim();
+  var ngay=new Date().toLocaleDateString('vi-VN');
+  var totalLe=donItems.reduce(function(s,x){return s+(x.le||0)*x.qty;},0);
+  var rows=donItems.map(function(item,i){
+    return '<tr><td style="text-align:center">'+(i+1)+'</td><td style="font-weight:600">'+item.ma+'</td><td style="text-align:center">'+item.kc+'</td><td style="text-align:center">'+item.qty+' m²</td><td style="text-align:right">'+(item.le>0?item.le.toLocaleString('vi-VN')+'đ':'Liên hệ')+'</td><td style="text-align:right;font-weight:700">'+(item.le*item.qty>0?(item.le*item.qty).toLocaleString('vi-VN')+'đ':'–')+'</td></tr>';
+  }).join('');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Báo giá Đồng Tâm</title>'
+    +'<style>body{font-family:Arial,sans-serif;font-size:13px;padding:30px;max-width:800px;margin:0 auto}'
+    +'.hdr{background:#C0232A;color:#fff;padding:18px 22px;border-radius:8px;margin-bottom:20px;display:flex;justify-content:space-between}'
+    +'.hdr h1{font-size:18px;margin:0}.hdr p{font-size:11px;margin:3px 0 0;opacity:0.85}'
+    +'.info{background:#f5f5f5;border-radius:8px;padding:12px 16px;margin-bottom:18px}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:16px}'
+    +'th{background:#C0232A;color:#fff;padding:8px 10px;font-size:12px;text-align:left}'
+    +'td{padding:7px 10px;border-bottom:1px solid #eee;font-size:12px}'
+    +'tr:nth-child(even){background:#fafafa}'
+    +'.total{text-align:right;font-size:15px;font-weight:700;color:#C0232A;padding:10px;border-top:2px solid #C0232A}'
+    +'.footer{margin-top:24px;font-size:11px;color:#888;border-top:1px solid #eee;padding-top:10px;text-align:center}'
+    +'</style></head><body>'
+    +'<div class="hdr"><div><h1>🏪 BÁO GIÁ VẬT LIỆU XÂY DỰNG</h1><p>Gạch & Ngói Đồng Tâm – Khu vực 23</p></div>'
+    +'<div style="text-align:right"><p>Ngày: '+ngay+'</p><p style="opacity:0.8">ĐT: 0819 548 908</p></div></div>'
+    +'<div class="info"><p><strong>Kính gửi:</strong> '+ten+(cty?' – '+cty:'')+'</p>'
+    +(sdt?'<p><strong>Điện thoại:</strong> '+sdt+'</p>':'')
+    +(dc?'<p><strong>Địa chỉ:</strong> '+dc+'</p>':'')+'</div>'
+    +'<table><thead><tr><th>#</th><th>Mã sản phẩm</th><th>Kích cỡ</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table>'
+    +'<div class="total">Tổng cộng: '+(totalLe>0?totalLe.toLocaleString('vi-VN')+'đ':'Liên hệ báo giá')+'</div>'
+    +(note?'<p style="margin-top:10px;font-size:12px;color:#555"><strong>Ghi chú:</strong> '+note+'</p>':'')
+    +'<div class="footer"><p>Báo giá có hiệu lực 7 ngày · Lê Chí Linh – 0819 548 908</p></div>'
+    +'</body></html>';
+  var w=window.open('','_blank','width=900,height=700');
+  if(w){w.document.write(html);w.document.close();setTimeout(function(){w.print();},600);}
+  else{var blob=new Blob([html],{type:'text/html;charset=utf-8'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='BaoGia_DongTam_'+ngay.replace(/\//g,'-')+'.html';a.click();}
+}
+
+function xuatExcel(){
+  if(donItems.length===0){alert('Chưa có sản phẩm!');return;}
+  var ten=document.getElementById('don-ten').value.trim()||'';
+  var cty=document.getElementById('don-cty').value.trim()||'';
+  var sdt=document.getElementById('don-sdt').value.trim()||'';
+  var ngay=new Date().toLocaleDateString('vi-VN');
+  var bom='\uFEFF';
+  var rows=[
+    ['BÁO GIÁ ĐỒNG TÂM – KHU VỰC 23','','','','','','','','',''],
+    ['Ngày:',ngay,'','Khách hàng:',ten+(cty?' – '+cty:''),'','SĐT:',sdt,'',''],
+    [''],
+    ['#','Mã sản phẩm','Kích cỡ','Số lượng (m²)','Giá lẻ (đ/m²)','Thành tiền lẻ','Giá ĐL nhận kho','Thành tiền ĐL','Lợi nhuận/m²','Tổng LN'],
+  ];
+  var tLe=0,tDl=0;
+  donItems.forEach(function(item,i){
+    var le=item.le||0,dl=item.ns>0?item.ns:(item.nhan||0),m=le-dl;
+    tLe+=le*item.qty; tDl+=dl*item.qty;
+    rows.push([i+1,item.ma,item.kc,item.qty,le||'Liên hệ',le*item.qty||'–',dl||'–',dl*item.qty||'–',m||'–',m*item.qty||'–']);
+  });
+  rows.push(['']);
+  rows.push(['','','','TỔNG','',tLe,'',tDl,'',tLe-tDl]);
+  rows.push(['','','','','','','','','Margin:',(tLe>0&&tDl>0)?((tLe-tDl)/tLe*100).toFixed(1)+'%':'–']);
+  var csv=rows.map(function(r){return r.map(function(c){var s=String(c);if(s.indexOf(',')>=0||s.indexOf('"')>=0)s='"'+s.replace(/"/g,'""')+'"';return s;}).join(',');}).join('\r\n');
+  var blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='DonHang_DT_'+ngay.replace(/\//g,'-')+'.csv';a.click();
+}
+
+function xuatZalo(){
+  if(donItems.length===0){alert('Chưa có sản phẩm!');return;}
+  var ten=document.getElementById('don-ten').value.trim()||'Quý khách';
+  var ngay=new Date().toLocaleDateString('vi-VN');
+  var totalLe=donItems.reduce(function(s,x){return s+(x.le||0)*x.qty;},0);
+  var lines=['🏪 BÁO GIÁ GẠCH ĐỒNG TÂM','━━━━━━━━━━━━━━','👤 Kính gửi: '+ten,'📅 Ngày: '+ngay,''];
+  donItems.forEach(function(item,i){
+    lines.push((i+1)+'. '+item.ma+' ('+item.kc+')');
+    lines.push('   '+item.qty+' m² × '+(item.le>0?item.le.toLocaleString('vi-VN')+'đ/m²':'Liên hệ')+(item.le*item.qty>0?' = '+(item.le*item.qty).toLocaleString('vi-VN')+'đ':''));
+  });
+  lines.push(''); lines.push('━━━━━━━━━━━━━━');
+  lines.push('💰 Tổng: '+(totalLe>0?totalLe.toLocaleString('vi-VN')+'đ':'Liên hệ báo giá'));
+  lines.push('📞 LH: 0819 548 908');
+  showShareModal(lines.join('\n'));
+}
 
 </script>
 </div><!-- end app-content -->
