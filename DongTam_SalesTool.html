@@ -1054,6 +1054,55 @@ function setGiaoHang(type){
   renderDon();
 }
 
+
+// Bảng quy đổi m²/thùng theo kích cỡ gạch Đồng Tâm
+var GACH_THUNG = {
+  '100x200':  1.20,  // 60v × 0.02m²
+  '150x300':  1.35,  // 30v × 0.045m²
+  '150x600':  1.26,  // 14v × 0.09m²
+  '200x200':  1.00,  // 25v × 0.04m²
+  '200x800':  1.28,  // 8v × 0.16m²
+  '200x1200': 1.20,  // 5v × 0.24m²
+  '250x400':  1.00,  // 10v × 0.10m²
+  '250x600':  1.50,  // 10v × 0.15m²
+  '294x294':  1.06,  // 12v × 0.0864m²
+  '300x300':  1.08,  // 12v × 0.09m²
+  '300x450':  1.35,  // 10v × 0.135m²
+  '300x600':  1.44,  // 8v × 0.18m²
+  '330x330':  1.09,  // 10v × 0.109m²
+  '400x400':  1.28,  // 8v × 0.16m²
+  '400x800':  1.28,  // 4v × 0.32m²
+  '600x600':  1.44,  // 4v × 0.36m²
+  '600x1200': 1.44,  // 2v × 0.72m²
+  '800x800':  1.28,  // 2v × 0.64m²
+  '1000x1000':1.00,  // 1v × 1.00m²
+};
+
+function tinhThung(item){
+  if(item.loai==='keo') return null;
+  if(item.loai==='ngoi'){
+    // Ngói: đọc dong_goi từ data
+    var p = NGOI.find(function(x){return x.ma===item.ma;});
+    if(!p||!p.dong_goi) return null;
+    var m = p.dong_goi.match(/(\d+)/);
+    if(!m) return null;
+    var vienPerThung = parseInt(m[1]);
+    if(!vienPerThung) return null;
+    var thung = item.qty / vienPerThung;
+    return {thung: thung, note: p.dong_goi};
+  }
+  // Gạch: tính theo kích cỡ
+  var kc = item.kc || '';
+  // Normalize kc: bỏ chữ thường, lấy phần số×số
+  var kcMatch = kc.match(/(\d+)[xX](\d+)/);
+  if(!kcMatch) return null;
+  var kcKey = kcMatch[1]+'x'+kcMatch[2];
+  var m2perThung = GACH_THUNG[kcKey];
+  if(!m2perThung) return null;
+  var thung = item.qty / m2perThung;
+  return {thung: thung, m2perThung: m2perThung, note: m2perThung.toFixed(2)+' m²/thùng'};
+}
+
 function addToDon(ma){
   if(!ma) return;
   var p = DATA.find(function(x){return x.ma===ma;});
@@ -1159,9 +1208,15 @@ function renderDon(){
         +'style="width:64px;text-align:center;font-size:15px;font-weight:700;padding:4px 6px;'
         +'border:1.5px solid var(--bd2);border-radius:6px;background:var(--bg1);'
         +'font-family:var(--f);-moz-appearance:textfield;" '
-        +'oninput="this.value=this.value.replace(/[^0-9]/,\'\')" />'
+        +'oninput="this.value=this.value.replace(/[^0-9.]/,\'\')" />'
       +'<button data-qty="'+item.ma+'" data-d="1" class="qty-btn" style="flex-shrink:0">+</button>'
       +'<span style="font-size:11px;color:var(--t2)">'+unit+'</span>'
+      +(function(){
+        var t=tinhThung(item);
+        if(!t) return '';
+        var thungStr=Number.isInteger(t.thung)?t.thung.toString():t.thung.toFixed(2);
+        return '<span style="font-size:11px;color:#0D47A1;margin-left:8px">≈ '+thungStr+' thùng ('+t.note+')</span>';
+      })()
       +'</div>'
       // Bảng giá 3 hàng
       +'<div style="background:var(--bg2);border-radius:var(--r8);padding:8px 10px;font-size:12px">'
@@ -1190,7 +1245,7 @@ function renderDon(){
       var ma=qb.dataset.qty;
       var inp=el.querySelector('input[data-inp="'+ma+'"]');
       var cur=inp?Math.max(1,parseInt(inp.value)||1):1;
-      var next=Math.max(1,cur+parseInt(qb.dataset.d));
+      var next=Math.round(Math.max(0.01,cur+parseInt(qb.dataset.d))*100)/100;
       if(inp) inp.value=next;
       setDonQty(ma,next);   // cập nhật donItems.qty → calcAndShowTotals
       return;
@@ -1217,8 +1272,9 @@ function updateDonQty(ma,d){
 function setDonQty(ma,val){
   var item=donItems.find(function(x){return x.ma===ma;});
   if(!item) return;
-  val=parseInt(val)||1;
-  if(val<1) val=1;
+  val=parseFloat(val)||0.1;
+  if(val<0.01) val=0.01;
+  val=Math.round(val*100)/100; // làm tròn 2 chữ số thập phân
   item.qty=val;              // cập nhật donItems trước
   updateDonBadge();
   calcAndShowTotals();       // rồi mới tính lại tổng
@@ -1355,12 +1411,15 @@ function xuatPDF(){
     var leVAT = item.le||0;
     var don   = leVAT * item.qty;
     var loaiLabel = item.loai==='ngoi'?'Ngói':item.loai==='keo'?'Keo':'Gạch';
+    var t=tinhThung(item);
+    var thungStr=t?(Number.isInteger(t.thung)?t.thung.toString():t.thung.toFixed(2))+' thùng':'';
     return '<tr>'
       +'<td class="tc">'+(i+1)+'</td>'
       +'<td><span class="loai-tag loai-'+item.loai+'">'+loaiLabel+'</span></td>'
       +'<td class="ma">'+item.ma+'<br><span class="sub">'+(item.ten&&item.ten!==item.ma?item.ten:'')+'</span></td>'
       +'<td class="tc">'+(item.kc&&item.kc!=='–'?item.kc:'–')+'</td>'
       +'<td class="tc">'+item.qty+' '+(item.unit||'m²')+'</td>'
+      +'<td class="tc" style="color:#0D47A1;font-weight:600">'+thungStr+'</td>'
       +'<td class="tr">'+(leVAT>0?leVAT.toLocaleString('vi-VN'):'Liên hệ')+'</td>'
       +'<td class="tr money">'+(don>0?don.toLocaleString('vi-VN'):'–')+'</td>'
       +'</tr>';
@@ -1473,6 +1532,7 @@ function xuatPDF(){
     +'<th>Mã sản phẩm</th>'
     +'<th class="tc">Kích cỡ</th>'
     +'<th class="tc">Số lượng</th>'
+    +'<th class="tc">Số thùng</th>'
     +'<th class="tr">Đơn giá (đ)</th>'
     +'<th class="tr">Thành tiền (đ)</th>'
     +'</tr></thead>'
