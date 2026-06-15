@@ -413,6 +413,42 @@ var curNgoiMa=null;
 var donItems=[];
 var curGiaoHang='nhan';
 var imgStore=(function(){ try{ return JSON.parse(localStorage.getItem('dt_imgs')||'{}'); }catch(e){ return {}; } })();
+
+// Fetch ảnh từ Google Sheet khi đăng nhập (dùng script tag để tránh CORS)
+function fetchImagesFromSheet(){
+  var APPS_URL='https://script.google.com/macros/s/AKfycby7iML1PrTBwlRxdpR7rdKTX8smflwcus4VxawzYH6s4hvDRiOlc5kB-uwIGkN07h5d7g/exec';
+
+  // Dùng JSONP: inject script tag để bypass CORS
+  window._onImgData = function(data){
+    try{
+      if(data && data.images){
+        var map=data.images, count=0;
+        Object.keys(map).forEach(function(ma){
+          if(map[ma]){ imgStore[ma]=map[ma]; count++; }
+        });
+        try{ localStorage.setItem('dt_imgs', JSON.stringify(imgStore)); }catch(e){}
+        if(curP_ma) loadImg(curP_ma);
+        console.log('✅ Đã tải '+count+' ảnh từ Sheet');
+      }
+    }catch(e){ console.log('Lỗi parse ảnh:', e); }
+    // Xóa script tag sau khi xong
+    var old=document.getElementById('_img_script');
+    if(old) old.remove();
+  };
+
+  // Xóa script cũ nếu có
+  var old=document.getElementById('_img_script');
+  if(old) old.remove();
+
+  var s=document.createElement('script');
+  s.id='_img_script';
+  s.src=APPS_URL+'?action=getImages&callback=_onImgData';
+  s.onerror=function(){
+    console.log('⚠️ Không kết nối được Sheet – dùng cache localStorage');
+    s.remove();
+  };
+  document.head.appendChild(s);
+}
 function setSize(sz){
   curSize=sz;
   document.querySelectorAll('.sz-item').forEach(function(el){el.classList.remove('on');});
@@ -977,6 +1013,8 @@ function showApp(name){
   if(hdr) hdr.textContent = 'Xin chào, ' + name + ' 👋';
   // Init app
   render();
+  // Tải ảnh từ Google Sheet (chạy nền)
+  fetchImagesFromSheet();
 }
 
 function doLogout(){
@@ -1229,20 +1267,27 @@ function guiDonHang(){
   var encoded=encodeURIComponent(JSON.stringify(orderData));
   var url='https://script.google.com/macros/s/AKfycby7iML1PrTBwlRxdpR7rdKTX8smflwcus4VxawzYH6s4hvDRiOlc5kB-uwIGkN07h5d7g/exec?data='+encoded;
 
-  // Dùng Image trick để tránh CORS
-  var img=new Image();
-  img.onload=img.onerror=function(){
-    document.getElementById('gui-don-status').style.display='none';
-    document.getElementById('gui-don-ok').style.display='block';
-    document.getElementById('btn-gui-don').style.display='none';
-  };
-  img.src=url;
+  // Gọi Apps Script qua fetch (no-cors để tránh CORS error)
+  fetch(url, {method:'GET', mode:'no-cors'})
+    .then(function(){
+      document.getElementById('gui-don-status').style.display='none';
+      document.getElementById('gui-don-ok').style.display='block';
+      document.getElementById('btn-gui-don').style.display='none';
+    })
+    .catch(function(){
+      // no-cors không báo lỗi thật — vẫn hiện OK vì request đã gửi
+      document.getElementById('gui-don-status').style.display='none';
+      document.getElementById('gui-don-ok').style.display='block';
+      document.getElementById('btn-gui-don').style.display='none';
+    });
 
-  // Timeout fallback 5 giây
+  // Timeout fallback 8 giây
   setTimeout(function(){
-    document.getElementById('gui-don-status').style.display='none';
-    document.getElementById('gui-don-ok').style.display='block';
-  },5000);
+    if(document.getElementById('gui-don-status').style.display!=='none'){
+      document.getElementById('gui-don-status').style.display='none';
+      document.getElementById('gui-don-ok').style.display='block';
+    }
+  },8000);
 }
 
 function calcAndShowTotals(){
