@@ -1519,30 +1519,110 @@ function xuatPDF(){
 }
 
 function xuatExcel(){
-  if(donItems.length===0){alert('Chưa có sản phẩm!');return;}
-  var ten=document.getElementById('don-ten').value.trim()||'';
-  var cty=document.getElementById('don-cty').value.trim()||'';
-  var sdt=document.getElementById('don-sdt').value.trim()||'';
-  var ngay=new Date().toLocaleDateString('vi-VN');
-  var bom='\uFEFF';
-  var rows=[
-    ['BÁO GIÁ ĐỒNG TÂM – KHU VỰC 23','','','','','','','','',''],
-    ['Ngày:',ngay,'','Khách hàng:',ten+(cty?' – '+cty:''),'','SĐT:',sdt,'',''],
-    [''],
-    ['#','Mã sản phẩm','Kích cỡ','Số lượng (m²)','Giá lẻ (đ/m²)','Thành tiền lẻ','Giá ĐL nhận kho','Thành tiền ĐL','Lợi nhuận/m²','Tổng LN'],
-  ];
-  var tLe=0,tDl=0;
+  if(donItems.length===0){alert('Chua co san pham!');return;}
+  var ten   = document.getElementById('don-ten').value.trim()||'';
+  var cty   = document.getElementById('don-cty').value.trim()||'';
+  var sdt   = document.getElementById('don-sdt').value.trim()||'';
+  var dc    = document.getElementById('don-dc').value.trim()||'';
+  var note  = document.getElementById('don-note').value.trim()||'';
+  var ngay  = new Date().toLocaleString('vi-VN');
+  var gh    = curGiaoHang==='nhan'?'Nhan tai kho':'Giao tan noi';
+  var sess  = checkSession();
+  var nguoi = sess?sess.name:'Sales Tool';
+
+  // Helper: escape CSV cell
+  function ec(v){
+    var s=String(v===null||v===undefined?'':v);
+    if(s.indexOf(',')>=0||s.indexOf('"')>=0){
+      s='"'+s.split('"').join('""')+'"';
+    }
+    return s;
+  }
+  function row(arr){ return arr.map(ec).join(','); }
+  function emptyRow(n){ return new Array(n+1).join(','); }
+
+  var N=20; // số cột
+  var lines=[];
+
+  // Tiêu đề file
+  lines.push(row(['BAO GIA – DONG TAM KHU VUC 23',
+    '','','','','','','','','','','','','','','','','','','']));
+  lines.push(row(['Ngay:',ngay,'','Nguoi lap:',nguoi,
+    '','','','','','','','','','','','','','','']));
+  lines.push(row(['Khach hang:',ten+(cty?' – '+cty:''),'','SDT:',sdt,
+    '','','','','','','','','','','','','','','']));
+  lines.push(row(['Dia chi:',dc,'','Hinh thuc:',gh,
+    '','','','','','','','','','','','','','','']));
+  if(note) lines.push(row(['Ghi chu:',note,'','','',
+    '','','','','','','','','','','','','','','']));
+  lines.push(emptyRow(N));
+
+  // Header 20 cột
+  lines.push(row([
+    'STT','Ngay dat','Nguoi lap','Ten khach','SDT','Dia chi',
+    'Ten san pham','Ma SP','Kich co','Don vi','So luong',
+    'Gia le (d/dvt)','Thanh tien le (d)',
+    'Gia DL nhan kho (d/dvt)','Thanh tien nhan kho (d)',
+    'Gia DL di giao (d/dvt)','Thanh tien giao (d)',
+    'Ghi chu','Hinh thuc giao','Trang thai'
+  ]));
+
+  var tLe=0,tNhan=0,tGiao=0;
   donItems.forEach(function(item,i){
-    var le=item.le||0,dl=item.ns>0?item.ns:(item.nhan||0),m=le-dl;
-    tLe+=le*item.qty; tDl+=dl*item.qty;
-    rows.push([i+1,item.ma,item.kc,item.qty,le||'Liên hệ',le*item.qty||'–',dl||'–',dl*item.qty||'–',m||'–',m*item.qty||'–']);
+    var le   = item.le||0;
+    var nhan = item.ns>0?item.ns:(item.nhan||0);
+    var giao = item.gs>0?item.gs:(item.giao||0);
+    var thLe  = le*item.qty;
+    var thNhan= nhan*item.qty;
+    var thGiao= giao*item.qty;
+    tLe+=thLe; tNhan+=thNhan; tGiao+=thGiao;
+
+    lines.push(row([
+      i+1,
+      i===0?ngay:'',
+      i===0?nguoi:'',
+      i===0?ten:'',
+      i===0?sdt:'',
+      i===0?dc:'',
+      item.ten||item.ma,
+      item.ma,
+      item.kc||'–',
+      item.unit||'m2',
+      item.qty,
+      le>0?le:'Lien he',
+      thLe>0?thLe:'–',
+      nhan>0?nhan:'–',
+      thNhan>0?thNhan:'–',
+      giao>0?giao:'–',
+      thGiao>0?thGiao:'–',
+      i===0?note:'',
+      i===0?gh:'',
+      i===0?'Moi':''
+    ]));
   });
-  rows.push(['']);
-  rows.push(['','','','TỔNG','',tLe,'',tDl,'',tLe-tDl]);
-  rows.push(['','','','','','','','','Margin:',(tLe>0&&tDl>0)?((tLe-tDl)/tLe*100).toFixed(1)+'%':'–']);
-  var csv=rows.map(function(r){return r.map(function(c){var s=String(c);if(s.indexOf(',')>=0||s.indexOf('"')>=0)s='"'+s.replace(/"/g,'""')+'"';return s;}).join(',');}).join('\r\n');
+
+  // Dòng tổng
+  lines.push(emptyRow(N));
+  var lnNhan=tLe-tNhan, lnGiao=tLe-tGiao;
+  var pN=tLe>0?(lnNhan/tLe*100).toFixed(1)+'%':'–';
+  var pG=tLe>0?(lnGiao/tLe*100).toFixed(1)+'%':'–';
+  lines.push(row(['','','','','','','','','','','TONG CONG',
+    '',tLe,'',tNhan,'',tGiao,'','','']));
+  lines.push(row(['','','','','','','','','','','',
+    'LN nhan kho:',lnNhan,pN,
+    'LN di giao:',lnGiao,pG,'','','']));
+
+  var bom='\uFEFF';
+  var csv=lines.join('\r\n');
+  var fileName='DonHang_DongTam_'
+    +(ten?ten.replace(/ /g,'_')+'_':'')
+    +new Date().toLocaleDateString('vi-VN').replace(/\//g,'-')
+    +'.csv';
   var blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='DonHang_DT_'+ngay.replace(/\//g,'-')+'.csv';a.click();
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=fileName;
+  a.click();
 }
 
 function xuatZalo(){
