@@ -438,6 +438,108 @@ var donItems=[];
 var curGiaoHang='nhan';
 var imgStore=(function(){ try{ return JSON.parse(localStorage.getItem('dt_imgs')||'{}'); }catch(e){ return {}; } })();
 
+// Fetch bảng giá từ Google Sheet (JSONP)
+// Gọi khi app mở — cập nhật DATA từ Sheet, không cần sửa code
+function fetchGiaFromSheet(){
+  var APPS_URL='https://script.google.com/macros/s/AKfycby7iML1PrTBwlRxdpR7rdKTX8smflwcus4VxawzYH6s4hvDRiOlc5kB-uwIGkN07h5d7g/exec';
+  var loais = ['gach','ngoi','keo','kinh'];
+  var loaded = 0;
+
+  loais.forEach(function(loai){
+    window['_onGia_'+loai] = function(res){
+      try{
+        if(!res||!res.data||!res.data.length) return;
+        var rows = res.data;
+        
+        if(loai==='gach'){
+          // Cập nhật giá vào DATA array
+          rows.forEach(function(row){
+            var ma = String(row.ma||'').trim();
+            if(!ma) return;
+            // Tìm trong D1,D2,D3
+            var p = DATA.find(function(x){return x.ma===ma;});
+            if(p){
+              if(row.le>0)   p.le   = parseInt(row.le);
+              if(row.nhan>0) p.nhan = parseInt(row.nhan);
+              if(row.giao>0) p.giao = parseInt(row.giao);
+              if(row.ns>0)   p.ns   = parseInt(row.ns);
+              if(row.gs>0)   p.gs   = parseInt(row.gs);
+            }
+          });
+          console.log('✅ Cập nhật giá gạch từ Sheet: '+rows.length+' mã');
+        }
+        else if(loai==='ngoi'){
+          rows.forEach(function(row){
+            var ma = String(row.ma||'').trim();
+            var p = NGOI.find(function(x){return x.ma===ma;});
+            if(p){
+              if(row.le>0)    p.le    = parseInt(row.le);
+              if(row.nhan>0)  p.nhan  = parseInt(row.nhan);
+              if(row.nhan2>0) p.nhan2 = parseInt(row.nhan2);
+              if(row.giao>0)  p.giao  = parseInt(row.giao);
+              if(row.giao2>0) p.giao2 = parseInt(row.giao2);
+              if(row.ns>0)    p.ns    = parseInt(row.ns);
+              if(row.gs>0)    p.gs    = parseInt(row.gs);
+            }
+          });
+          console.log('✅ Cập nhật giá ngói từ Sheet: '+rows.length+' mã');
+        }
+        else if(loai==='keo'){
+          rows.forEach(function(row){
+            var ma = String(row.ma||'').trim();
+            var p = KEO.find(function(x){return x.ma===ma;});
+            if(p){
+              if(row.le>0)    p.le    = parseInt(row.le);
+              if(row.nhan>0)  p.nhan  = parseInt(row.nhan);
+              if(row.nhan2>0) p.nhan2 = parseInt(row.nhan2);
+              if(row.giao>0)  p.giao  = parseInt(row.giao);
+              if(row.giao2>0) p.giao2 = parseInt(row.giao2);
+            }
+          });
+          console.log('✅ Cập nhật giá keo từ Sheet: '+rows.length+' mã');
+        }
+        else if(loai==='kinh'){
+          rows.forEach(function(row){
+            var ma = String(row.ma||'').trim();
+            var p = KINH.find(function(x){return x.ma===ma;});
+            if(p){
+              if(row.le>0)    p.le    = parseInt(row.le);
+              if(row.nhan>0)  p.nhan  = parseInt(row.nhan);
+              if(row.nhan2>0) p.nhan2 = parseInt(row.nhan2);
+              if(row.nhan3>0) p.nhan3 = parseInt(row.nhan3);
+              if(row.giao>0)  p.giao  = parseInt(row.giao);
+              if(row.giao2>0) p.giao2 = parseInt(row.giao2);
+              if(row.giao3>0) p.giao3 = parseInt(row.giao3);
+            }
+          });
+          console.log('✅ Cập nhật giá kính từ Sheet: '+rows.length+' mã');
+        }
+        
+        loaded++;
+        if(loaded===loais.length){
+          // Render lại sau khi cập nhật xong
+          render();
+          console.log('🎉 Đã đồng bộ giá từ Sheet xong!');
+        }
+      }catch(e){ console.log('Lỗi parse giá '+loai+':', e.message); }
+      var s=document.getElementById('_gia_script_'+loai);
+      if(s) s.remove();
+    };
+    
+    var old=document.getElementById('_gia_script_'+loai);
+    if(old) old.remove();
+    var s=document.createElement('script');
+    s.id='_gia_script_'+loai;
+    s.src=APPS_URL+'?action=getGia&loai='+loai+'&callback=_onGia_'+loai;
+    s.onerror=function(){
+      console.log('⚠️ Không tải được giá '+loai+' từ Sheet — dùng giá trong app');
+      s.remove();
+    };
+    document.head.appendChild(s);
+  });
+}
+
+
 // Fetch ảnh từ Google Sheet khi đăng nhập (dùng script tag để tránh CORS)
 function fetchImagesFromSheet(){
   var APPS_URL='https://script.google.com/macros/s/AKfycby7iML1PrTBwlRxdpR7rdKTX8smflwcus4VxawzYH6s4hvDRiOlc5kB-uwIGkN07h5d7g/exec';
@@ -1108,6 +1210,8 @@ function showApp(name){
   render();
   // Tải ảnh từ Google Sheet (chạy nền)
   fetchImagesFromSheet();
+  // Tải giá từ Google Sheet (chạy nền, ưu tiên hơn giá trong code)
+  fetchGiaFromSheet();
 }
 
 function doLogout(){
