@@ -1349,11 +1349,10 @@ function xuatPDF(){
   var dc   = document.getElementById('don-dc').value.trim();
   var note = document.getElementById('don-note').value.trim();
   var ngay = new Date().toLocaleDateString('vi-VN');
-  var totalLe = donItems.reduce(function(s,x){return s+Math.round((x.le||0)*1.10/100)*100*x.qty;},0);
+  var totalLe = donItems.reduce(function(s,x){return s+(x.le||0)*x.qty;},0);
 
-  var VAT = 1.10; // Giá đã bao gồm VAT 10%
   var rows = donItems.map(function(item,i){
-    var leVAT = item.le>0 ? Math.round(item.le*VAT/100)*100 : 0;
+    var leVAT = item.le||0;
     var don   = leVAT * item.qty;
     var loaiLabel = item.loai==='ngoi'?'Ngói':item.loai==='keo'?'Keo':'Gạch';
     return '<tr>'
@@ -1485,7 +1484,7 @@ function xuatPDF(){
     +'<div class="total-wrap">'
     +'<div class="total-row">'
     +'<div><div class="total-label">TỔNG GIÁ TRỊ BÁO GIÁ</div>'
-    +'<div class="total-note">Giá đã bao gồm VAT 10%</div></div>'
+    +'</div>'
     +'<div class="total-val">'+(totalLe>0?totalLe.toLocaleString('vi-VN')+' đ':'Liên hệ báo giá')+'</div>'
     +'</div>'
     +'</div>'
