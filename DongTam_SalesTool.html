@@ -988,26 +988,53 @@ function loadImg(ma){
 }
 
 function shareZalo(){
-  var p = DATA.find(function(x){return x.ma===curP_ma;});
+  // Tìm sản phẩm — có thể là gạch, ngói, keo, kính
+  var p = DATA.find(function(x){return x.ma===curP_ma;})
+       || NGOI.find(function(x){return x.ma===curP_ma;})
+       || KEO.find(function(x){return x.ma===curP_ma;})
+       || KINH.find(function(x){return x.ma===curP_ma;});
   if(!p) return;
-  var le = p.le>0 ? 'Giá lẻ: '+p.le.toLocaleString('vi-VN')+'đ/m²' : '';
-  var price = '';
-  if(p.ns>0){
-    price = '🔥 Giá nhận tại kho đang Sale: '+p.ns.toLocaleString('vi-VN')+'đ/m²'
-          + (p.gs>0 ? '\nGiao tận nơi đang Sale: '+p.gs.toLocaleString('vi-VN')+'đ/m²' : '');
-  } else if(p.nhan>0){
-    price = 'Giá nhận tại kho: '+p.nhan.toLocaleString('vi-VN')+'đ/m²'
-          + (p.giao>0 ? '\nGiao tận nơi: '+p.giao.toLocaleString('vi-VN')+'đ/m²' : '');
+
+  var unit   = p.unit||'m²';
+  var le     = p.le   ||0;
+  var nhan   = p.nhan ||0;
+  var giao   = p.giao ||0;
+  var ns     = p.ns   ||0;
+  var loai   = p.loai || (p.cat==='ngoi'?'ngoi': p.cat==='kinh'?'kinh': p.ma.startsWith('BCR')||p.ma.startsWith('KEO')?'keo':'gach');
+  var isGach = loai!=='ngoi'&&loai!=='keo'&&loai!=='kinh';
+  var isNgoi = loai==='ngoi';
+  var header = isNgoi?'🏠 NGÓI ĐỒNG TÂM':loai==='keo'?'🧱 KEO ĐỒNG TÂM':loai==='kinh'?'💎 GẠCH KÍNH ĐỒNG TÂM':'🏪 GẠCH ĐỒNG TÂM';
+
+  var lines = [];
+  lines.push(header);
+  lines.push('━━━━━━━━━━━━━━');
+  lines.push('📦 Mã: '+p.ma);
+  if(p.kc&&p.kc!=='–') lines.push('📐 Kích cỡ: '+p.kc);
+
+  // Giá lẻ
+  if(le>0) lines.push('Giá lẻ: '+le.toLocaleString('vi-VN')+'đ/'+unit);
+
+  // Giá nhận kho
+  if(nhan>0){
+    if(isGach){
+      var ck = ns>0 ? ns : Math.round(nhan*0.95);
+      lines.push('Giá nhận tại kho: '+nhan.toLocaleString('vi-VN')+'đ/'+unit
+        +' Chương trình tháng 06 và tháng 7 còn '+ck.toLocaleString('vi-VN')+'đ/'+unit+' 🔥');
+    } else if(isNgoi){
+      var ckN = ns>0 ? ns : Math.round(nhan*0.90);
+      lines.push('Giá nhận tại kho: '+nhan.toLocaleString('vi-VN')+'đ/'+unit
+        +' Chương trình tháng 06 và tháng 7 còn '+ckN.toLocaleString('vi-VN')+'đ/'+unit+' 🔥');
+    } else {
+      lines.push('Giá nhận tại kho: '+nhan.toLocaleString('vi-VN')+'đ/'+unit);
+    }
   }
-  var msg = '🏪 GẠCH ĐỒNG TÂM\n'
-    + '━━━━━━━━━━━━━━\n'
-    + '📦 Mã: '+p.ma+'\n'
-    + '📐 Kích cỡ: '+p.kc+'\n'
-    + (le?le+'\n':'')
-    + (price?price+'\n':'')
-    + '━━━━━━━━━━━━━━\n'
-    + '📞 Liên hệ báo giá chi tiết';
-  showZaloChat(msg);
+
+  // Giá giao hàng
+  if(giao>0) lines.push('Giao tận nơi: '+giao.toLocaleString('vi-VN')+'đ/'+unit);
+
+  lines.push('━━━━━━━━━━━━━━');
+
+  showZaloChat(lines.join('\n'));
 }
 
 function copyText(text){
@@ -1035,17 +1062,65 @@ function copyText(text){
 }
 
 function showZaloChat(msg){
-  // Bước 1: Copy nội dung vào clipboard
+  // Copy vào clipboard
   copyText(msg).then(function(){
-    showToast('✅ Đã copy! Đang mở Zalo chat...');
+    showToast('✅ Đã copy nội dung!');
   }).catch(function(){
-    showToast('⚠️ Vui lòng copy thủ công rồi paste vào Zalo');
+    // fallback: hiện text để copy thủ công
   });
 
-  // Bước 2: Mở Zalo chat trực tiếp (zalo.me/sdt = link chat, không vào trang cá nhân)
-  setTimeout(function(){
-    window.open('https://chat.zalo.me/','_blank');
-  }, 400);
+  // Hiện popup nội dung - không tự mở Zalo
+  // Khách tự chuyển về app Zalo và paste
+  var overlay = document.createElement('div');
+  overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:flex-end';
+
+  var box = document.createElement('div');
+  box.style.cssText='background:var(--bg1);border-radius:16px 16px 0 0;padding:16px;width:100%;max-height:75vh;overflow-y:auto;box-sizing:border-box';
+
+  // Header
+  var hdr = document.createElement('div');
+  hdr.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:12px';
+  hdr.innerHTML='<span style="font-weight:700;font-size:14px">💬 Nội dung gửi Zalo</span>'
+    +'<span style="font-size:11px;color:var(--t2)">Đã copy vào clipboard ✅</span>';
+  box.appendChild(hdr);
+
+  // Hướng dẫn
+  var guide = document.createElement('div');
+  guide.style.cssText='background:#E3F2FD;border-radius:8px;padding:10px 12px;font-size:12px;color:#0D47A1;margin-bottom:10px;line-height:1.6';
+  guide.innerHTML='📌 <strong>Đã copy xong!</strong> Mở Zalo → chọn khách → paste (nhấn giữ → Dán)';
+  box.appendChild(guide);
+
+  // Nội dung
+  var pre = document.createElement('pre');
+  pre.style.cssText='background:var(--bg2);border-radius:8px;padding:12px;font-size:12px;white-space:pre-wrap;word-break:break-word;font-family:var(--f);color:var(--t1);margin:0 0 12px;line-height:1.6';
+  pre.textContent = msg;
+  box.appendChild(pre);
+
+  // Nút copy lại
+  var row = document.createElement('div');
+  row.style.cssText='display:flex;gap:8px';
+
+  var btnCopy = document.createElement('button');
+  btnCopy.style.cssText='flex:1;padding:13px;border-radius:10px;border:2px solid var(--red);background:var(--bg1);color:var(--red);font-weight:700;font-size:13px;cursor:pointer;font-family:var(--f)';
+  btnCopy.textContent='📋 Copy lại';
+  btnCopy.onclick=function(){
+    copyText(msg).then(function(){
+      btnCopy.textContent='✅ Đã copy!';
+      setTimeout(function(){ btnCopy.textContent='📋 Copy lại'; },2000);
+    });
+  };
+  row.appendChild(btnCopy);
+
+  var btnClose = document.createElement('button');
+  btnClose.style.cssText='flex:1;padding:13px;border-radius:10px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--f)';
+  btnClose.textContent='✓ Đóng';
+  btnClose.onclick=function(){ document.body.removeChild(overlay); };
+  row.appendChild(btnClose);
+
+  box.appendChild(row);
+  overlay.appendChild(box);
+  overlay.onclick=function(e){ if(e.target===overlay) document.body.removeChild(overlay); };
+  document.body.appendChild(overlay);
 }
 
 function showShareModal(msg){
@@ -2033,34 +2108,60 @@ function xuatExcel(){
 
 function xuatZalo(){
   if(donItems.length===0){alert('Chưa có sản phẩm!');return;}
-  var ten    = document.getElementById('don-ten').value.trim()||'Quý khách';
-  var sdt    = document.getElementById('don-sdt').value.trim();
-  var ngay   = new Date().toLocaleDateString('vi-VN');
-  var totalLe= donItems.reduce(function(s,x){return s+(x.le||0)*x.qty;},0);
 
-  var lines = [
-    '🏪 BÁO GIÁ – ĐỒNG TÂM KV23',
-    '━━━━━━━━━━━━━━━━━━',
-    '👤 Kính gửi: '+ten,
-    (sdt?'📞 SĐT: '+sdt:''),
-    '📅 Ngày: '+ngay,
-    ''
-  ].filter(Boolean);
+  var blocks = [];
 
-  donItems.forEach(function(item,i){
-    var loaiIcon = item.loai==='ngoi'?'🏠':item.loai==='keo'?'🧱':'🔲';
-    var thanhTien = (item.le||0)*item.qty;
-    lines.push(loaiIcon+' '+item.ma+(item.kc&&item.kc!=='–'?' ('+item.kc+')':''));
-    lines.push('   '+item.qty+' '+(item.unit||'m²')+' × '+(item.le>0?item.le.toLocaleString('vi-VN')+'đ':'Liên hệ')+(thanhTien>0?' = '+thanhTien.toLocaleString('vi-VN')+'đ':''));
+  donItems.forEach(function(item){
+    var unit  = item.unit||'m²';
+    var le    = item.le   ||0;
+    var nhan  = item.nhan ||0;
+    var giao  = item.giao ||0;
+    var ns    = item.ns   ||0;  // giá sale nhận kho CT150
+    var gs    = item.gs   ||0;  // giá sale giao CT150
+
+    // Tiêu đề theo loại
+    var header = item.loai==='ngoi'  ? '🏠 NGÓI ĐỒNG TÂM'
+                :item.loai==='keo'   ? '🧱 KEO ĐỒNG TÂM'
+                :item.loai==='kinh'  ? '💎 GẠCH KÍNH ĐỒNG TÂM'
+                :                     '🏪 GẠCH ĐỒNG TÂM';
+
+    var lines = [];
+    lines.push(header);
+    lines.push('━━━━━━━━━━━━━━');
+    lines.push('📦 Mã: '+item.ma);
+    if(item.kc && item.kc!=='–') lines.push('📐 Kích cỡ: '+item.kc);
+
+    // Giá lẻ
+    if(le>0) lines.push('Giá lẻ: '+le.toLocaleString('vi-VN')+'đ/'+unit);
+
+    // Giá nhận kho
+    if(nhan>0){
+      var isGach = item.loai!=='ngoi'&&item.loai!=='keo'&&item.loai!=='kinh';
+      var ckNhan = Math.round(nhan*0.95); // CT150: giảm 5% gạch
+      var ckNgoi = Math.round(nhan*0.90); // CT150: giảm 10% ngói
+      if(isGach){
+        lines.push('Giá nhận tại kho: '+nhan.toLocaleString('vi-VN')+'đ/'+unit
+          +' Chương trình tháng 06 và tháng 7 còn '+(ns>0?ns:ckNhan).toLocaleString('vi-VN')+'đ/'+unit+' 🔥');
+      } else if(item.loai==='ngoi'){
+        lines.push('Giá nhận tại kho: '+nhan.toLocaleString('vi-VN')+'đ/'+unit
+          +' Chương trình tháng 06 và tháng 7 còn '+(ns>0?ns:ckNgoi).toLocaleString('vi-VN')+'đ/'+unit+' 🔥');
+      } else {
+        lines.push('Giá nhận tại kho: '+nhan.toLocaleString('vi-VN')+'đ/'+unit);
+      }
+    }
+
+    // Giá giao hàng
+    if(giao>0){
+      lines.push('Giao tận nơi: '+giao.toLocaleString('vi-VN')+'đ/'+unit);
+    }
+
+    lines.push('━━━━━━━━━━━━━━');
+    lines.push('📞 Liên hệ báo giá chi tiết');
+
+    blocks.push(lines.join('\n'));
   });
 
-  lines.push('');
-  lines.push('━━━━━━━━━━━━━━━━━━');
-  lines.push('💰 Tổng: '+(totalLe>0?totalLe.toLocaleString('vi-VN')+'đ':'Liên hệ báo giá'));
-  lines.push('');
-  lines.push('✅ Báo giá từ Lê Chí Linh – 0819 548 908');
-
-  var msg = lines.join('\n');
+  var msg = blocks.join('\n\n');
   showZaloChat(msg);
 }
 
