@@ -127,8 +127,8 @@ input[type=number]{-moz-appearance:textfield}
   <button class="tb on" onclick="swTab('tra')">Tra mã</button>
   <button class="tb"    onclick="swTab('sale')">🔥 Sale</button>
   <button class="tb"    onclick="swTab('ngoi')">🏠 Ngói</button>
-  <button class="tb"    onclick="swTab('kinh')">💎 Kính</button>
   <button class="tb"    onclick="swTab('keo')">🧱 Keo</button>
+  <button class="tb"    onclick="swTab('kinh')">💎 Kính</button>
   <button class="tb"    onclick="swTab('don')" id="tab-don-btn">🛒 <span id="don-badge" style="display:none;background:#C0232A;color:#fff;border-radius:10px;padding:1px 5px;font-size:10px"></span>Đơn</button>
 </div>
 
@@ -283,13 +283,6 @@ input[type=number]{-moz-appearance:textfield}
 </div>
 
 <!-- TAB 4: Keo -->
-<div id="tab-kinh" class="tc">
-  <div style="background:#E3F2FD;border-radius:var(--r12);padding:12px 14px;margin-bottom:10px;font-size:12px;color:#0D47A1">
-    💎 <strong>Gạch kính</strong> · Kích cỡ 19×19×9.5cm · Đóng gói 6 viên/thùng · <strong>Chỉ bán theo thùng</strong>
-  </div>
-  <div id="kinh-list"></div>
-</div>
-
 <div id="tab-keo" class="tc">
   <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Keo dán gạch GECKO Đồng Tâm · Giá <b>đồng/bao</b></p>
   <div id="keo-detail" style="display:none;background:var(--bg1);border:2px solid #7B1FA2;border-radius:var(--r12);padding:14px;margin-bottom:12px">
@@ -315,6 +308,13 @@ input[type=number]{-moz-appearance:textfield}
     </div>
   </div>
   <div id="keo-list"></div>
+</div>
+
+<div id="tab-kinh" class="tc">
+  <div style="background:#E3F2FD;border-radius:var(--r12);padding:12px 14px;margin-bottom:10px;font-size:12px;color:#0D47A1">
+    💎 <strong>Gạch kính</strong> · Kích cỡ 19×19×9.5cm · Đóng gói 6 viên/thùng · <strong>Chỉ bán theo thùng</strong>
+  </div>
+  <div id="kinh-list"></div>
 </div>
 
 <!-- TAB 5: Pitch -->
@@ -891,6 +891,8 @@ function addToDonKinh(ma){
     });
   }
   updateDonBadge();
+  updateDonBadge();
+  calcAndShowTotals();
   showToast('✓ Đã thêm gạch kính vào đơn!');
 }
 
@@ -1496,7 +1498,7 @@ function renderDon(){
       +'</div>'
       +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">'
       +'<button data-qty="'+item.ma+'" data-d="-1" class="qty-btn" style="flex-shrink:0">−</button>'
-      +'<input type="number" data-inp="'+item.ma+'" value="'+item.qty+'" min="0.01" step="0.01" '
+      +'<input type="number" data-inp="'+item.ma+'" value="'+item.qty+'" min="'+(item.loai==="kinh"?"1":"0.01")+'" step="'+(item.loai==="kinh"?"1":"0.01")+'" '
         +'style="width:72px;text-align:center;font-size:14px;font-weight:700;padding:4px 6px;'
         +'border:1.5px solid var(--bd2);border-radius:6px;background:var(--bg1);'
         +'font-family:var(--f);-moz-appearance:textfield;" />'
@@ -1583,14 +1585,23 @@ function setDonQty(ma,val){
   if(!item) return;
   val=Math.round((parseFloat(val)||0.01)*100)/100;
   if(val<0.01) val=0.01;
-  // Nếu kích cỡ chỉ bán thùng → làm tròn lên thùng nguyên
-  var t=tinhThung({ma:item.ma,kc:item.kc,loai:item.loai,qty:val});
-  if(t && t.chiBanThung){
-    val=t.m2ThucTe; // làm tròn lên thùng
-    // Cập nhật ô input cho user thấy
-    var inp=document.querySelector('input[data-inp="'+ma+'"]');
-    if(inp) inp.value=val;
+
+  // Gạch kính: chỉ bán nguyên thùng → làm tròn lên số nguyên
+  if(item.loai==='kinh'){
+    val=Math.max(1, Math.round(val));
   }
+  // Gạch thường: nếu kích cỡ chỉ bán thùng → làm tròn lên thùng nguyên
+  else if(item.loai!=='keo'&&item.loai!=='ngoi'){
+    var t=tinhThung({ma:item.ma,kc:item.kc,loai:item.loai,qty:val});
+    if(t && t.chiBanThung && t.m2ThucTe){
+      val=t.m2ThucTe;
+    }
+  }
+
+  // Cập nhật ô input
+  var inp=document.querySelector('input[data-inp="'+ma+'"]');
+  if(inp) inp.value=val;
+
   item.qty=val;
   updateDonBadge();
   calcAndShowTotals();
