@@ -661,13 +661,22 @@ function fetchGiaFromSheet(){
             // Tìm trong D1,D2,D3
             var p = DATA.find(function(x){return x.ma===ma;});
             if(p){
-              p.le=parseFloat(String(row.le||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.nhan=parseFloat(String(row.nhan||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.giao=parseFloat(String(row.giao||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              var _nsCT1=parseFloat(String(row.ns||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              // CT150: giảm thêm 5% trên giá Sale CT1 (nếu có) hoặc giá nhận kho thường
-              p.ns=_nsCT1>0?Math.round(_nsCT1*0.95):Math.round((p.nhan||0)*0.95);
-              p.gs=parseFloat(String(row.gs||"0").replace(/\./g,"").replace(/,/g,"."))||0;
+              function pg(v){return parseFloat(String(v||'0').replace(/\./g,'').replace(/,/g,'.'))||0;}
+              p.le   = pg(row.le);
+              p.nhan = pg(row.nhan);
+              p.giao = pg(row.giao);
+              // ns từ Sheet = giá CT150 đã tính sẵn (cột M)
+              // Nếu Sheet chưa có cột CT150 (ns=0) → tự tính
+              var nsSheet = pg(row.ns);
+              var nsCT1   = pg(row.ns_ct1);
+              if(nsSheet > 0){
+                p.ns = nsSheet; // Sheet đã tính CT150 sẵn
+              } else if(nsCT1 > 0){
+                p.ns = Math.round(nsCT1 * 0.95); // Có Sale CT1 → -5%
+              } else {
+                p.ns = Math.round(p.nhan * 0.95); // Không sale → -5% nhan
+              }
+              p.gs = pg(row.gs) || p.giao;
             }
           });
           console.log('✅ Cập nhật giá gạch từ Sheet: '+rows.length+' mã');
@@ -677,15 +686,15 @@ function fetchGiaFromSheet(){
             var ma = String(row.ma||'').trim();
             var p = NGOI.find(function(x){return x.ma===ma;});
             if(p){
-              p.le=parseFloat(String(row.le||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.nhan=parseFloat(String(row.nhan||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.nhan2=parseFloat(String(row.nhan2||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.giao=parseFloat(String(row.giao||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.giao2=parseFloat(String(row.giao2||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              var _nsCT1=parseFloat(String(row.ns||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              // CT150: giảm thêm 5% trên giá Sale CT1 (nếu có) hoặc giá nhận kho thường
-              p.ns=_nsCT1>0?Math.round(_nsCT1*0.95):Math.round((p.nhan||0)*0.95);
-              p.gs=parseFloat(String(row.gs||"0").replace(/\./g,"").replace(/,/g,"."))||0;
+              function pg2(v){return parseFloat(String(v||'0').replace(/\./g,'').replace(/,/g,'.'))||0;}
+              p.le    = pg2(row.le);
+              p.nhan  = pg2(row.nhan);
+              p.nhan2 = pg2(row.nhan2);
+              p.giao  = pg2(row.giao);
+              p.giao2 = pg2(row.giao2);
+              var nsNgoi = pg2(row.ns);
+              p.ns = nsNgoi > 0 ? nsNgoi : Math.round(p.nhan * 0.90);
+              p.gs = pg2(row.gs) || p.giao;
             }
           });
           console.log('✅ Cập nhật giá ngói từ Sheet: '+rows.length+' mã');
@@ -724,8 +733,7 @@ function fetchGiaFromSheet(){
         loaded++;
         if(loaded===loais.length){
           // Render lại sau khi cập nhật xong
-          render();
-          // Cập nhật badge thông báo
+          // Cập nhật badge
           var badge = document.getElementById('gia-source-badge');
           if(badge){
             badge.textContent = '✅ Giá Sheet';
