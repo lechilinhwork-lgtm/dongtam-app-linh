@@ -1729,7 +1729,7 @@ function tinhSoVien(item){
   var vienPerM2=1/(w*h);
   var qty=parseFloat(item.qty)||0;
   var soVien=Math.round(qty*vienPerM2);
-  return {soVien:soVien, vienPerM2:Math.round(vienPerM2*10)/10};
+  return {soVien:soVien, vienPerM2:Math.ceil(vienPerM2*10)/10};
 }
 
 function laTronQtyTheoQuyDinh(item){
