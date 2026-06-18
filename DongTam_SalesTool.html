@@ -1491,35 +1491,62 @@ function showShareModal(msg){
 // ===== LOGIN SYSTEM =====
 // Tài khoản: thêm/sửa tại đây
 // pass được encode base64 để không lộ plaintext
-var USERS = [
-  {u:'linh',    p:btoa('Linh@2024'),   name:'Lê Chí Linh'},
-  {u:'nhanvien1', p:btoa('NV1@2024'), name:'Nhân viên 1'},
-  {u:'nhanvien2', p:btoa('NV2@2024'), name:'Nhân viên 2'},
-];
+var USERS = function doLogin(){
+  var u = document.getElementById('inp-user').value.trim().toLowerCase();
+  var p = document.getElementById('inp-pass').value;
+  var errEl = document.getElementById('login-err');
+  errEl.textContent = '';
 
-var SESSION_KEY = 'dt_sales_auth';
-var SESSION_HOURS = 8; // Tự đăng xuất sau 8 tiếng
+  if(!u || !p){
+    errEl.textContent = 'Vui lòng nhập đầy đủ thông tin!';
+    return;
+  }
 
-function checkSession(){
-  try{
-    var s = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
-    if(!s) return false;
-    var obj = JSON.parse(s);
-    if(Date.now() > obj.exp) {
-      localStorage.removeItem(SESSION_KEY);
-      sessionStorage.removeItem(SESSION_KEY);
-      return false;
+  var APPS_URL = 'DÁN_LINK_APPS_SCRIPT_EXEC_Ở_ĐÂY';
+  var cb = '_loginCb_' + Date.now();
+
+  window[cb] = function(res){
+    try {
+      if(res && res.status === 'ok'){
+        var obj = {
+          user: res.username,
+          name: res.name,
+          role: res.role,
+          token: res.token,
+          exp: res.exp
+        };
+
+        localStorage.setItem(SESSION_KEY, JSON.stringify(obj));
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(obj));
+        showApp(res.name);
+      } else {
+        errEl.textContent = 'Sai tài khoản hoặc mật khẩu!';
+        document.getElementById('inp-pass').value = '';
+        document.getElementById('inp-pass').focus();
+      }
+    } finally {
+      delete window[cb];
+      var old = document.getElementById(cb);
+      if(old) old.remove();
     }
-    return obj;
-  } catch(e){ return false; }
-}
-
-function saveSession(user){
-  var obj = {
-    user: user.u,
-    name: user.name,
-    exp: Date.now() + SESSION_HOURS * 3600 * 1000
   };
+
+  var s = document.createElement('script');
+  s.id = cb;
+  s.src = APPS_URL
+    + '?action=login'
+    + '&username=' + encodeURIComponent(u)
+    + '&password=' + encodeURIComponent(p)
+    + '&callback=' + cb;
+
+  s.onerror = function(){
+    errEl.textContent = 'Không kết nối được máy chủ đăng nhập!';
+    delete window[cb];
+    s.remove();
+  };
+
+  document.head.appendChild(s);
+};
   localStorage.setItem(SESSION_KEY, JSON.stringify(obj));
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(obj));
 }
