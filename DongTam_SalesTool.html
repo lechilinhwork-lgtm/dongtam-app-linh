@@ -377,6 +377,7 @@ input::placeholder{color:var(--t3)}
       <div>
         <p id="dp-ma" style="font-size:14px;font-weight:600;margin-bottom:2px"></p>
         <p id="dp-kc" style="font-size:11px;color:var(--t2)"></p>
+        <p id="dp-quycach" style="font-size:11px;color:var(--t2);margin-top:2px;display:none"></p>
       </div>
       <button onclick="document.getElementById('dp').style.display='none'" style="font-size:13px;padding:4px 10px">✕</button>
     </div>
@@ -501,6 +502,11 @@ input::placeholder{color:var(--t3)}
 
 <!-- TAB 4: Keo -->
 <div id="tab-keo" class="tc">
+  <div style="display:flex;gap:6px;margin-bottom:12px">
+    <button id="sub-keo-btn" onclick="swSubKeo('keo')" style="flex:1;padding:9px;border-radius:10px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:12px;cursor:pointer;font-family:var(--f)">🧱 Keo & Bột</button>
+    <button id="sub-kinh-btn" onclick="swSubKeo('kinh')" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--bd);background:var(--bg1);color:var(--t2);font-weight:700;font-size:12px;cursor:pointer;font-family:var(--f)">💎 Gạch kính</button>
+  </div>
+  <div id="sub-keo-content">
   <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Keo dán gạch GECKO Đồng Tâm · Giá <b>đồng/bao</b></p>
   <div id="keo-detail" style="display:none;background:var(--bg1);border:2px solid #7B1FA2;border-radius:var(--r12);padding:14px;margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;margin-bottom:10px">
@@ -525,14 +531,16 @@ input::placeholder{color:var(--t3)}
     </div>
   </div>
   <div id="keo-list"></div>
-</div>
-
-<div id="tab-kinh" class="tc">
+  </div><!-- /sub-keo-content -->
+  <div id="sub-kinh-content" style="display:none">
   <div style="background:#E3F2FD;border-radius:var(--r12);padding:12px 14px;margin-bottom:10px;font-size:12px;color:#0D47A1">
     💎 <strong>Gạch kính</strong> · Kích cỡ 19×19×9.5cm · Đóng gói 6 viên/thùng · <strong>Chỉ bán theo thùng</strong>
   </div>
   <div id="kinh-list"></div>
+  </div><!-- /sub-kinh-content -->
 </div>
+
+
 
 <!-- TAB 5: Pitch -->
 <!-- TAB ĐƠN HÀNG -->
@@ -816,6 +824,16 @@ function setSize(sz){
 
 function fmt(n){ return (!n||n===0)?'–':n.toLocaleString('vi-VN')+'đ'; }
 
+function swSubKeo(sub){
+  document.getElementById('sub-keo-content').style.display = sub==='keo'?'block':'none';
+  document.getElementById('sub-kinh-content').style.display = sub==='kinh'?'block':'none';
+  var bKeo=document.getElementById('sub-keo-btn'), bKinh=document.getElementById('sub-kinh-btn');
+  if(sub==='keo'){ bKeo.style.background='var(--red)'; bKeo.style.color='#fff'; bKeo.style.border='none';
+                    bKinh.style.background='var(--bg1)'; bKinh.style.color='var(--t2)'; bKinh.style.border='1.5px solid var(--bd)'; }
+  else { bKinh.style.background='var(--red)'; bKinh.style.color='#fff'; bKinh.style.border='none';
+         bKeo.style.background='var(--bg1)'; bKeo.style.color='var(--t2)'; bKeo.style.border='1.5px solid var(--bd)'; }
+}
+
 function swTab(t){
   ['tra','sale','ngoi','keo','kinh','don'].forEach(function(x){
     var el=document.getElementById('tab-'+x);
@@ -920,6 +938,17 @@ function showDP(ma){
   curP_ma=ma;
   document.getElementById('dp-ma').textContent=p.ma;
   document.getElementById('dp-kc').textContent='Kích cỡ: '+p.kc+(p.gio?' · '+p.gio+(p.gio==='★'?' Chiến lược':' Chủ lực'):'');
+  // Quy cách: số viên/thùng, kg/thùng
+  var qcEl = document.getElementById('dp-quycach');
+  if(qcEl){
+    var qc = getQuyCach(p.kc, p.cat);
+    if(qc){
+      qcEl.style.display='block';
+      qcEl.textContent = '📦 '+qc.vien+' viên/thùng · '+qc.m2+'m²/thùng'+(qc.kg?' · '+qc.kg+'kg/thùng':'');
+    } else {
+      qcEl.style.display='none';
+    }
+  }
   document.getElementById('dp-le').textContent=fmt(p.le);
   document.getElementById('dp-nhan').textContent=fmt(p.nhan);
   document.getElementById('dp-giao').textContent=fmt(p.giao);
@@ -1491,62 +1520,35 @@ function showShareModal(msg){
 // ===== LOGIN SYSTEM =====
 // Tài khoản: thêm/sửa tại đây
 // pass được encode base64 để không lộ plaintext
-var USERS = function doLogin(){
-  var u = document.getElementById('inp-user').value.trim().toLowerCase();
-  var p = document.getElementById('inp-pass').value;
-  var errEl = document.getElementById('login-err');
-  errEl.textContent = '';
+var USERS = [
+  {u:'linh',    p:btoa('Linh@2024'),   name:'Lê Chí Linh'},
+  {u:'nhanvien1', p:btoa('NV1@2024'), name:'Nhân viên 1'},
+  {u:'nhanvien2', p:btoa('NV2@2024'), name:'Nhân viên 2'},
+];
 
-  if(!u || !p){
-    errEl.textContent = 'Vui lòng nhập đầy đủ thông tin!';
-    return;
-  }
+var SESSION_KEY = 'dt_sales_auth';
+var SESSION_HOURS = 8; // Tự đăng xuất sau 8 tiếng
 
-  var APPS_URL = 'DÁN_LINK_APPS_SCRIPT_EXEC_Ở_ĐÂY';
-  var cb = '_loginCb_' + Date.now();
-
-  window[cb] = function(res){
-    try {
-      if(res && res.status === 'ok'){
-        var obj = {
-          user: res.username,
-          name: res.name,
-          role: res.role,
-          token: res.token,
-          exp: res.exp
-        };
-
-        localStorage.setItem(SESSION_KEY, JSON.stringify(obj));
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify(obj));
-        showApp(res.name);
-      } else {
-        errEl.textContent = 'Sai tài khoản hoặc mật khẩu!';
-        document.getElementById('inp-pass').value = '';
-        document.getElementById('inp-pass').focus();
-      }
-    } finally {
-      delete window[cb];
-      var old = document.getElementById(cb);
-      if(old) old.remove();
+function checkSession(){
+  try{
+    var s = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
+    if(!s) return false;
+    var obj = JSON.parse(s);
+    if(Date.now() > obj.exp) {
+      localStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(SESSION_KEY);
+      return false;
     }
+    return obj;
+  } catch(e){ return false; }
+}
+
+function saveSession(user){
+  var obj = {
+    user: user.u,
+    name: user.name,
+    exp: Date.now() + SESSION_HOURS * 3600 * 1000
   };
-
-  var s = document.createElement('script');
-  s.id = cb;
-  s.src = APPS_URL
-    + '?action=login'
-    + '&username=' + encodeURIComponent(u)
-    + '&password=' + encodeURIComponent(p)
-    + '&callback=' + cb;
-
-  s.onerror = function(){
-    errEl.textContent = 'Không kết nối được máy chủ đăng nhập!';
-    delete window[cb];
-    s.remove();
-  };
-
-  document.head.appendChild(s);
-};
   localStorage.setItem(SESSION_KEY, JSON.stringify(obj));
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(obj));
 }
@@ -1644,52 +1646,47 @@ var KC_THUNG_HOAC_VIEN = {
 };
 
 // Bảng m²/thùng theo kích cỡ gạch Đồng Tâm (đo thực tế)
-var GACH_THUNG = {
-  '100x200':0.50,
-  '100x300':0.495,
-  '150x600':0.90,
-
-  '200x200':1.00,
-  '200x800':1.60,
-  '200x1200':1.44,
-
-  '300x300':0.99,
-  '300x450':1.08,
-  '300x600':1.08,
-
-  '400x400':0.96,
-  '400x800':1.28,
-
-  '600x600':1.44,
-  '600x1200':1.44,
-
-  '800x800':1.92,
-  '1000x1000':2.00
+var QUY_CACH = {
+  // key: "kc|cat" → {vien, m2, day, kg}
+  '100x200|ceramic':   {vien:25, m2:0.50,  day:'8',       kg:7.8},
+  '150x300|ceramic':   {vien:11, m2:0.495, day:'9',       kg:9.3},
+  '150x600|porcelain': {vien:10, m2:0.90,  day:'9.3',     kg:19},
+  '200x200|ceramic':   {vien:25, m2:1.00,  day:'16',      kg:null},
+  '200x200|porcelain': {vien:12, m2:0.48,  day:'12',      kg:13.48},
+  '200x800|porcelain': {vien:10, m2:1.60,  day:'10.5',    kg:37},
+  '200x1200|porcelain':{vien:6,  m2:1.44,  day:'11',      kg:null},
+  '300x300|porcelain': {vien:11, m2:0.99,  day:'8',       kg:18.6},
+  '300x450|ceramic':   {vien:8,  m2:1.08,  day:'-',       kg:null},
+  '300x600|ceramic':   {vien:6,  m2:1.08,  day:'8.7',     kg:18},
+  '300x600|porcelain': {vien:6,  m2:1.08,  day:'9.2-9.5', kg:24},
+  '400x400|porcelain': {vien:6,  m2:0.96,  day:'8.7-9.4', kg:17.4},
+  '400x800|porcelain': {vien:4,  m2:1.28,  day:'10.5',    kg:24.5},
+  '400x800|ceramic':   {vien:4,  m2:1.28,  day:'10.5',    kg:24.5},
+  '600x600|porcelain': {vien:4,  m2:1.44,  day:'9.3-9.5', kg:31.6},
+  '600x1200|porcelain':{vien:2,  m2:1.44,  day:'11',      kg:37.4},
+  '800x800|porcelain': {vien:3,  m2:1.92,  day:'11',      kg:51},
+  '1000x1000|porcelain':{vien:2, m2:2.00,  day:'12.5',    kg:57.1},
 };
-// Bảng viên/thùng theo kích thước
 
-var GACH_VIEN_THUNG = {
-  '100x200':25,
-  '100x300':11,
-  '150x600':10,
+// Lấy quy cách đúng theo kc + cat (ceramic/porcelain), fallback nếu không có cat
+function getQuyCach(kc, cat){
+  if(!kc) return null;
+  cat = (cat||'').toLowerCase();
+  var key = kc+'|'+cat;
+  if(QUY_CACH[key]) return QUY_CACH[key];
+  // Fallback: thử cat khác nếu chỉ có 1 loại cho kích cỡ đó
+  var alt = kc+'|'+(cat==='ceramic'?'porcelain':'ceramic');
+  if(QUY_CACH[alt]) return QUY_CACH[alt];
+  return null;
+}
 
-  '200x200':25,
-  '200x800':10,
-  '200x1200':6,
+// Giữ GACH_THUNG (m²/thùng) để tương thích code cũ - build từ QUY_CACH
+GACH_THUNG = {};
+Object.keys(QUY_CACH).forEach(function(k){
+  var kc = k.split('|')[0];
+  if(!GACH_THUNG[kc]) GACH_THUNG[kc] = QUY_CACH[k].m2;
+});
 
-  '300x300':11,
-  '300x450':8,
-  '300x600':6,
-
-  '400x400':6,
-  '400x800':4,
-
-  '600x600':4,
-  '600x1200':2,
-
-  '800x800':3,
-  '1000x1000':2
-};
 // Kiểm tra kích cỡ có được bán lẻ viên không
 function coTheBanVien(kc){
   if(!kc) return false;
@@ -1769,17 +1766,24 @@ function tinhThung(item){
 // - Bán được viên → giữ nguyên m² khách nhập
 function tinhSoVien(item){
   if(item.loai==='keo'||item.loai==='kinh'||item.loai==='ngoi') return null;
+  var qc = getQuyCach(item.kc, item.cat);
+  var qty = parseFloat(item.qty)||0;
+  if(qc && qc.m2 > 0){
+    // Dùng data quy cách thực tế từ Sheet
+    var soThung = qty / qc.m2;
+    var soVien = Math.round(soThung * qc.vien);
+    var kg = qc.kg ? Math.round(soThung * qc.kg * 10)/10 : null;
+    return {soVien:soVien, vienPerThung:qc.vien, kg:kg, m2PerThung:qc.m2};
+  }
+  // Fallback: tính hình học nếu không có quy cách
   var kc=item.kc||'';
   var m=kc.match(/(\d+)[xX](\d+)/);
   if(!m) return null;
-  var key=m[1]+'x'+m[2];
-  // Tính viên/m²: 1m² / (w×h) m²/viên
   var w=parseInt(m[1])/1000, h=parseInt(m[2])/1000;
   if(!w||!h) return null;
   var vienPerM2=1/(w*h);
-  var qty=parseFloat(item.qty)||0;
   var soVien=Math.round(qty*vienPerM2);
-  return {soVien:soVien, vienPerM2:Math.ceil(vienPerM2*10)/10};
+  return {soVien:soVien, vienPerM2:Math.round(vienPerM2*10)/10, kg:null};
 }
 
 function laTronQtyTheoQuyDinh(item){
@@ -1927,7 +1931,10 @@ function renderDon(){
         if(item.loai==='keo'||item.loai==='kinh'||item.loai==='ngoi') return '';
         var v=tinhSoVien(item);
         if(!v||!v.soVien) return '';
-        return '<span style="font-size:11px;color:var(--t2);margin-left:8px">≈ '+v.soVien+' viên</span>';
+        var s='<span style="font-size:11px;color:var(--t2);margin-left:8px">≈ '+v.soVien+' viên';
+        if(v.kg) s+=' · '+v.kg+'kg';
+        s+='</span>';
+        return s;
       })()
       +'</div>'
       // Bảng giá 3 hàng
