@@ -350,7 +350,7 @@ input::placeholder{color:var(--t3)}
     <button class="fb on" id="f-all"       onclick="setF('all')">Tất cả</button>
     <button class="fb"    id="f-porcelain" onclick="setF('porcelain')">Porcelain</button>
     <button class="fb"    id="f-ceramic"   onclick="setF('ceramic')">Ceramic</button>
-    <button class="fb"    id="f-star"      onclick="setF('star')">★ Chiến lược</button>
+    <button class="fb"    id="f-kinh"      onclick="setF('kinh')">💎 Gạch kính</button>
     <button class="fb"    id="f-sale"      onclick="setF('sale')">🔥 Sale</button>
   </div>
   <div style="display:flex;gap:0;margin:8px -10px 0;width:calc(100% + 20px)">
@@ -398,6 +398,18 @@ input::placeholder{color:var(--t3)}
     <div style="background:var(--bg2);border-radius:var(--r8);padding:9px 11px;font-size:12px;color:var(--t2)">
       Bán <input id="dp-sell" type="number" style="width:90px;display:inline;padding:3px 6px;font-size:12px" oninput="calcM()"/> đ/m² → lời <span id="dp-margin" style="font-weight:600;color:#388E3C">–</span>
     </div>
+    <!-- Nhập số lượng theo thùng hoặc m² -->
+    <div id="dp-qty-section" style="background:var(--bg2);border-radius:var(--r8);padding:10px 11px;margin-top:8px">
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <button id="dp-unit-m2" onclick="setDpUnit('m2')" style="flex:1;padding:6px;border-radius:8px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:11px;cursor:pointer;font-family:var(--f)">Theo m²</button>
+        <button id="dp-unit-thung" onclick="setDpUnit('thung')" style="flex:1;padding:6px;border-radius:8px;border:1.5px solid var(--bd);background:var(--bg1);color:var(--t2);font-weight:700;font-size:11px;cursor:pointer;font-family:var(--f)">Theo thùng</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input id="dp-qty-input" type="number" value="1" min="0.01" step="0.01" oninput="calcDpQty()" style="flex:1;text-align:center;font-size:15px;font-weight:700;padding:8px;border:1.5px solid var(--bd2);border-radius:8px;background:var(--bg1);font-family:var(--f)"/>
+        <span id="dp-qty-unit-label" style="font-size:12px;color:var(--t2);min-width:30px">m²</span>
+      </div>
+      <p id="dp-qty-convert" style="font-size:11px;color:#0D47A1;margin-top:6px;text-align:center"></p>
+    </div>
     <!-- Ảnh sản phẩm -->
     <div id="dp-img-section" style="margin-top:10px">
       <div id="dp-img-wrap" style="display:none;margin-bottom:8px;border-radius:var(--r8);overflow:hidden;background:var(--bg2)">
@@ -406,7 +418,7 @@ input::placeholder{color:var(--t3)}
       <div style="display:flex;gap:6px">
         <button id="dp-img-btn" onclick="toggleImgInput()" style="flex:1;font-size:12px;padding:8px;border-radius:var(--r8);border:1px dashed var(--bd2);color:var(--t2);background:var(--bg2)">📷 Thêm ảnh Drive</button>
         <button id="dp-zalo-btn" onclick="shareZalo()" style="flex:1;font-size:12px;padding:8px;border-radius:var(--r8);border:none;background:#0068FF;color:#fff;font-weight:600">Zalo ↗</button>
-        <button onclick="addToDon(curP_ma)" style="flex:1;font-size:12px;padding:8px;border-radius:var(--r8);border:none;background:#C0232A;color:#fff;font-weight:600;font-family:var(--f)">🛒 + Đơn</button>
+        <button onclick="addToDonWithQty()" style="flex:1;font-size:12px;padding:8px;border-radius:var(--r8);border:none;background:#C0232A;color:#fff;font-weight:600;font-family:var(--f)">🛒 + Đơn</button>
       </div>
       <div id="dp-img-input-wrap" style="display:none;margin-top:8px">
         <input type="text" id="dp-img-url" placeholder="Dán link Google Drive vào đây..." style="font-size:12px;padding:8px;margin-bottom:6px"/>
@@ -852,7 +864,7 @@ function swTab(t){
 // --- TAB 1 ---
 function setF(f){
   curF=f;
-  ['all','porcelain','ceramic','star','sale'].forEach(function(x){
+  ['all','porcelain','ceramic','kinh','sale'].forEach(function(x){
     var b=document.getElementById('f-'+x); if(b) b.classList.toggle('on',x===f);
   });
   curPage=0;document.getElementById('dp').style.display='none';
@@ -867,10 +879,9 @@ function goPage(p){
 }
 function render(){
   var q=document.getElementById('sq').value.trim().toUpperCase();
-  var list=DATA;
+  var list = curF==='kinh' ? KINH.slice() : DATA;
   if(curF==='porcelain') list=list.filter(function(p){return p.cat==='porcelain';});
   else if(curF==='ceramic') list=list.filter(function(p){return p.cat==='ceramic';});
-  else if(curF==='star') list=list.filter(function(p){return p.gio==='★';});
   else if(curF==='sale') list=list.filter(function(p){return p.gs>0||p.ns>0;});
   if(curSize&&curSize!=='all') list=list.filter(function(p){return p.kc===curSize||p.kc.toLowerCase()===curSize.toLowerCase();});
   if(q) list=list.filter(function(p){return p.ma.toUpperCase().includes(q)||p.kc.includes(q);});
@@ -963,6 +974,11 @@ function showDP(ma){
   }
   document.getElementById('dp-sell').value=p.nhan>0?Math.round(p.nhan*1.07):'';
   document.getElementById('dp').style.display='block'; calcM();
+  // Reset qty input về m² mặc định
+  dpUnit='m2';
+  var qtyInp=document.getElementById('dp-qty-input');
+  if(qtyInp) qtyInp.value=1;
+  setTimeout(function(){ setDpUnit('m2'); },10);
   loadImg(ma);
   document.getElementById('dp-img-input-wrap').style.display='none';
 }
@@ -1768,14 +1784,14 @@ function tinhSoVien(item){
   if(item.loai==='keo'||item.loai==='kinh'||item.loai==='ngoi') return null;
   var qc = getQuyCach(item.kc, item.cat);
   var qty = parseFloat(item.qty)||0;
+  // Chỉ hiện KG cho riêng kích cỡ 300x600 (3060) — theo yêu cầu
+  var isKc3060 = (item.kc||'').replace(/\s/g,'') === '300x600';
   if(qc && qc.m2 > 0){
-    // Dùng data quy cách thực tế từ Sheet
     var soThung = qty / qc.m2;
     var soVien = Math.round(soThung * qc.vien);
-    var kg = qc.kg ? Math.round(soThung * qc.kg * 10)/10 : null;
+    var kg = (isKc3060 && qc.kg) ? Math.round(soThung * qc.kg * 10)/10 : null;
     return {soVien:soVien, vienPerThung:qc.vien, kg:kg, m2PerThung:qc.m2};
   }
-  // Fallback: tính hình học nếu không có quy cách
   var kc=item.kc||'';
   var m=kc.match(/(\d+)[xX](\d+)/);
   if(!m) return null;
@@ -1794,25 +1810,99 @@ function laTronQtyTheoQuyDinh(item){
 }
 
 
-function addToDon(ma){
+function addToDon(ma, qty){
   if(!ma) return;
+  qty = qty || 1;
   var p = DATA.find(function(x){return x.ma===ma;});
   if(!p) return;
   var exist = donItems.find(function(x){return x.ma===ma;});
-  if(exist){ exist.qty++; }
+  if(exist){ exist.qty = Math.round((exist.qty+qty)*100)/100; }
   else {
     donItems.push({
-      ma:p.ma, ten:p.ten||p.ma, kc:p.kc, unit:'m²', loai:'gach',
+      ma:p.ma, ten:p.ten||p.ma, kc:p.kc, cat:p.cat, unit:'m²', loai:'gach',
       le:p.le||0,
       nhan:p.nhan||0,   // giá nhận kho
       giao:p.giao||0,   // giá đi giao
       ns:p.ns||0,       // giá nhận sale
       gs:p.gs||0,       // giá giao sale
-      qty:1
+      qty:qty
     });
   }
   updateDonBadge();
   showToast('✓ Đã thêm vào đơn!');
+}
+
+// ===== Toggle đơn vị nhập trong popup chi tiết: m² hoặc thùng =====
+var dpUnit = 'm2'; // 'm2' hoặc 'thung'
+
+function setDpUnit(u){
+  dpUnit = u;
+  var bM2=document.getElementById('dp-unit-m2'), bThung=document.getElementById('dp-unit-thung');
+  var label=document.getElementById('dp-qty-unit-label');
+  if(u==='m2'){
+    bM2.style.background='var(--red)'; bM2.style.color='#fff'; bM2.style.border='none';
+    bThung.style.background='var(--bg1)'; bThung.style.color='var(--t2)'; bThung.style.border='1.5px solid var(--bd)';
+    label.textContent='m²';
+    document.getElementById('dp-qty-input').step='0.01';
+  } else {
+    bThung.style.background='var(--red)'; bThung.style.color='#fff'; bThung.style.border='none';
+    bM2.style.background='var(--bg1)'; bM2.style.color='var(--t2)'; bM2.style.border='1.5px solid var(--bd)';
+    label.textContent='thùng';
+    document.getElementById('dp-qty-input').step='1';
+  }
+  // Reset về 1 khi đổi đơn vị
+  document.getElementById('dp-qty-input').value = 1;
+  calcDpQty();
+}
+
+function calcDpQty(){
+  var p = DATA.find(function(x){return x.ma===curP_ma;});
+  if(!p) return;
+  var val = parseFloat(document.getElementById('dp-qty-input').value)||0;
+  var qc = getQuyCach(p.kc, p.cat);
+  var convertEl = document.getElementById('dp-qty-convert');
+  if(!qc || !qc.m2){ convertEl.textContent=''; return; }
+
+  if(dpUnit==='thung'){
+    var m2 = Math.round(val * qc.m2 * 100)/100;
+    var vien = Math.round(val * qc.vien);
+    var kgStr = (qc.kg && (p.kc||'').replace(/\s/g,'')==='300x600') ? ' · '+Math.round(val*qc.kg*10)/10+'kg' : '';
+    convertEl.textContent = '≈ '+m2+' m² · '+vien+' viên'+kgStr;
+  } else {
+    var thung = Math.round((val/qc.m2)*100)/100;
+    var thungNguyen = Math.ceil(val/qc.m2);
+    convertEl.textContent = '≈ '+thung+' thùng (làm tròn lên: '+thungNguyen+' thùng)';
+  }
+}
+
+function addToDonWithQty(){
+  var p = DATA.find(function(x){return x.ma===curP_ma;});
+  if(!p) return;
+  var val = parseFloat(document.getElementById('dp-qty-input').value)||0;
+  if(val<=0){ alert('Vui lòng nhập số lượng!'); return; }
+
+  var qc = getQuyCach(p.kc, p.cat);
+  var qtyM2;
+
+  if(dpUnit==='thung' && qc && qc.m2){
+    // Nhập theo thùng → đổi sang m² để lưu (đơn vị chuẩn trong giỏ hàng)
+    qtyM2 = Math.round(val * qc.m2 * 100)/100;
+  } else {
+    qtyM2 = val;
+    // Nếu kích cỡ chỉ bán thùng → làm tròn lên thùng nguyên
+    if(qc && qc.m2){
+      var isThungHoacVien = coTheBanVien(p.kc);
+      if(!isThungHoacVien){
+        var thungNguyen = Math.ceil(val/qc.m2);
+        qtyM2 = Math.round(thungNguyen * qc.m2 * 100)/100;
+      }
+    }
+  }
+
+  addToDon(curP_ma, qtyM2);
+  // Reset input
+  document.getElementById('dp-qty-input').value = 1;
+  setDpUnit('m2');
 }
 
 function addToDonNgoi(ma){
