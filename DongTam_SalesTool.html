@@ -24,6 +24,15 @@
 html,body{width:100%;height:100%;overflow-x:hidden}
 body{font-family:var(--f);font-size:14px;color:var(--t1);background:var(--bg);padding:0;margin:0}
 
+/* ===== DESKTOP: thu hẹp như điện thoại ===== */
+@media(min-width:600px){
+  body{background:#E8E8E8;display:flex;justify-content:center}
+  #login-screen{max-width:420px;margin:0 auto;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.12)}
+  #app-screen{max-width:420px;width:100%;background:var(--bg);box-shadow:0 0 40px rgba(0,0,0,.15);position:relative;min-height:100vh}
+  .bottom-nav{max-width:420px;left:50%;transform:translateX(-50%)}
+  .topbar{max-width:420px}
+}
+
 /* ===== INPUTS ===== */
 input,button,select{font-family:var(--f);outline:none;-webkit-appearance:none}
 input[type=text],input[type=number],input[type=password]{
@@ -678,28 +687,27 @@ function fetchGiaFromSheet(){
           rows.forEach(function(row){
             var ma = String(row.ma||'').trim();
             if(!ma) return;
-            // Tìm trong D1,D2,D3
+            function pg(v){return parseFloat(String(v||'0').replace(/\./g,'').replace(/,/g,'.'))||0;}
+            var le=pg(row.le), nhan=pg(row.nhan), giao=pg(row.giao);
+            var nsSheet=pg(row.ns), nsCT1=pg(row.ns_ct1);
+            var ns = nsSheet>0 ? nsSheet : nsCT1>0 ? Math.round(nsCT1*0.95) : Math.round(nhan*0.95);
+            var gs = pg(row.gs)||giao;
+
+            // Tìm trong DATA hiện tại
             var p = DATA.find(function(x){return x.ma===ma;});
             if(p){
-              function pg(v){return parseFloat(String(v||'0').replace(/\./g,'').replace(/,/g,'.'))||0;}
-              p.le   = pg(row.le);
-              p.nhan = pg(row.nhan);
-              p.giao = pg(row.giao);
-              // ns từ Sheet = giá CT150 đã tính sẵn (cột M)
-              // Nếu Sheet chưa có cột CT150 (ns=0) → tự tính
-              var nsSheet = pg(row.ns);
-              var nsCT1   = pg(row.ns_ct1);
-              if(nsSheet > 0){
-                p.ns = nsSheet; // Sheet đã tính CT150 sẵn
-              } else if(nsCT1 > 0){
-                p.ns = Math.round(nsCT1 * 0.95); // Có Sale CT1 → -5%
-              } else {
-                p.ns = Math.round(p.nhan * 0.95); // Không sale → -5% nhan
-              }
-              p.gs = pg(row.gs) || p.giao;
+              // Mã đã có → cập nhật giá
+              p.le=le; p.nhan=nhan; p.giao=giao; p.ns=ns; p.gs=gs;
+            } else {
+              // Mã MỚI trong Sheet → thêm vào DATA
+              DATA.push({
+                ma:ma, kc:String(row.kc||''), cat:String(row.cat||'').toLowerCase(),
+                gio:String(row.gio||''), ten:String(row.ten||ma),
+                le:le, nhan:nhan, giao:giao, ns:ns, gs:gs
+              });
             }
           });
-          console.log('✅ Cập nhật giá gạch từ Sheet: '+rows.length+' mã');
+          console.log('✅ Cập nhật giá gạch từ Sheet: '+rows.length+' mã (bao gồm mã mới)');
         }
         else if(loai==='ngoi'){
           rows.forEach(function(row){
@@ -840,10 +848,15 @@ function swSubKeo(sub){
   document.getElementById('sub-keo-content').style.display = sub==='keo'?'block':'none';
   document.getElementById('sub-kinh-content').style.display = sub==='kinh'?'block':'none';
   var bKeo=document.getElementById('sub-keo-btn'), bKinh=document.getElementById('sub-kinh-btn');
-  if(sub==='keo'){ bKeo.style.background='var(--red)'; bKeo.style.color='#fff'; bKeo.style.border='none';
-                    bKinh.style.background='var(--bg1)'; bKinh.style.color='var(--t2)'; bKinh.style.border='1.5px solid var(--bd)'; }
-  else { bKinh.style.background='var(--red)'; bKinh.style.color='#fff'; bKinh.style.border='none';
-         bKeo.style.background='var(--bg1)'; bKeo.style.color='var(--t2)'; bKeo.style.border='1.5px solid var(--bd)'; }
+  if(sub==='keo'){
+    bKeo.style.background='var(--red)'; bKeo.style.color='#fff'; bKeo.style.border='none';
+    bKinh.style.background='var(--bg1)'; bKinh.style.color='var(--t2)'; bKinh.style.border='1.5px solid var(--bd)';
+  } else {
+    bKinh.style.background='var(--red)'; bKinh.style.color='#fff'; bKinh.style.border='none';
+    bKeo.style.background='var(--bg1)'; bKeo.style.color='var(--t2)'; bKeo.style.border='1.5px solid var(--bd)';
+    // Render danh sách gạch kính khi mở sub-tab
+    renderKinh();
+  }
 }
 
 function swTab(t){
@@ -856,7 +869,7 @@ function swTab(t){
   });
   if(t==='sale') renderSale();
   if(t==='ngoi') renderNgoi();
-  if(t==='keo')  renderKeo();
+  if(t==='keo')  { renderKeo(); }
   if(t==='kinh') renderKinh();
   if(t==='don')  renderDon();
 }
@@ -879,7 +892,13 @@ function goPage(p){
 }
 function render(){
   var q=document.getElementById('sq').value.trim().toUpperCase();
-  var list = curF==='kinh' ? KINH.slice() : DATA;
+  // Nếu filter gạch kính → redirect sang tab Keo sub-tab Kính
+  if(curF==='kinh'){
+    swTab('keo');
+    swSubKeo('kinh');
+    return;
+  }
+  var list = DATA;
   if(curF==='porcelain') list=list.filter(function(p){return p.cat==='porcelain';});
   else if(curF==='ceramic') list=list.filter(function(p){return p.cat==='ceramic';});
   else if(curF==='sale') list=list.filter(function(p){return p.gs>0||p.ns>0;});
@@ -1536,11 +1555,7 @@ function showShareModal(msg){
 // ===== LOGIN SYSTEM =====
 // Tài khoản: thêm/sửa tại đây
 // pass được encode base64 để không lộ plaintext
-var USERS = [
-  {u:'linh',    p:btoa('Linh@2024'),   name:'Lê Chí Linh'},
-  {u:'nhanvien1', p:btoa('NV1@2024'), name:'Nhân viên 1'},
-  {u:'nhanvien2', p:btoa('NV2@2024'), name:'Nhân viên 2'},
-];
+// USERS: xác thực qua Apps Script (tab USERS trong Sheet)
 
 var SESSION_KEY = 'dt_sales_auth';
 var SESSION_HOURS = 8; // Tự đăng xuất sau 8 tiếng
@@ -1573,6 +1588,7 @@ function doLogin(){
   var u = document.getElementById('inp-user').value.trim().toLowerCase();
   var p = document.getElementById('inp-pass').value;
   var errEl = document.getElementById('login-err');
+  var btn   = document.getElementById('login-btn');
   errEl.textContent = '';
 
   if(!u || !p){
@@ -1580,18 +1596,38 @@ function doLogin(){
     return;
   }
 
-  var found = USERS.find(function(x){
-    return x.u === u && x.p === btoa(p);
-  });
+  // Hiện loading
+  btn.textContent = '⏳ Đang kiểm tra...';
+  btn.disabled = true;
 
-  if(found){
-    saveSession(found);
-    showApp(found.name);
-  } else {
-    errEl.textContent = '❌ Sai tài khoản hoặc mật khẩu!';
-    document.getElementById('inp-pass').value = '';
-    document.getElementById('inp-pass').focus();
-  }
+  // Gọi Apps Script xác thực
+  var url = APPS_URL + '?action=login&username=' + encodeURIComponent(u) + '&password=' + encodeURIComponent(p);
+  var s = document.createElement('script');
+  var cbName = '_loginCB_' + Date.now();
+  window[cbName] = function(data){
+    btn.textContent = '→ Đăng nhập';
+    btn.disabled = false;
+    delete window[cbName];
+    s.remove();
+    if(data && data.status === 'ok'){
+      saveSession({u:u, name:data.name, role:data.role});
+      showApp(data.name);
+    } else {
+      errEl.textContent = '❌ ' + (data && data.msg ? data.msg : 'Sai tài khoản hoặc mật khẩu!');
+      document.getElementById('inp-pass').value = '';
+      document.getElementById('inp-pass').focus();
+    }
+  };
+  s.src = url + '&callback=' + cbName;
+  // Timeout 8s nếu Apps Script không phản hồi
+  var t = setTimeout(function(){
+    btn.textContent = '→ Đăng nhập';
+    btn.disabled = false;
+    errEl.textContent = '⚠️ Không kết nối được, thử lại!';
+    s.remove();
+  }, 8000);
+  s.onload = function(){ clearTimeout(t); };
+  document.head.appendChild(s);
 }
 
 function showApp(name){
@@ -1784,12 +1820,10 @@ function tinhSoVien(item){
   if(item.loai==='keo'||item.loai==='kinh'||item.loai==='ngoi') return null;
   var qc = getQuyCach(item.kc, item.cat);
   var qty = parseFloat(item.qty)||0;
-  // Chỉ hiện KG cho riêng kích cỡ 300x600 (3060) — theo yêu cầu
-  var isKc3060 = (item.kc||'').replace(/\s/g,'') === '300x600';
   if(qc && qc.m2 > 0){
     var soThung = qty / qc.m2;
     var soVien = Math.round(soThung * qc.vien);
-    var kg = (isKc3060 && qc.kg) ? Math.round(soThung * qc.kg * 10)/10 : null;
+    var kg = qc.kg ? Math.round(soThung * qc.kg * 10)/10 : null;
     return {soVien:soVien, vienPerThung:qc.vien, kg:kg, m2PerThung:qc.m2};
   }
   var kc=item.kc||'';
@@ -1866,7 +1900,7 @@ function calcDpQty(){
   if(dpUnit==='thung'){
     var m2 = Math.round(val * qc.m2 * 100)/100;
     var vien = Math.round(val * qc.vien);
-    var kgStr = (qc.kg && (p.kc||'').replace(/\s/g,'')==='300x600') ? ' · '+Math.round(val*qc.kg*10)/10+'kg' : '';
+    var kgStr = qc.kg ? ' · '+Math.round(val*qc.kg*10)/10+'kg' : '';
     convertEl.textContent = '≈ '+m2+' m² · '+vien+' viên'+kgStr;
   } else {
     var thung = Math.round((val/qc.m2)*100)/100;
