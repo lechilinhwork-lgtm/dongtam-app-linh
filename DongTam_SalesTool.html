@@ -27,7 +27,6 @@ body{font-family:var(--f);font-size:14px;color:var(--t1);background:var(--bg);pa
 /* ===== DESKTOP: thu hẹp như điện thoại ===== */
 @media(min-width:600px){
   html,body{background:#D0D0D0;min-height:100vh}
-  /* KHÔNG dùng flex trên body - làm login + app xếp ngang nhau */
   body{display:block}
 
   #login-screen{
@@ -46,14 +45,12 @@ body{font-family:var(--f);font-size:14px;color:var(--t1);background:var(--bg);pa
     margin:0 auto;
   }
 
-  /* Topbar: sticky trong #app-content */
   .topbar{
     position:sticky;top:0;
     width:100%;
     z-index:100;
   }
 
-  /* Bottom nav: fixed, căn giữa - ghi đè CSS gốc left:0;right:0 */
   .bottom-nav{
     position:fixed !important;bottom:0 !important;
     width:420px !important;
@@ -725,8 +722,12 @@ function fetchGiaFromSheet(){
             // Tìm trong DATA hiện tại
             var p = DATA.find(function(x){return x.ma===ma;});
             if(p){
-              // Mã đã có → cập nhật giá
-              p.le=le; p.nhan=nhan; p.giao=giao; p.ns=ns; p.gs=gs;
+              // Mã đã có → chỉ cập nhật nếu giá > 0 (tránh ghi đè bằng 0 khi Sheet lỗi)
+              if(le>0)   p.le=le;
+              if(nhan>0) p.nhan=nhan;
+              if(giao>0) p.giao=giao;
+              if(ns>0)   p.ns=ns;
+              if(gs>0)   p.gs=gs;
             } else {
               // Mã MỚI trong Sheet → thêm vào DATA
               DATA.push({
@@ -778,7 +779,6 @@ function fetchGiaFromSheet(){
               function pgK(v){return parseFloat(String(v||"0").replace(/\./g,"").replace(/,/g,"."))||0;}
               var _le=pgK(row.le),_nhan=pgK(row.nhan),_nhan2=pgK(row.nhan2),_nhan3=pgK(row.nhan3);
               var _giao=pgK(row.giao),_giao2=pgK(row.giao2),_giao3=pgK(row.giao3);
-              // Chỉ cập nhật nếu giá > 0 (tránh ghi đè giá đúng bằng 0 khi Sheet thiếu cột)
               if(_le>0)    p.le=_le;
               if(_nhan>0)  p.nhan=_nhan;
               if(_nhan2>0) p.nhan2=_nhan2;
