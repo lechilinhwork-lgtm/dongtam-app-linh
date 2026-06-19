@@ -27,8 +27,7 @@ body{font-family:var(--f);font-size:14px;color:var(--t1);background:var(--bg);pa
 /* ===== DESKTOP: thu hẹp như điện thoại ===== */
 @media(min-width:600px){
   html,body{background:#D0D0D0;min-height:100vh}
-  /* KHÔNG dùng flex trên body - sẽ đẩy các phần tử con ra ngoài */
-  body{display:block;}
+  body{display:flex;justify-content:center;align-items:flex-start}
 
   #login-screen{
     width:420px;max-width:420px;min-height:auto;
@@ -43,23 +42,26 @@ body{font-family:var(--f);font-size:14px;color:var(--t1);background:var(--bg);pa
     background:var(--bg);
     box-shadow:0 0 48px rgba(0,0,0,.22);
     position:relative;
-    margin:0 auto; /* căn giữa bằng margin auto */
+    /* Không dùng margin:auto ở đây vì body đã flex+center */
   }
 
-  /* Topbar: sticky bên trong #app-content */
+  /* Topbar: cố định, căn giữa theo #app-content */
   .topbar{
-    position:sticky;top:0;
-    width:100%;
+    position:fixed;top:0;
+    width:420px;
+    left:50%;transform:translateX(-50%);
     z-index:100;
   }
 
-  /* Bottom nav: cố định, căn giữa theo #app-content */
+  /* Bottom nav: cố định, căn giữa */
   .bottom-nav{
     position:fixed;bottom:0;
     width:420px;
-    left:50%;right:auto;
-    transform:translateX(-50%);
+    left:50%;transform:translateX(-50%);
   }
+
+  /* Nội dung bên trong không bị che bởi topbar cố định */
+  .wrap{padding-top:58px !important}
 }
 
 /* ===== INPUTS ===== */
@@ -142,14 +144,6 @@ input::placeholder{color:var(--t3)}
   background:var(--bg1);border-top:1px solid var(--bd);
   display:flex;z-index:100;
   padding-bottom:env(safe-area-inset-bottom);
-}
-@media(min-width:600px){
-  .bottom-nav{
-    left:50% !important;
-    right:auto !important;
-    width:420px !important;
-    transform:translateX(-50%) !important;
-  }
 }
 .bn{
   flex:1;display:flex;flex-direction:column;align-items:center;
@@ -783,16 +777,23 @@ function fetchGiaFromSheet(){
             var ma = String(row.ma||'').trim();
             var p = KINH.find(function(x){return x.ma===ma;});
             if(p){
-              p.le=parseFloat(String(row.le||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.nhan=parseFloat(String(row.nhan||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.nhan2=parseFloat(String(row.nhan2||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.nhan3=parseFloat(String(row.nhan3||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.giao=parseFloat(String(row.giao||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.giao2=parseFloat(String(row.giao2||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.giao3=parseFloat(String(row.giao3||"0").replace(/\./g,"").replace(/,/g,"."))||0;
+              function pgK(v){return parseFloat(String(v||"0").replace(/\./g,"").replace(/,/g,"."))||0;}
+              var _le=pgK(row.le), _nhan=pgK(row.nhan), _nhan2=pgK(row.nhan2), _nhan3=pgK(row.nhan3);
+              var _giao=pgK(row.giao), _giao2=pgK(row.giao2), _giao3=pgK(row.giao3);
+              // Chỉ cập nhật nếu giá > 0 (tránh ghi đè giá đúng bằng 0)
+              if(_le>0)    p.le=_le;
+              if(_nhan>0)  p.nhan=_nhan;
+              if(_nhan2>0) p.nhan2=_nhan2;
+              if(_nhan3>0) p.nhan3=_nhan3;
+              if(_giao>0)  p.giao=_giao;
+              if(_giao2>0) p.giao2=_giao2;
+              if(_giao3>0) p.giao3=_giao3;
+              console.log('💎 Kính '+ma+': giao='+p.giao+' giao2='+p.giao2+' giao3='+p.giao3);
             }
           });
           console.log('✅ Cập nhật giá kính từ Sheet: '+rows.length+' mã');
+          // Debug: in raw data từ Sheet
+          if(rows[0]) console.log('💎 Raw kính row[0]:', JSON.stringify(rows[0]));
         }
         
         loaded++;
