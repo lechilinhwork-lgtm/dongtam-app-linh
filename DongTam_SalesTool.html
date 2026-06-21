@@ -553,8 +553,8 @@ input::placeholder{color:var(--t3)}
 <!-- TAB 4: Keo -->
 <div id="tab-keo" class="tc">
   <div style="display:flex;gap:6px;margin-bottom:12px">
-    <button id="sub-keo-btn" onclick="swSubKeo('keo')" style="flex:1;padding:9px;border-radius:10px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:12px;cursor:pointer;font-family:var(--f)">🧱 Keo & Bột</button>
-    <button id="sub-kinh-btn" onclick="swSubKeo('kinh')" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--bd);background:var(--bg1);color:var(--t2);font-weight:700;font-size:12px;cursor:pointer;font-family:var(--f)">💎 Gạch kính</button>
+    <button id="sub-keo-btn" onclick="swSubKeo('keo')" style="width:100%;padding:9px;border-radius:10px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:12px;cursor:pointer;font-family:var(--f)">🧱 Keo & Bột chà ron</button>
+
   </div>
   <div id="sub-keo-content">
   <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Keo dán gạch GECKO Đồng Tâm · Giá <b>đồng/bao</b></p>
@@ -582,7 +582,7 @@ input::placeholder{color:var(--t3)}
   </div>
   <div id="keo-list"></div>
   </div><!-- /sub-keo-content -->
-  <div id="sub-kinh-content" style="display:none">
+  <div id="sub-kinh-content" style="display:none;visibility:hidden;height:0;overflow:hidden">
   <div style="background:#E3F2FD;border-radius:var(--r12);padding:12px 14px;margin-bottom:10px;font-size:12px;color:#0D47A1">
     💎 <strong>Gạch kính</strong> · Kích cỡ 19×19×9.5cm · Đóng gói 6 viên/thùng · <strong>Chỉ bán theo thùng</strong>
   </div>
@@ -929,12 +929,55 @@ function goPage(p){
   var plist=document.getElementById('plist');
   if(plist) plist.scrollIntoView({behavior:'smooth',block:'start'});
 }
+function renderKinhInGach(){
+  var el=document.getElementById('plist'); el.innerHTML='';
+  document.getElementById('pcount').textContent='3 mã gạch kính';
+  KINH.forEach(function(p){
+    var inDon=donItems.some(function(x){return x.ma===p.ma;});
+    var div=document.createElement('div'); div.className='mk';
+    div.style.cssText='padding:10px 12px';
+    div.innerHTML=
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+      +getImgHtml(p.ma,48,'💎')
+      +'<div style="flex:1">'
+      +'<p style="font-size:13px;font-weight:700;color:var(--t1)">'+p.ten+'</p>'
+      +'<p style="font-size:11px;color:var(--t2)">'+p.kc+' cm · 6 viên/thùng</p>'
+      +'</div>'
+      +'<div style="text-align:right">'
+      +'<p style="font-size:12px;color:var(--t3);text-decoration:line-through">'+p.le.toLocaleString('vi-VN')+'đ</p>'
+      +'<p style="font-size:13px;font-weight:800;color:#1565C0">'+p.nhan.toLocaleString('vi-VN')+'đ</p>'
+      +'<p style="font-size:10px;color:var(--t2)">/thùng · nhận kho</p>'
+      +'</div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:11px;margin-bottom:8px">'
+      +'<div style="background:#E3F2FD;border-radius:6px;padding:5px;text-align:center">'
+      +'<p style="color:#666;margin-bottom:1px">≤20 thùng</p>'
+      +'<p style="font-weight:700;color:#1565C0">'+p.nhan.toLocaleString('vi-VN')+'</p>'
+      +'<p style="color:#888;font-size:10px">giao: '+p.giao.toLocaleString('vi-VN')+'</p>'
+      +'</div>'
+      +'<div style="background:#E8EAF6;border-radius:6px;padding:5px;text-align:center">'
+      +'<p style="color:#666;margin-bottom:1px">21–49 thùng</p>'
+      +'<p style="font-weight:700;color:#3949AB">'+(p.nhan2||p.nhan).toLocaleString('vi-VN')+'</p>'
+      +'<p style="color:#888;font-size:10px">giao: '+(p.giao2||p.giao).toLocaleString('vi-VN')+'</p>'
+      +'</div>'
+      +'<div style="background:#E8F5E9;border-radius:6px;padding:5px;text-align:center">'
+      +'<p style="color:#666;margin-bottom:1px">≥50 thùng</p>'
+      +'<p style="font-weight:700;color:#2E7D32">'+(p.nhan3||p.nhan).toLocaleString('vi-VN')+'</p>'
+      +'<p style="color:#888;font-size:10px">giao: '+(p.giao3||p.giao).toLocaleString('vi-VN')+'</p>'
+      +'</div>'
+      +'</div>'
+      +'<button onclick="addToDonKinh(''+p.ma+'')" style="width:100%;padding:8px;border:none;border-radius:8px;background:'+(inDon?'#1B7A3E':'#1565C0')+';color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">'
+      +(inDon?'✓ Đã thêm vào đơn':'🛒 + Thêm vào đơn')
+      +'</button>';
+    el.appendChild(div);
+  });
+}
+
 function render(){
   var q=document.getElementById('sq').value.trim().toUpperCase();
-  // Nếu filter gạch kính → redirect sang tab Keo sub-tab Kính
+  // Nếu filter gạch kính → hiển thị trong tab Gạch cùng với nút thêm vào đơn
   if(curF==='kinh'){
-    swTab('keo');
-    swSubKeo('kinh');
+    renderKinhInGach();
     return;
   }
   var list = DATA;
@@ -952,21 +995,33 @@ function render(){
   var el=document.getElementById('plist'); el.innerHTML='';
   shown.forEach(function(p){
     var hasSale=p.gs>0||p.ns>0;
-    var star=p.gio==='★'?' <span class="badge" style="background:#FDECEA;color:#8B0000">★ CL</span>'
-             :p.gio==='●'?' <span class="badge" style="background:#E8F5E9;color:#1B5E20">● CL</span>':'';
+    var star=p.gio==='★'?' <span class="badge" style="background:#FDECEA;color:#8B0000;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:700">★ CL</span>'
+             :p.gio==='●'?' <span class="badge" style="background:#E8F5E9;color:#1B5E20;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:700">🔥 Sale</span>':'';
     var saleDot=hasSale?'<span class="sale-dot"></span>':'';
-    var priceDisp=p.nhan>0?p.nhan.toLocaleString('vi-VN')+'đ':'–';
+    var priceNhan=p.nhan>0?p.nhan.toLocaleString('vi-VN')+'đ':'–';
+    var priceGiao=p.giao>0?p.giao.toLocaleString('vi-VN')+'đ':'–';
+    var priceNs=p.ns>0?p.ns.toLocaleString('vi-VN')+'đ':'–';
     var div=document.createElement('div'); div.className='mk';
-    div.innerHTML='<div style="display:flex;justify-content:space-between;align-items:start">'
-      +'<div style="flex:1;min-width:0"><p style="font-size:14px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px">'+p.ma+saleDot+'</p>'
-      +'<p style="font-size:11px;color:var(--t2)">'+p.kc+star+'</p></div>'
-      +'<div style="text-align:right;flex-shrink:0;margin-left:8px">'
-      +(hasSale?'<p style="font-size:11px;color:var(--t3);text-decoration:line-through">'+priceDisp+'</p>'
-               +'<p style="font-size:13px;font-weight:700;color:#C0232A">'+(p.ns>0?p.ns.toLocaleString('vi-VN')+'đ':'–')+'</p>'
-               +'<p style="font-size:10px;color:#C0232A">sale/kho</p>'
-        :'<p style="font-size:13px;font-weight:600;color:#C0232A">'+priceDisp+'</p>'
-        +'<p style="font-size:10px;color:var(--t2)">nhận kho</p>')
-      +'</div></div>';
+    div.style.cssText='padding:10px 12px;cursor:pointer';
+    div.innerHTML=
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+      +'<div style="flex:1;min-width:0">'
+      +'<p style="font-size:13px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+p.ma+saleDot+'</p>'
+      +'<p style="font-size:11px;color:var(--t2);margin-top:2px">'+p.kc+star+'</p>'
+      +'</div>'
+      +(hasSale
+        ?'<div style="text-align:right;flex-shrink:0;margin-left:10px">'
+          +'<p style="font-size:11px;color:var(--t3);text-decoration:line-through">'+priceNhan+'</p>'
+          +'<p style="font-size:14px;font-weight:800;color:#C0232A">'+priceNs+'</p>'
+          +'<p style="font-size:10px;color:#C0232A;font-weight:600">🔥 sale/kho</p>'
+          +'</div>'
+        :'<div style="text-align:right;flex-shrink:0;margin-left:10px">'
+          +'<p style="font-size:14px;font-weight:800;color:#C0232A">'+priceNhan+'</p>'
+          +'<p style="font-size:10px;color:var(--t2)">nhận kho</p>'
+          +'<p style="font-size:11px;color:#1565C0;font-weight:600">→ giao: '+priceGiao+'</p>'
+          +'</div>'
+      )
+      +'</div>';
     div.addEventListener('click',function(){showDP(p.ma);});
     el.appendChild(div);
   });
