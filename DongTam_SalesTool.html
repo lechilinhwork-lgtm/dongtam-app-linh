@@ -27,7 +27,8 @@ body{font-family:var(--f);font-size:14px;color:var(--t1);background:var(--bg);pa
 /* ===== DESKTOP: thu hẹp như điện thoại ===== */
 @media(min-width:600px){
   html,body{background:#D0D0D0;min-height:100vh}
-  body{display:flex;justify-content:center;align-items:flex-start}
+  /* KHÔNG dùng flex - làm login + app xếp ngang nhau */
+  body{display:block}
 
   #login-screen{
     width:420px;max-width:420px;min-height:auto;
@@ -42,26 +43,23 @@ body{font-family:var(--f);font-size:14px;color:var(--t1);background:var(--bg);pa
     background:var(--bg);
     box-shadow:0 0 48px rgba(0,0,0,.22);
     position:relative;
-    /* Không dùng margin:auto ở đây vì body đã flex+center */
+    margin:0 auto;
   }
 
-  /* Topbar: cố định, căn giữa theo #app-content */
+  /* Topbar: sticky trong app-content */
   .topbar{
-    position:fixed;top:0;
-    width:420px;
-    left:50%;transform:translateX(-50%);
+    position:sticky;top:0;
+    width:100%;
     z-index:100;
   }
 
-  /* Bottom nav: cố định, căn giữa */
+  /* Bottom nav: fixed căn giữa - dùng !important để override CSS gốc left:0;right:0 */
   .bottom-nav{
-    position:fixed;bottom:0;
-    width:420px;
-    left:50%;transform:translateX(-50%);
+    position:fixed !important;bottom:0 !important;
+    width:420px !important;
+    left:50% !important;right:auto !important;
+    transform:translateX(-50%) !important;
   }
-
-  /* Nội dung bên trong không bị che bởi topbar cố định */
-  .wrap{padding-top:58px !important}
 }
 
 /* ===== INPUTS ===== */
@@ -727,8 +725,12 @@ function fetchGiaFromSheet(){
             // Tìm trong DATA hiện tại
             var p = DATA.find(function(x){return x.ma===ma;});
             if(p){
-              // Mã đã có → cập nhật giá
-              p.le=le; p.nhan=nhan; p.giao=giao; p.ns=ns; p.gs=gs;
+              // Mã đã có → chỉ cập nhật nếu giá > 0 (tránh ghi đè bằng 0 khi Sheet lỗi)
+              if(le>0)   p.le=le;
+              if(nhan>0) p.nhan=nhan;
+              if(giao>0) p.giao=giao;
+              if(ns>0)   p.ns=ns;
+              if(gs>0)   p.gs=gs;
             } else {
               // Mã MỚI trong Sheet → thêm vào DATA
               DATA.push({
@@ -764,9 +766,8 @@ function fetchGiaFromSheet(){
             var p = KEO.find(function(x){return x.ma===ma;});
             if(p){
               function pgKeo(v){return parseFloat(String(v||"0").replace(/\./g,"").replace(/,/g,"."))||0;}
-              var _le=pgKeo(row.le), _nhan=pgKeo(row.nhan), _nhan2=pgKeo(row.nhan2);
-              var _giao=pgKeo(row.giao), _giao2=pgKeo(row.giao2);
-              // Chỉ cập nhật nếu giá > 0 (tránh ghi đè bằng 0 khi Sheet lỗi hoặc thiếu cột)
+              var _le=pgKeo(row.le),_nhan=pgKeo(row.nhan),_nhan2=pgKeo(row.nhan2);
+              var _giao=pgKeo(row.giao),_giao2=pgKeo(row.giao2);
               if(_le>0)    p.le=_le;
               if(_nhan>0)  p.nhan=_nhan;
               if(_nhan2>0) p.nhan2=_nhan2;
@@ -2067,14 +2068,9 @@ function renderDon(){
       else if(qty_>=21){ nhanVal=item.nhan2||item.nhan; giaoVal=item.giao2||item.giao; }
       else { nhanVal=item.nhan; giaoVal=item.giao; }
     } else if(item.loai==='keo'){
-      // Keo/Bột: 2 mức theo số bao (< 50 hoặc ≥ 50)
-      if(qty_>=50){
-        nhanVal=item.nhan2||item.nhan; // giá ≥50 bao
-        giaoVal=item.giao2||item.giao;
-      } else {
-        nhanVal=item.nhan; // giá <50 bao
-        giaoVal=item.giao;
-      }
+      // Keo/Bột: 2 mức (< 50 bao hoặc ≥ 50 bao)
+      if(qty_>=50){ nhanVal=item.nhan2||item.nhan; giaoVal=item.giao2||item.giao; }
+      else { nhanVal=item.nhan; giaoVal=item.giao; }
     } else {
       // Gạch / Ngói: dùng giá sale nếu có
       nhanVal=item.ns>0?item.ns:item.nhan;
@@ -2082,9 +2078,7 @@ function renderDon(){
     }
 
     var div=document.createElement('div'); div.className='cart-item';
-    var label = loai==='ngoi'?'🏠 Ngói':
-      loai==='keo'?(item.qty>=50?'🧱 Keo (≥50 bao ✓)':'🧱 Keo (<50 bao)'):
-      loai==='kinh'?'💎 Kính':'🏗️ Gạch';
+    var label = loai==='ngoi'?'🏠 Ngói': loai==='keo'?'🧱 Keo': loai==='kinh'?'💎 Kính':'🏗️ Gạch';
     div.innerHTML=
       '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">'
       +'<div>'
@@ -2286,14 +2280,9 @@ function calcAndShowTotals(){
       else if(qty_>=21){ nhanVal=item.nhan2||item.nhan; giaoVal=item.giao2||item.giao; }
       else { nhanVal=item.nhan; giaoVal=item.giao; }
     } else if(item.loai==='keo'){
-      // Keo/Bột: 2 mức theo số bao (< 50 hoặc ≥ 50)
-      if(qty_>=50){
-        nhanVal=item.nhan2||item.nhan; // giá ≥50 bao
-        giaoVal=item.giao2||item.giao;
-      } else {
-        nhanVal=item.nhan; // giá <50 bao
-        giaoVal=item.giao;
-      }
+      // Keo/Bột: 2 mức (< 50 bao hoặc ≥ 50 bao)
+      if(qty_>=50){ nhanVal=item.nhan2||item.nhan; giaoVal=item.giao2||item.giao; }
+      else { nhanVal=item.nhan; giaoVal=item.giao; }
     } else {
       // Gạch / Ngói: dùng giá sale nếu có
       nhanVal=item.ns>0?item.ns:item.nhan;
