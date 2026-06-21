@@ -969,9 +969,13 @@ function renderKinhInGach(){
       +'<p style="color:#888;font-size:10px">giao: '+(p.giao3||p.giao).toLocaleString('vi-VN')+'</p>'
       +'</div>'
       +'</div>'
-      +'<button onclick="addToDonKinh(''+p.ma+'')" style="width:100%;padding:8px;border:none;border-radius:8px;background:'+(inDon?'#1B7A3E':'#1565C0')+';color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">'
+      +'<button id="kinh-btn-'+p.ma+'" style="width:100%;padding:8px;border:none;border-radius:8px;background:'+(inDon?'#1B7A3E':'#1565C0')+';color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">'
       +(inDon?'✓ Đã thêm vào đơn':'🛒 + Thêm vào đơn')
       +'</button>';
+    // Gắn onclick sau khi tạo element (tránh lỗi quote)
+    (function(ma){
+      div.querySelector('button').addEventListener('click', function(){ addToDonKinh(ma); });
+    })(p.ma);
     el.appendChild(div);
   });
 }
@@ -1689,36 +1693,44 @@ var LOCAL_USERS = [
 ];
 
 function doLogin(){
-  var u = document.getElementById('inp-user').value.trim().toLowerCase();
-  var p = document.getElementById('inp-pass').value;
+  var u = (document.getElementById('inp-user').value||'').trim().toLowerCase();
+  var pw = (document.getElementById('inp-pass').value||'');
   var errEl = document.getElementById('login-err');
-  var btn   = document.getElementById('btn-login');
+  var btn = document.getElementById('btn-login');
+
   errEl.textContent = '';
 
-  if(!u || !p){
-    errEl.textContent = 'Vui lòng nhập đầy đủ thông tin!';
+  if(!u || !pw){
+    errEl.textContent = 'Vui lòng nhập đầy đủ!';
     return;
   }
 
-  // 1. Thử local trước (nhanh, không cần mạng)
-  var local = LOCAL_USERS.find(function(x){ return x.u===u && x.p===p; });
-  if(local){
-    saveSession({u:u, name:local.name, role:local.role});
-    showApp(local.name);
+  // Kiểm tra LOCAL_USERS trước
+  var found = null;
+  for(var i=0;i<LOCAL_USERS.length;i++){
+    if(LOCAL_USERS[i].u === u && LOCAL_USERS[i].p === pw){
+      found = LOCAL_USERS[i];
+      break;
+    }
+  }
+
+  if(found){
+    saveSession({u:u, name:found.name, role:found.role});
+    showApp(found.name);
     return;
   }
 
-  // 2. Thử qua Apps Script (đọc tab USERS trong Sheet)
+  // Thử Apps Script
   btn.textContent = '⏳ Đang kiểm tra...';
   btn.disabled = true;
 
-  var cbName = '_loginCB_' + Date.now();
+  var cbName = '_cb_' + Date.now();
   var s = document.createElement('script');
   var t = setTimeout(function(){
     btn.textContent = '→ Đăng nhập';
     btn.disabled = false;
     errEl.textContent = '❌ Sai tài khoản hoặc mật khẩu!';
-    s.remove();
+    if(s.parentNode) s.parentNode.removeChild(s);
     delete window[cbName];
   }, 8000);
 
@@ -1726,25 +1738,25 @@ function doLogin(){
     clearTimeout(t);
     btn.textContent = '→ Đăng nhập';
     btn.disabled = false;
+    if(s.parentNode) s.parentNode.removeChild(s);
     delete window[cbName];
-    s.remove();
-    if(data && data.status === 'ok'){
+    if(data && data.status==='ok'){
       saveSession({u:u, name:data.name, role:data.role});
       showApp(data.name);
     } else {
       errEl.textContent = '❌ Sai tài khoản hoặc mật khẩu!';
       document.getElementById('inp-pass').value = '';
-      document.getElementById('inp-pass').focus();
     }
   };
 
   var url = APPS_URL + '?action=login'
     + '&username=' + encodeURIComponent(u)
-    + '&password=' + encodeURIComponent(p)
-    + '&callback=' + cbName;
+    + '&password=' + encodeURIComponent(pw)
+    + '&callback=' + encodeURIComponent(cbName);
   s.src = url;
   document.head.appendChild(s);
 }
+
 
 function showApp(name){
   document.getElementById('login-screen').style.display = 'none';
