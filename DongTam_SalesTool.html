@@ -1034,7 +1034,7 @@ function render(){
   var list = DATA;
   if(curF==='porcelain') list=list.filter(function(p){return p.cat==='porcelain';});
   else if(curF==='ceramic') list=list.filter(function(p){return p.cat==='ceramic';});
-  else if(curF==='sale') list=list.filter(function(p){return p.gs>0||p.ns>0;});
+  else if(curF==='sale') list=list.filter(function(p){return p.gio==='●';});
   if(curSize&&curSize!=='all') list=list.filter(function(p){return p.kc===curSize||p.kc.toLowerCase()===curSize.toLowerCase();});
   if(q) list=list.filter(function(p){return p.ma.toUpperCase().includes(q)||p.kc.includes(q);});
   var totalItems=list.length;
@@ -1045,7 +1045,7 @@ function render(){
   document.getElementById('pcount').textContent=totalItems+' mã'+(totalItems>0?' · hiển thị '+startN+'–'+endN:'');
   var el=document.getElementById('plist'); el.innerHTML='';
   shown.forEach(function(p){
-    var hasSale=p.gs>0||p.ns>0;
+    var hasSale=p.gio==='●'; // Chỉ hàng có danh mục 🔥 Sale trong Sheet
     var star=p.gio==='★'?' <span class="badge" style="background:#FDECEA;color:#8B0000;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:700">★ CL</span>'
              :p.gio==='●'?' <span class="badge" style="background:#E8F5E9;color:#1B5E20;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:700">🔥 Sale</span>':'';
     var saleDot=hasSale?'<span class="sale-dot"></span>':'';
