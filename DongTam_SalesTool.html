@@ -27,6 +27,7 @@ body{font-family:var(--f);font-size:14px;color:var(--t1);background:var(--bg);pa
 /* ===== DESKTOP: thu hẹp như điện thoại ===== */
 @media(min-width:600px){
   html,body{background:#D0D0D0;min-height:100vh}
+  /* KHÔNG dùng flex - làm login + app xếp ngang nhau */
   body{display:block}
 
   #login-screen{
@@ -45,12 +46,14 @@ body{font-family:var(--f);font-size:14px;color:var(--t1);background:var(--bg);pa
     margin:0 auto;
   }
 
+  /* Topbar: sticky trong app-content */
   .topbar{
     position:sticky;top:0;
     width:100%;
     z-index:100;
   }
 
+  /* Bottom nav: fixed căn giữa - dùng !important để override CSS gốc left:0;right:0 */
   .bottom-nav{
     position:fixed !important;bottom:0 !important;
     width:420px !important;
@@ -88,13 +91,13 @@ input::placeholder{color:var(--t3)}
 .login-form{width:100%;max-width:360px}
 .login-field{margin-bottom:12px}
 .login-label{display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px}
-#login-btn{
+#btn-login{
   width:100%;padding:15px;margin-top:8px;
   background:var(--red);color:#fff;border:none;border-radius:var(--r);
   font-size:16px;font-weight:700;cursor:pointer;
   letter-spacing:.2px;
 }
-#login-btn:active{opacity:.88}
+#btn-login:active{opacity:.88}
 
 /* ===== APP ===== */
 #app-screen{display:none;padding-bottom:64px}
@@ -550,8 +553,8 @@ input::placeholder{color:var(--t3)}
 <!-- TAB 4: Keo -->
 <div id="tab-keo" class="tc">
   <div style="display:flex;gap:6px;margin-bottom:12px">
-    <button id="sub-keo-btn" onclick="swSubKeo('keo')" style="flex:1;padding:9px;border-radius:10px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:12px;cursor:pointer;font-family:var(--f)">🧱 Keo & Bột</button>
-    <button id="sub-kinh-btn" onclick="swSubKeo('kinh')" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--bd);background:var(--bg1);color:var(--t2);font-weight:700;font-size:12px;cursor:pointer;font-family:var(--f)">💎 Gạch kính</button>
+    <button id="sub-keo-btn" onclick="swSubKeo('keo')" style="width:100%;padding:9px;border-radius:10px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:12px;cursor:pointer;font-family:var(--f)">🧱 Keo & Bột chà ron</button>
+
   </div>
   <div id="sub-keo-content">
   <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Keo dán gạch GECKO Đồng Tâm · Giá <b>đồng/bao</b></p>
@@ -579,7 +582,7 @@ input::placeholder{color:var(--t3)}
   </div>
   <div id="keo-list"></div>
   </div><!-- /sub-keo-content -->
-  <div id="sub-kinh-content" style="display:none">
+  <div id="sub-kinh-content" style="display:none;visibility:hidden;height:0;overflow:hidden">
   <div style="background:#E3F2FD;border-radius:var(--r12);padding:12px 14px;margin-bottom:10px;font-size:12px;color:#0D47A1">
     💎 <strong>Gạch kính</strong> · Kích cỡ 19×19×9.5cm · Đóng gói 6 viên/thùng · <strong>Chỉ bán theo thùng</strong>
   </div>
@@ -745,11 +748,14 @@ function fetchGiaFromSheet(){
             var p = NGOI.find(function(x){return x.ma===ma;});
             if(p){
               function pg2(v){return parseFloat(String(v||'0').replace(/\./g,'').replace(/,/g,'.'))||0;}
-              p.le    = pg2(row.le);
-              p.nhan  = pg2(row.nhan);
-              p.nhan2 = pg2(row.nhan2);
-              p.giao  = pg2(row.giao);
-              p.giao2 = pg2(row.giao2);
+              var _le=pg2(row.le),_nhan=pg2(row.nhan),_nhan2=pg2(row.nhan2);
+              var _giao=pg2(row.giao),_giao2=pg2(row.giao2);
+              // Guard > 0: không ghi đè nếu Sheet trả về 0
+              if(_le>0)    p.le=_le;
+              if(_nhan>0)  p.nhan=_nhan;
+              if(_nhan2>0) p.nhan2=_nhan2;
+              if(_giao>0)  p.giao=_giao;
+              if(_giao2>0) p.giao2=_giao2;
               var nsNgoi = pg2(row.ns);
               p.ns = nsNgoi > 0 ? nsNgoi : Math.round(p.nhan * 0.90);
               p.gs = pg2(row.gs) || p.giao;
@@ -762,11 +768,14 @@ function fetchGiaFromSheet(){
             var ma = String(row.ma||'').trim();
             var p = KEO.find(function(x){return x.ma===ma;});
             if(p){
-              p.le=parseFloat(String(row.le||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.nhan=parseFloat(String(row.nhan||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.nhan2=parseFloat(String(row.nhan2||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.giao=parseFloat(String(row.giao||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-              p.giao2=parseFloat(String(row.giao2||"0").replace(/\./g,"").replace(/,/g,"."))||0;
+              function pgKeo(v){return parseFloat(String(v||"0").replace(/\./g,"").replace(/,/g,"."))||0;}
+              var _le=pgKeo(row.le),_nhan=pgKeo(row.nhan),_nhan2=pgKeo(row.nhan2);
+              var _giao=pgKeo(row.giao),_giao2=pgKeo(row.giao2);
+              if(_le>0)    p.le=_le;
+              if(_nhan>0)  p.nhan=_nhan;
+              if(_nhan2>0) p.nhan2=_nhan2;
+              if(_giao>0)  p.giao=_giao;
+              if(_giao2>0) p.giao2=_giao2;
             }
           });
           console.log('✅ Cập nhật giá keo từ Sheet: '+rows.length+' mã');
@@ -923,12 +932,55 @@ function goPage(p){
   var plist=document.getElementById('plist');
   if(plist) plist.scrollIntoView({behavior:'smooth',block:'start'});
 }
+function renderKinhInGach(){
+  var el=document.getElementById('plist'); el.innerHTML='';
+  document.getElementById('pcount').textContent='3 mã gạch kính';
+  KINH.forEach(function(p){
+    var inDon=donItems.some(function(x){return x.ma===p.ma;});
+    var div=document.createElement('div'); div.className='mk';
+    div.style.cssText='padding:10px 12px';
+    div.innerHTML=
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+      +getImgHtml(p.ma,48,'💎')
+      +'<div style="flex:1">'
+      +'<p style="font-size:13px;font-weight:700;color:var(--t1)">'+p.ten+'</p>'
+      +'<p style="font-size:11px;color:var(--t2)">'+p.kc+' cm · 6 viên/thùng</p>'
+      +'</div>'
+      +'<div style="text-align:right">'
+      +'<p style="font-size:12px;color:var(--t3);text-decoration:line-through">'+p.le.toLocaleString('vi-VN')+'đ</p>'
+      +'<p style="font-size:13px;font-weight:800;color:#1565C0">'+p.nhan.toLocaleString('vi-VN')+'đ</p>'
+      +'<p style="font-size:10px;color:var(--t2)">/thùng · nhận kho</p>'
+      +'</div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:11px;margin-bottom:8px">'
+      +'<div style="background:#E3F2FD;border-radius:6px;padding:5px;text-align:center">'
+      +'<p style="color:#666;margin-bottom:1px">≤20 thùng</p>'
+      +'<p style="font-weight:700;color:#1565C0">'+p.nhan.toLocaleString('vi-VN')+'</p>'
+      +'<p style="color:#888;font-size:10px">giao: '+p.giao.toLocaleString('vi-VN')+'</p>'
+      +'</div>'
+      +'<div style="background:#E8EAF6;border-radius:6px;padding:5px;text-align:center">'
+      +'<p style="color:#666;margin-bottom:1px">21–49 thùng</p>'
+      +'<p style="font-weight:700;color:#3949AB">'+(p.nhan2||p.nhan).toLocaleString('vi-VN')+'</p>'
+      +'<p style="color:#888;font-size:10px">giao: '+(p.giao2||p.giao).toLocaleString('vi-VN')+'</p>'
+      +'</div>'
+      +'<div style="background:#E8F5E9;border-radius:6px;padding:5px;text-align:center">'
+      +'<p style="color:#666;margin-bottom:1px">≥50 thùng</p>'
+      +'<p style="font-weight:700;color:#2E7D32">'+(p.nhan3||p.nhan).toLocaleString('vi-VN')+'</p>'
+      +'<p style="color:#888;font-size:10px">giao: '+(p.giao3||p.giao).toLocaleString('vi-VN')+'</p>'
+      +'</div>'
+      +'</div>'
+      +'<button onclick="addToDonKinh(''+p.ma+'')" style="width:100%;padding:8px;border:none;border-radius:8px;background:'+(inDon?'#1B7A3E':'#1565C0')+';color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">'
+      +(inDon?'✓ Đã thêm vào đơn':'🛒 + Thêm vào đơn')
+      +'</button>';
+    el.appendChild(div);
+  });
+}
+
 function render(){
   var q=document.getElementById('sq').value.trim().toUpperCase();
-  // Nếu filter gạch kính → redirect sang tab Keo sub-tab Kính
+  // Nếu filter gạch kính → hiển thị trong tab Gạch cùng với nút thêm vào đơn
   if(curF==='kinh'){
-    swTab('keo');
-    swSubKeo('kinh');
+    renderKinhInGach();
     return;
   }
   var list = DATA;
@@ -946,21 +998,33 @@ function render(){
   var el=document.getElementById('plist'); el.innerHTML='';
   shown.forEach(function(p){
     var hasSale=p.gs>0||p.ns>0;
-    var star=p.gio==='★'?' <span class="badge" style="background:#FDECEA;color:#8B0000">★ CL</span>'
-             :p.gio==='●'?' <span class="badge" style="background:#E8F5E9;color:#1B5E20">● CL</span>':'';
+    var star=p.gio==='★'?' <span class="badge" style="background:#FDECEA;color:#8B0000;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:700">★ CL</span>'
+             :p.gio==='●'?' <span class="badge" style="background:#E8F5E9;color:#1B5E20;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:700">🔥 Sale</span>':'';
     var saleDot=hasSale?'<span class="sale-dot"></span>':'';
-    var priceDisp=p.nhan>0?p.nhan.toLocaleString('vi-VN')+'đ':'–';
+    var priceNhan=p.nhan>0?p.nhan.toLocaleString('vi-VN')+'đ':'–';
+    var priceGiao=p.giao>0?p.giao.toLocaleString('vi-VN')+'đ':'–';
+    var priceNs=p.ns>0?p.ns.toLocaleString('vi-VN')+'đ':'–';
     var div=document.createElement('div'); div.className='mk';
-    div.innerHTML='<div style="display:flex;justify-content:space-between;align-items:start">'
-      +'<div style="flex:1;min-width:0"><p style="font-size:14px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px">'+p.ma+saleDot+'</p>'
-      +'<p style="font-size:11px;color:var(--t2)">'+p.kc+star+'</p></div>'
-      +'<div style="text-align:right;flex-shrink:0;margin-left:8px">'
-      +(hasSale?'<p style="font-size:11px;color:var(--t3);text-decoration:line-through">'+priceDisp+'</p>'
-               +'<p style="font-size:13px;font-weight:700;color:#C0232A">'+(p.ns>0?p.ns.toLocaleString('vi-VN')+'đ':'–')+'</p>'
-               +'<p style="font-size:10px;color:#C0232A">sale/kho</p>'
-        :'<p style="font-size:13px;font-weight:600;color:#C0232A">'+priceDisp+'</p>'
-        +'<p style="font-size:10px;color:var(--t2)">nhận kho</p>')
-      +'</div></div>';
+    div.style.cssText='padding:10px 12px;cursor:pointer';
+    div.innerHTML=
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+      +'<div style="flex:1;min-width:0">'
+      +'<p style="font-size:13px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+p.ma+saleDot+'</p>'
+      +'<p style="font-size:11px;color:var(--t2);margin-top:2px">'+p.kc+star+'</p>'
+      +'</div>'
+      +(hasSale
+        ?'<div style="text-align:right;flex-shrink:0;margin-left:10px">'
+          +'<p style="font-size:11px;color:var(--t3);text-decoration:line-through">'+priceNhan+'</p>'
+          +'<p style="font-size:14px;font-weight:800;color:#C0232A">'+priceNs+'</p>'
+          +'<p style="font-size:10px;color:#C0232A;font-weight:600">🔥 sale/kho</p>'
+          +'</div>'
+        :'<div style="text-align:right;flex-shrink:0;margin-left:10px">'
+          +'<p style="font-size:14px;font-weight:800;color:#C0232A">'+priceNhan+'</p>'
+          +'<p style="font-size:10px;color:var(--t2)">nhận kho</p>'
+          +'<p style="font-size:11px;color:#1565C0;font-weight:600">→ giao: '+priceGiao+'</p>'
+          +'</div>'
+      )
+      +'</div>';
     div.addEventListener('click',function(){showDP(p.ma);});
     el.appendChild(div);
   });
@@ -1628,7 +1692,7 @@ function doLogin(){
   var u = document.getElementById('inp-user').value.trim().toLowerCase();
   var p = document.getElementById('inp-pass').value;
   var errEl = document.getElementById('login-err');
-  var btn   = document.getElementById('login-btn');
+  var btn   = document.getElementById('btn-login');
   errEl.textContent = '';
 
   if(!u || !p){
@@ -2057,10 +2121,16 @@ function renderDon(){
     var nhanVal, giaoVal;
     var qty_=parseFloat(item.qty)||0;
     if(item.loai==='kinh'){
+      // Gạch kính: 3 mức theo số thùng
       if(qty_>=50){ nhanVal=item.nhan3||item.nhan; giaoVal=item.giao3||item.giao; }
       else if(qty_>=21){ nhanVal=item.nhan2||item.nhan; giaoVal=item.giao2||item.giao; }
       else { nhanVal=item.nhan; giaoVal=item.giao; }
+    } else if(item.loai==='keo'){
+      // Keo/Bột: 2 mức (< 50 bao hoặc ≥ 50 bao)
+      if(qty_>=50){ nhanVal=item.nhan2||item.nhan; giaoVal=item.giao2||item.giao; }
+      else { nhanVal=item.nhan; giaoVal=item.giao; }
     } else {
+      // Gạch / Ngói: dùng giá sale nếu có
       nhanVal=item.ns>0?item.ns:item.nhan;
       giaoVal=item.gs>0?item.gs:item.giao;
     }
@@ -2263,10 +2333,16 @@ function calcAndShowTotals(){
     var nhanVal, giaoVal;
     var qty_=parseFloat(item.qty)||0;
     if(item.loai==='kinh'){
+      // Gạch kính: 3 mức theo số thùng
       if(qty_>=50){ nhanVal=item.nhan3||item.nhan; giaoVal=item.giao3||item.giao; }
       else if(qty_>=21){ nhanVal=item.nhan2||item.nhan; giaoVal=item.giao2||item.giao; }
       else { nhanVal=item.nhan; giaoVal=item.giao; }
+    } else if(item.loai==='keo'){
+      // Keo/Bột: 2 mức (< 50 bao hoặc ≥ 50 bao)
+      if(qty_>=50){ nhanVal=item.nhan2||item.nhan; giaoVal=item.giao2||item.giao; }
+      else { nhanVal=item.nhan; giaoVal=item.giao; }
     } else {
+      // Gạch / Ngói: dùng giá sale nếu có
       nhanVal=item.ns>0?item.ns:item.nhan;
       giaoVal=item.gs>0?item.gs:item.giao;
     }
