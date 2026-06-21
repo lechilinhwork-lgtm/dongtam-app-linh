@@ -748,11 +748,14 @@ function fetchGiaFromSheet(){
             var p = NGOI.find(function(x){return x.ma===ma;});
             if(p){
               function pg2(v){return parseFloat(String(v||'0').replace(/\./g,'').replace(/,/g,'.'))||0;}
-              p.le    = pg2(row.le);
-              p.nhan  = pg2(row.nhan);
-              p.nhan2 = pg2(row.nhan2);
-              p.giao  = pg2(row.giao);
-              p.giao2 = pg2(row.giao2);
+              var _le=pg2(row.le),_nhan=pg2(row.nhan),_nhan2=pg2(row.nhan2);
+              var _giao=pg2(row.giao),_giao2=pg2(row.giao2);
+              // Guard > 0: không ghi đè nếu Sheet trả về 0
+              if(_le>0)    p.le=_le;
+              if(_nhan>0)  p.nhan=_nhan;
+              if(_nhan2>0) p.nhan2=_nhan2;
+              if(_giao>0)  p.giao=_giao;
+              if(_giao2>0) p.giao2=_giao2;
               var nsNgoi = pg2(row.ns);
               p.ns = nsNgoi > 0 ? nsNgoi : Math.round(p.nhan * 0.90);
               p.gs = pg2(row.gs) || p.giao;
