@@ -343,6 +343,10 @@ input::placeholder{color:var(--t3)}
 }
 ::-webkit-scrollbar{width:3px;height:3px}
 ::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+.pag{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px;padding:8px 12px}
+.pag-btn{min-width:32px;height:32px;padding:0 8px;border-radius:6px;border:1.5px solid var(--bd);background:var(--bg1);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--f);color:var(--t2)}
+.pag-btn.on{background:var(--red);border-color:var(--red);color:#fff}
+.pag-btn:disabled{opacity:.4;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -475,9 +479,9 @@ input::placeholder{color:var(--t3)}
       </div>
     </div>
   </div>
+  <div id="pagination" class="pag" style="padding:8px 12px;border-bottom:1px solid #eee;display:flex;flex-wrap:wrap;justify-content:center;gap:4px;align-items:center"></div>
   <div id="plist"></div>
   <p id="pcount" class="pag-info"></p>
-  <div id="pagination" class="pag"></div>
     </div><!-- end main content -->
   </div><!-- end sidebar layout -->
 </div>
@@ -493,7 +497,6 @@ input::placeholder{color:var(--t3)}
   <input type="text" id="ssq" placeholder="Tìm mã sale..." oninput="renderSale()" style="margin-bottom:10px"/>
   <div class="filters" style="margin-bottom:8px">
     <button class="fb on" id="sf2-all"       onclick="setSF2('all')">Tất cả</button>
-    <button class="fb"    id="sf2-cl"         onclick="setSF2('cl')">★ Chiến lược</button>
     <button class="fb"    id="sf2-porcelain"  onclick="setSF2('porcelain')">Porcelain</button>
     <button class="fb"    id="sf2-ceramic"    onclick="setSF2('ceramic')">Ceramic</button>
   </div>
@@ -889,7 +892,10 @@ function setSize(sz){
   document.querySelectorAll('.sz-item').forEach(function(el){el.classList.remove('on');});
   var map={'all':'sz-all','600x1200':'sz-60x120','1000x1000':'sz-100x100','800x800':'sz-80x80','600x600':'sz-60x60','400x800':'sz-40x80','300x600':'sz-30x60','400x400':'sz-40x40','300x300':'sz-30x30','200x800':'sz-20x80','200x1200':'sz-20x120','200x200':'sz-20x20','150x300':'sz-15x30','250x600':'sz-25x60','100x200':'sz-10x20'};
   var el=document.getElementById(map[sz]||'sz-all'); if(el) el.classList.add('on');
-  curPage=0;render();
+  curPage=0;
+  // Nếu đang ở tab Sale thì render Sale theo kích thước
+  if(curF==='sale') renderSale();
+  else render();
 }
 
 function fmt(n){ return (!n||n===0)?'–':n.toLocaleString('vi-VN')+'đ'; }
@@ -1034,7 +1040,7 @@ function render(){
   var list = DATA;
   if(curF==='porcelain') list=list.filter(function(p){return p.cat==='porcelain';});
   else if(curF==='ceramic') list=list.filter(function(p){return p.cat==='ceramic';});
-  else if(curF==='sale') list=list.filter(function(p){return p.gio==='●';});
+  else if(curF==='sale'){ renderSale(); return; }
   if(curSize&&curSize!=='all') list=list.filter(function(p){return p.kc===curSize||p.kc.toLowerCase()===curSize.toLowerCase();});
   if(q) list=list.filter(function(p){return p.ma.toUpperCase().includes(q)||p.kc.includes(q);});
   var totalItems=list.length;
@@ -1045,7 +1051,7 @@ function render(){
   document.getElementById('pcount').textContent=totalItems+' mã'+(totalItems>0?' · hiển thị '+startN+'–'+endN:'');
   var el=document.getElementById('plist'); el.innerHTML='';
   shown.forEach(function(p){
-    var hasSale=p.gio==='●'; // Chỉ hàng có danh mục 🔥 Sale trong Sheet
+    var hasSale=p.gio==='●' && p.ns>0; // Sale thật: gio=● VÀ có giá ns thật
     var star=p.gio==='★'?' <span class="badge" style="background:#FDECEA;color:#8B0000;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:700">★ CL</span>'
              :p.gio==='●'?' <span class="badge" style="background:#E8F5E9;color:#1B5E20;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:700">🔥 Sale</span>':'';
     var saleDot=hasSale?'<span class="sale-dot"></span>':'';
@@ -1166,10 +1172,10 @@ function setSF(f){
 function renderSale(){
   var q=(document.getElementById('ssq').value||'').trim().toUpperCase();
   var sf2 = window._sf2||'all';
-  var list=DATA.filter(function(p){ return (p.gs>0||p.ns>0); });
-  if(sf2==='cl')        list=list.filter(function(p){ return p.gio==='★'; });
-  else if(sf2==='porcelain') list=list.filter(function(p){ return p.cat==='porcelain'; });
-  else if(sf2==='ceramic')   list=list.filter(function(p){ return p.cat==='ceramic'; });
+  // D2 + D3 = toàn bộ SP Sale thật từ Sheet (cột Danh mục = 🔥 Sale)
+  var list=D2.concat(D3);
+  if(sf2==='porcelain') list=list.filter(function(p){ return p.cat==='porcelain'; });
+  else if(sf2==='ceramic') list=list.filter(function(p){ return p.cat==='ceramic'; });
   if(q) list=list.filter(function(p){ return p.ma.toUpperCase().includes(q)||(p.kc||'').includes(q); });
   document.getElementById('scount').textContent=list.length+' mã đang sale';
   var el=document.getElementById('slist'); el.innerHTML='';
