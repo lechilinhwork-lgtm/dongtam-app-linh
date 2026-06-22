@@ -1172,8 +1172,9 @@ function setSF(f){
 function renderSale(){
   var q=(document.getElementById('ssq').value||'').trim().toUpperCase();
   var sf2 = window._sf2||'all';
-  // D2 + D3 = toàn bộ SP Sale thật từ Sheet (cột Danh mục = 🔥 Sale)
-  var list=D2.concat(D3);
+  // SP Sale thật = D1 có gio:"●" + toàn bộ D2 + D3
+  var saleD1 = D1.filter(function(p){ return p.gio==='●'; });
+  var list = saleD1.concat(D2).concat(D3).slice();
   if(sf2==='porcelain') list=list.filter(function(p){ return p.cat==='porcelain'; });
   else if(sf2==='ceramic') list=list.filter(function(p){ return p.cat==='ceramic'; });
   if(q) list=list.filter(function(p){ return p.ma.toUpperCase().includes(q)||(p.kc||'').includes(q); });
