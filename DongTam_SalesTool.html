@@ -443,7 +443,8 @@ input::placeholder{color:var(--t3)}
         <div class="pr-box sale"><p>Nhận kho Sale</p><p id="dp-ns"></p></div>
         <div class="pr-box sale"><p>Giao Sale</p><p id="dp-gs"></p></div>
       </div>
-      <div id="dp-save" style="background:#E8F5E9;border-radius:var(--r8);padding:8px 10px;font-size:12px;color:#1B5E20;text-align:center;margin-bottom:8px"></div>
+      <div id="dp-save" style="background:#E8F5E9;border-radius:var(--r8);padding:8px 10px;font-size:12px;color:#1B5E20;text-align:center;margin-bottom:4px"></div>
+      <div style="text-align:center;margin-bottom:8px"><span id="dp-sale-badge" style="display:none"></span></div>
     </div>
     <div style="background:var(--bg2);border-radius:var(--r8);padding:9px 11px;font-size:12px;color:var(--t2)">
       Bán <input id="dp-sell" type="number" style="width:90px;display:inline;padding:3px 6px;font-size:12px" oninput="calcM()"/> đ/m² → lời <span id="dp-margin" style="font-weight:600;color:#388E3C">–</span>
@@ -496,11 +497,10 @@ input::placeholder{color:var(--t3)}
   </div>
   <input type="text" id="ssq" placeholder="Tìm mã sale..." oninput="renderSale()" style="margin-bottom:10px"/>
   <div class="filters" style="margin-bottom:8px">
-    <button class="fb on" id="sf2-all"       onclick="setSF2('all')">Tất cả</button>
-    <button class="fb"    id="sf2-ct1"        onclick="setSF2('ct1')">🗓️ Sale tháng</button>
+    <button class="fb on" id="sf2-ct1"        onclick="setSF2('ct1')">🗓️ Sale tháng</button>
     <button class="fb"    id="sf2-ct2"        onclick="setSF2('ct2')">📦 Xả kho</button>
-    <button class="fb"    id="sf2-porcelain"  onclick="setSF2('porcelain')">Porcelain</button>
-    <button class="fb"    id="sf2-ceramic"    onclick="setSF2('ceramic')">Ceramic</button>
+    <button class="fb"    id="sf2-porcelain"  onclick="setSF2('porcelain')">🏷️ Porcelain</button>
+    <button class="fb"    id="sf2-ceramic"    onclick="setSF2('ceramic')">🏷️ Ceramic</button>
   </div>
   <div id="slist" class="sale-grid"></div>
   <p id="scount" class="cnt"></p>
@@ -925,7 +925,7 @@ function swTab(t){
   document.querySelectorAll('.tb').forEach(function(b,i){
     b.classList.toggle('on',['tra','sale','ngoi','keo','kinh','don'][i]===t);
   });
-  if(t==='sale') renderSale();
+  if(t==='sale'){ window._sf2=window._sf2||'ct1'; renderSale(); }
   if(t==='ngoi') renderNgoi();
   if(t==='keo')  { renderKeo(); }
   if(t==='kinh') renderKinh();
@@ -1135,14 +1135,32 @@ function showDP(ma){
   document.getElementById('dp-le').textContent=fmt(p.le);
   document.getElementById('dp-nhan').textContent=fmt(p.nhan);
   document.getElementById('dp-giao').textContent=fmt(p.giao);
-  var hasSale=p.gs>0||p.ns>0;
-  document.getElementById('dp-sale-section').style.display=hasSale?'block':'none';
+  // Tra giá sale từ CT1_DATA / CT2_DATA (nếu đã load)
+  var saleInfo = CT1_DATA.find(function(x){return x.ma===ma;})
+               || CT2_DATA.find(function(x){return x.ma===ma;});
+  var ns_sale = saleInfo ? (saleInfo.ns||0) : (p.ns||0);
+  var gs_sale = saleInfo ? (saleInfo.gs||0) : (p.gs||0);
+  var loai_sale = saleInfo ? saleInfo.loai_sale : null;
+  var hasSale = ns_sale>0 || gs_sale>0;
+  var saleSec = document.getElementById('dp-sale-section');
+  saleSec.style.display = hasSale ? 'block' : 'none';
   if(hasSale){
-    document.getElementById('dp-ns').textContent=fmt(p.ns);
-    document.getElementById('dp-gs').textContent=fmt(p.gs);
-    var base=p.nhan||p.giao; var saleP=p.ns||p.gs;
+    document.getElementById('dp-ns').textContent=fmt(ns_sale);
+    document.getElementById('dp-gs').textContent=fmt(gs_sale);
+    var base=p.nhan||p.giao; var saleP=ns_sale||gs_sale;
     if(base&&saleP){ var save=base-saleP; var pct=Math.round(save/base*100);
       document.getElementById('dp-save').textContent='Tiết kiệm '+save.toLocaleString('vi-VN')+'đ/m² (giảm '+pct+'%)'; }
+    // Hiện badge loại sale
+    var badgeEl = document.getElementById('dp-sale-badge');
+    if(badgeEl){
+      badgeEl.style.display='inline';
+      if(loai_sale==='ct1') { badgeEl.textContent='🗓️ Sale tháng'; badgeEl.style.cssText='display:inline;font-size:10px;background:#E8F5E9;color:#2E7D32;padding:2px 6px;border-radius:4px;margin-left:6px'; }
+      else if(loai_sale==='ct2') { badgeEl.textContent='📦 Xả kho'; badgeEl.style.cssText='display:inline;font-size:10px;background:#FFF3E0;color:#E65100;padding:2px 6px;border-radius:4px;margin-left:6px'; }
+      else badgeEl.style.display='none';
+    }
+  } else {
+    var badgeEl2 = document.getElementById('dp-sale-badge');
+    if(badgeEl2) badgeEl2.style.display='none';
   }
   document.getElementById('dp-sell').value=p.nhan>0?Math.round(p.nhan*1.07):'';
   document.getElementById('dp').style.display='block'; calcM();
@@ -1176,31 +1194,23 @@ var CT1_DATA=[], CT2_DATA=[], ct1Loaded=false, ct2Loaded=false;
 
 function renderSale(){
   var q=(document.getElementById('ssq').value||'').trim().toUpperCase();
-  var sf2 = window._sf2||'all';
-
-  // SP Sale thật = D1 có gio:"●" + toàn bộ D2 + D3 (từ bảng giá)
-  var saleD1 = D1.filter(function(p){ return p.gio==='●'; });
-  var allSale = saleD1.concat(D2).concat(D3);
+  var sf2 = window._sf2||'ct1';  // Mặc định hiện CT1
 
   var list;
-  if(sf2==='ct1'){
-    // Sale tháng: từ sheet CT1 (fetch Apps Script)
-    if(!ct1Loaded){ fetchCT('ct1'); return; }
-    list = CT1_DATA.slice();
-  } else if(sf2==='ct2'){
-    // Xả kho: từ sheet CT2 (fetch Apps Script)
+  if(sf2==='ct2'){
+    // Xả kho: từ sheet CT2
     if(!ct2Loaded){ fetchCT('ct2'); return; }
     list = CT2_DATA.slice();
+    if(q) list=list.filter(function(p){ return p.ma.toUpperCase().includes(q)||(p.kc||'').includes(q); });
   } else {
-    list = allSale.slice();
+    // CT1 (mặc định): Sale tháng
+    if(!ct1Loaded){ fetchCT('ct1'); return; }
+    list = CT1_DATA.slice();
     if(sf2==='porcelain') list=list.filter(function(p){ return p.cat==='porcelain'; });
     else if(sf2==='ceramic') list=list.filter(function(p){ return p.cat==='ceramic'; });
+    if(q) list=list.filter(function(p){ return p.ma.toUpperCase().includes(q)||(p.kc||'').includes(q); });
   }
 
-  // Filter kích thước
-  if(curSize && curSize!=='all') list=list.filter(function(p){ return p.kc===curSize; });
-  // Filter tìm kiếm
-  if(q) list=list.filter(function(p){ return p.ma.toUpperCase().includes(q)||(p.kc||'').includes(q); });
   document.getElementById('scount').textContent=list.length+' mã đang sale';
   var el=document.getElementById('slist'); el.innerHTML='';
 
@@ -1294,10 +1304,13 @@ function renderSale(){
 
 function setSF2(v){
   window._sf2=v;
-  ['all','ct1','ct2','porcelain','ceramic'].forEach(function(x){
+  ['ct1','ct2','porcelain','ceramic'].forEach(function(x){
     var b=document.getElementById('sf2-'+x);
-    if(b) b.className='fb'+(v===x?' on':'');
+    if(b) b.className='fb'+(v===x||((v==='porcelain'||v==='ceramic')&&x==='ct1')?' on':'');
   });
+  // Porcelain/Ceramic vẫn nằm trong CT1 data, CT1 button vẫn sáng
+  document.getElementById('sf2-ct1').className='fb'+((v==='ct1'||v==='porcelain'||v==='ceramic')?' on':'');
+  document.getElementById('sf2-ct2').className='fb'+(v==='ct2'?' on':'');
   renderSale();
 }
 
