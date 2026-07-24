@@ -437,11 +437,30 @@ function swTab(t){
   if(t==='don')   renderDon();
 }
 
+// ===== BANNER TRANG CHỦ (Danh mục) — sửa mảng này để đổi nội dung banner =====
+var TRANG_CHU_BANNERS=[
+  {icon:'🔥',title:'Sale tháng — giảm đến 25%',sub:'Hàng trăm mã đang giảm giá',grad:'linear-gradient(120deg,#C0232A,#8B1A1A)',tab:'sale'},
+  {icon:'🆕',title:'Mẫu mới về kho',sub:'Xem ngay mẫu gạch vừa cập nhật',grad:'linear-gradient(120deg,#3949AB,#1A237E)',tab:'tra'}
+];
+function renderTrangChuBanners(){
+  var el=document.getElementById('dm-banners'); if(!el) return;
+  if(!TRANG_CHU_BANNERS.length){ el.innerHTML=''; return; }
+  el.innerHTML='<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px">'
+    +TRANG_CHU_BANNERS.map(function(b,i){
+      return '<div onclick="swTab(\''+b.tab+'\')" style="flex:0 0 240px;border-radius:14px;padding:16px;background:'+b.grad+';color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.12)">'
+        +'<div style="font-size:22px;margin-bottom:6px">'+b.icon+'</div>'
+        +'<div style="font-size:14px;font-weight:800;margin-bottom:3px">'+b.title+'</div>'
+        +'<div style="font-size:11px;opacity:.85">'+b.sub+'</div>'
+        +'</div>';
+    }).join('')
+    +'</div>';
+}
 // ===== LỚP 1: Danh mục ngành hàng (grid) =====
 // Chỉ là màn hình "cửa vào" - bấm vào 1 ô sẽ nhảy sang tab ngành đó
 // (dùng lại swTab có sẵn), không tự render danh sách sản phẩm ở đây.
 function moDanhMuc(){
   renderDanhMucGrid();
+  renderTrangChuBanners();
   swTab('danhmuc');
 }
 function renderDanhMucGrid(){
@@ -920,6 +939,8 @@ function render(){
   var shown=list.slice(curPage*20,(curPage+1)*20);
   var startN=curPage*20+1, endN=Math.min((curPage+1)*20,totalItems);
   document.getElementById('pcount').textContent=totalItems+' mã'+(totalItems>0?' · hiển thị '+startN+'–'+endN:'');
+  renderDanhMucGrid();
+  renderTrangChuBanners();
   var el=document.getElementById('plist'); el.innerHTML='';
   shown.forEach(function(p){
     var hasSale=p.gio==='●' && p.ns>0; // Sale thật: gio=● VÀ có giá ns thật
@@ -1135,6 +1156,25 @@ function showDP(ma){
   if(qtyInp) qtyInp.value=1;
   setTimeout(function(){ setDpUnit('m2'); },10);
   loadImg(ma);
+  renderDpRelated(p);
+}
+// Sản phẩm liên quan: cùng kích cỡ (kc), khác mã, ưu tiên còn ảnh, tối đa 8
+function renderDpRelated(p){
+  var wrap=document.getElementById('dp-related-wrap');
+  var el=document.getElementById('dp-related');
+  if(!wrap||!el) return;
+  var list=DATA.filter(function(x){ return x.kc===p.kc && x.ma!==p.ma; }).slice(0,8);
+  if(!list.length){ wrap.style.display='none'; el.innerHTML=''; return; }
+  wrap.style.display='block';
+  el.innerHTML=list.map(function(x){
+    var img=(typeof imgStore!=='undefined'&&imgStore[x.ma])?imgStore[x.ma]:'';
+    return '<div onclick="showDP(\''+x.ma+'\')" style="flex:0 0 84px;cursor:pointer;text-align:center">'
+      +'<div style="width:84px;height:84px;border-radius:10px;overflow:hidden;background:var(--bg2);display:flex;align-items:center;justify-content:center">'
+      +(img?'<img src="'+img+'" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">':'<span style="font-size:22px">📷</span>')
+      +'</div>'
+      +'<div style="font-size:10px;color:var(--t2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x.ma+'</div>'
+      +'</div>';
+  }).join('');
 }
 function closeDp(){
   document.getElementById('dp').style.display='none';
