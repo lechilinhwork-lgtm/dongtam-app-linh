@@ -166,11 +166,31 @@ body{font-family:var(--f);font-size:14px;color:var(--t1);background:var(--bg);pa
   /* Tab Tra giá: đẩy thêm sang phải để tránh size-sidebar cố định (84+390=474px) */
   #tab-tra{margin-left:474px !important}
 
-  /* Product list: 3 cột (rộng thêm nhờ bỏ panel giỏ hàng cố định) */
-  #plist{display:grid !important;grid-template-columns:repeat(3,1fr);gap:12px}
+  /* Product list: 3 cột (rộng thêm nhờ bỏ panel giỏ hàng cố định), khoảng cách thoáng hơn */
+  #plist{display:grid !important;grid-template-columns:repeat(3,1fr);gap:16px}
 
   /* Sale grid: 3 cột */
-  #slist.sale-grid{grid-template-columns:repeat(3,1fr) !important}
+  #slist.sale-grid{display:grid !important;grid-template-columns:repeat(3,1fr) !important;gap:16px !important}
+
+  /* Polish: thẻ sản phẩm có độ nổi nhẹ, hover mượt thay vì phẳng lì */
+  .mk,.mk-kinh{
+    border-radius:14px !important;
+    box-shadow:0 1px 3px rgba(20,20,20,.05) !important;
+  }
+  .mk:hover{
+    box-shadow:0 8px 20px rgba(20,20,20,.10) !important;
+    border-color:var(--red) !important;
+    transform:translateY(-2px);
+  }
+
+  /* Polish: nút bấm/chip đồng bộ transition + trạng thái active có bóng nhẹ */
+  .fb,button,.export-btn{transition:box-shadow .15s ease,transform .12s ease,background .15s ease,border-color .15s ease}
+  .fb.on{box-shadow:0 3px 10px rgba(192,35,42,.25)}
+  button:active,.fb:active{transform:scale(.97)}
+
+  /* Polish: khoảng thở cho nội dung tab, tránh cảm giác bó sát */
+  .tc{padding-left:6px;padding-right:6px}
+  #tab-tra,#tab-sale{padding-top:4px}
 
   /* Search wrap sticky dưới topbar */
   .search-wrap{position:sticky;top:0;z-index:40;background:var(--bg)}
@@ -471,6 +491,7 @@ input::placeholder{color:var(--t3)}
   border-radius:var(--r);padding:10px 12px;
   margin-bottom:0;cursor:pointer;
   display:flex;justify-content:space-between;align-items:center;
+  transition:box-shadow .18s ease,transform .18s ease,border-color .18s ease;
 }
 .mk:active{background:#FFF5F5;border-color:var(--red)}
 /* Card gạch kính - layout dọc */
@@ -773,7 +794,10 @@ input::placeholder{color:var(--t3)}
   #filter-side .fs-hdr:first-child{margin-top:0}
   #filter-side label.fs-row{display:flex;gap:7px;align-items:center;font-size:12.5px;color:var(--t1);margin:6px 0;cursor:pointer}
   #filter-side label.fs-row input{accent-color:#C0232A}
-  #filter-side select{width:100%;font-size:12px;padding:8px;border:1.5px solid var(--bd2);border-radius:8px;background:var(--bg1);color:var(--t1);font-family:var(--f);margin-bottom:8px}
+  #filter-side select{width:100%;font-size:12px;padding:8px;border:1.5px solid var(--bd2);border-radius:8px;background:var(--bg1);color:var(--t1);font-family:var(--f);margin-bottom:8px;transition:border-color .15s ease,box-shadow .15s ease}
+  #filter-side select:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(192,35,42,.12)}
+  #filter-side label.fs-row{transition:color .15s ease}
+  #filter-side label.fs-row:hover{color:var(--red)}
   #filter-side .fs-lbl{font-size:11.5px;font-weight:700;color:var(--t2);display:block;margin-bottom:3px}
   #fs-count{background:#FDECEA;color:#C0232A;border-radius:8px;padding:7px;text-align:center;font-size:12px;font-weight:700;margin-top:12px}
   #fs-clear{width:100%;margin-top:8px;padding:8px;border:1px solid var(--bd2);border-radius:8px;background:none;color:var(--t2);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)}
