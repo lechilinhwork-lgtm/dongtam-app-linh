@@ -2124,9 +2124,10 @@ function slideNdImg(dir){
   renderNdImg();
 }
 
-function shareZalo(){
-  var p=DATA.find(function(x){return x.ma===curP_ma;});
-  if(!p) return;
+// Dựng nội dung báo giá text (dùng chung cho popup chi tiết SP + Zalo nhanh)
+function layNoiDungBaoGia(ma){
+  var p=DATA.find(function(x){return x.ma===ma;});
+  if(!p) return '';
 
   // Lấy thêm data từ CT1/CT2 nếu SP từ Sale
   var ctData = CT1_DATA.find(function(x){return x.ma===p.ma;})
@@ -2185,9 +2186,53 @@ function shareZalo(){
     if(gh>0)      lines.push('3. Giá đại lý đi giao tận nơi Hồ Chí Minh: '+f(gh));
   }
 
-  var msg=lines.join('\n');
+  return lines.join('\n');
+}
+function shareZalo(){
+  var msg=layNoiDungBaoGia(curP_ma);
+  if(!msg) return;
   navigator.clipboard&&navigator.clipboard.writeText
     ?navigator.clipboard.writeText(msg).then(function(){showToast('✅ Đã copy! Paste vào Zalo');}).catch(function(){fallbackCopy(msg);})
+    :fallbackCopy(msg);
+}
+
+// ===== ZALO NHANH: tìm mã → copy báo giá 1 bấm (không cần mở popup chi tiết) =====
+var znSelectedMa=null;
+function openZaloNhanh(){
+  document.getElementById('zn-modal-bg').classList.add('on');
+  document.getElementById('zn-modal').classList.add('on');
+  document.getElementById('zn-input').value='';
+  document.getElementById('zn-results').innerHTML='';
+  document.getElementById('zn-preview').style.display='none';
+  znSelectedMa=null;
+  setTimeout(function(){ var i=document.getElementById('zn-input'); if(i) i.focus(); },50);
+}
+function closeZaloNhanh(){
+  document.getElementById('zn-modal-bg').classList.remove('on');
+  document.getElementById('zn-modal').classList.remove('on');
+}
+function renderZnResults(){
+  var q=(document.getElementById('zn-input').value||'').trim().toUpperCase();
+  var el=document.getElementById('zn-results');
+  document.getElementById('zn-preview').style.display='none';
+  if(!q){ el.innerHTML=''; return; }
+  var list=DATA.filter(function(p){ return p.ma.toUpperCase().includes(q)||p.kc.includes(q); }).slice(0,8);
+  if(!list.length){ el.innerHTML='<div style="font-size:12px;color:var(--t2);padding:8px 2px">Không tìm thấy mã nào khớp</div>'; return; }
+  el.innerHTML=list.map(function(p){
+    return '<div class="zn-row" onclick="znSelect(\''+p.ma+'\')">'+p.ma+'<span style="color:var(--t2);font-weight:400"> · '+p.kc+'</span></div>';
+  }).join('');
+}
+function znSelect(ma){
+  znSelectedMa=ma;
+  var msg=layNoiDungBaoGia(ma);
+  document.getElementById('zn-preview-text').value=msg;
+  document.getElementById('zn-preview').style.display='block';
+}
+function znCopyZalo(){
+  if(!znSelectedMa) return;
+  var msg=document.getElementById('zn-preview-text').value;
+  navigator.clipboard&&navigator.clipboard.writeText
+    ?navigator.clipboard.writeText(msg).then(function(){showToast('✅ Đã copy! Paste vào Zalo');closeZaloNhanh();}).catch(function(){fallbackCopy(msg);})
     :fallbackCopy(msg);
 }
 
