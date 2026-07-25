@@ -988,6 +988,23 @@ function render(){
   renderDanhMucGrid();
   renderTrangChuBanners();
   var el=document.getElementById('plist'); el.innerHTML='';
+  // Skeleton khi data chưa tải xong
+  if(!DATA||DATA.length===0){
+    var skHtml='';
+    for(var sk=0;sk<8;sk++) skHtml+='<div class="sk-card"><div class="sk-img"></div><div class="sk-body"><div class="sk-line sk-w80"></div><div class="sk-line sk-w60"></div><div class="sk-line sk-w90"></div><div class="sk-line sk-w50"></div></div></div>';
+    el.innerHTML='<div class="sk-grid">'+skHtml+'</div>';
+    return;
+  }
+  // Empty state khi filter không có kết quả
+  if(shown.length===0){
+    el.innerHTML='<div class="empty-state">'
+      +'<div class="empty-icon">🔍</div>'
+      +'<div class="empty-title">Không tìm thấy sản phẩm nào</div>'
+      +'<div class="empty-sub">Thử thay đổi bộ lọc hoặc xóa từ khóa tìm kiếm</div>'
+      +'<button onclick="document.getElementById(\'sq\').value=\'\';setSize(\'all\');curLocGia=\'\';curLocCT={};render()" class="empty-reset-btn">Xóa tất cả bộ lọc</button>'
+      +'</div>';
+    return;
+  }
   shown.forEach(function(p){
     var hasSale=p.gio==='●' && p.ns>0; // Sale thật: gio=● VÀ có giá ns thật
     var star=p.gio==='★'?' <span class="badge" style="background:#FDECEA;color:#8B0000;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:700">★ CL</span>'
@@ -1026,7 +1043,7 @@ function render(){
         :'';
       div.innerHTML=
         '<div style="width:100%;height:160px;background:#F0EEEC;position:relative;overflow:hidden;flex-shrink:0">'
-        +(imgUrl?'<img src="'+imgUrl+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">':'')
+        +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">':'')
         +noImgHtml
         +overlayBadges
         +'<div class="mk-hover-overlay">Xem chi tiết</div>'
@@ -1063,7 +1080,7 @@ function render(){
       div.style.cssText='padding:12px;cursor:pointer;align-items:flex-start';
       var mImgHtml='<div style="width:96px;flex-shrink:0;margin-right:10px;display:flex;flex-direction:column;align-items:center;gap:4px">'
         +'<div style="width:96px;height:96px;border-radius:10px;background:#F0EEEC;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">'
-        +(imgUrl?'<img src="'+imgUrl+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display=\'none\'">'
+        +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display=\'none\'">'
           :'<div style="display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:20px">📷</span><span style="font-size:8px;color:#bbb;text-align:center;line-height:1.2">Chưa<br>có ảnh</span></div>')
         +'</div>'
         +'<div style="display:flex;align-items:center;justify-content:center;gap:4px;width:100%;flex-wrap:wrap">'
@@ -1332,7 +1349,7 @@ function renderSale(){
       var tkColor=tk?(tk.tier&&tk.tier.nhanh>0?'#2E7D32':tk.tier&&tk.tier.mai>0?'#E65100':'#C62828'):'#bbb';
       dcard.innerHTML=
         '<div style="width:110px;height:110px;flex-shrink:0;background:#F0EEEC;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;align-self:center;margin:6px;border-radius:8px"><div style="display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:20px">📷</span><span style="font-size:9px;color:#bbb;text-align:center;line-height:1.2">Chưa<br>có ảnh</span></div>'
-        +(imgUrl?'<img src="'+imgUrl+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display=\'none\'">':'')
+        +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display=\'none\'">':'')
         +'</div>'
         +'<div style="flex:1;padding:8px 8px 8px 2px;display:flex;flex-direction:column;justify-content:center;min-width:0">'
         +'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px">'+badgeHtml
@@ -3238,24 +3255,43 @@ function addToDonKeo(ma){
   showToast('✓ Đã thêm keo vào đơn!');
 }
 
-function showToast(msg){
+function showToast(msg,type){
+  // Xóa toast cũ cùng loại nếu còn
+  var old=document.querySelector('.dt-toast');
+  if(old) old.remove();
+  var isErr=type==='error', isWarn=type==='warn';
+  var bg=isErr?'#C62828':isWarn?'#E65100':'#1B8A3C';
   var t=document.createElement('div');
+  t.className='dt-toast';
   t.textContent=msg;
-  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1B8A3C;color:#fff;padding:9px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap';
+  t.style.cssText='position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(8px);background:'+bg+';color:#fff;padding:10px 22px;border-radius:24px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.22);opacity:0;transition:opacity .2s ease,transform .2s ease;pointer-events:none';
   document.body.appendChild(t);
-  setTimeout(function(){t.remove();},2000);
+  requestAnimationFrame(function(){
+    t.style.opacity='1';
+    t.style.transform='translateX(-50%) translateY(0)';
+  });
+  setTimeout(function(){
+    t.style.opacity='0';
+    t.style.transform='translateX(-50%) translateY(8px)';
+    setTimeout(function(){t.remove();},220);
+  },2200);
 }
 
 function updateDonBadge(){
   var badge=document.getElementById('don-badge');
   var total=donItems.reduce(function(s,x){return s+x.qty;},0);
+  var spCount=donItems.length;
   if(badge){badge.textContent=total;badge.style.display=total>0?'inline-flex':'none';}
+  // Side-nav badge (desktop)
   var snBadge=document.getElementById('sn-don-badge');
-  if(snBadge){snBadge.textContent=total;snBadge.style.display=total>0?'block':'none';}
+  if(snBadge){
+    snBadge.textContent=spCount>9?'9+':spCount;
+    snBadge.classList.toggle('show',spCount>0);
+  }
+  // Topbar cart label (mobile)
   var label=document.getElementById('don-cart-label');
   if(label){
-    if(donItems.length===0){label.textContent='Giỏ hàng';}
-    else{label.textContent=donItems.length+' SP · '+total+' cái';}
+    label.textContent=spCount===0?'Giỏ hàng':spCount+' SP · '+total+' cái';
   }
   saveDonItemsToStorage();
 }
@@ -5103,7 +5139,7 @@ function renderCT3Card(p, el){
   window[safeKey]=p;
 
   var imgHtml='<div style="display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:20px">📷</span><span style="font-size:9px;color:#bbb;text-align:center;line-height:1.2">Chưa<br>có ảnh</span></div>'
-    +(imgUrl?'<img src="'+imgUrl+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display=\'none\'">':'');
+    +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display=\'none\'">':'');
 
   if(isDesktop){
     card.innerHTML=
@@ -5126,7 +5162,7 @@ function renderCT3Card(p, el){
   } else {
     card.style.cursor='pointer';
     var mobImg='<div class="sale-img-wrap"><div class="sale-img-placeholder" style="font-size:28px">🎯</div>'
-      +(imgUrl?'<img src="'+imgUrl+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">':'')
+      +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">':'')
       +'</div>';
     card.innerHTML=
       mobImg
