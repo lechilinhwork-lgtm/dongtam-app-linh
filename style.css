@@ -17,8 +17,18 @@
   --r8:8px;
   --f:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 }
-html,body{width:100%;height:100%;overflow-x:hidden}
+html,body{width:100%;height:100%;overflow-x:hidden;scroll-behavior:smooth}
 body{font-family:var(--f);font-size:14px;color:var(--t1);background:var(--bg);padding:0;margin:0}
+
+/* ===== POLISH TOÀN CỤC: mượt hơn khi chuyển tab/bấm nút, không phẳng lì ===== */
+@keyframes tcFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.tc.on{animation:tcFadeIn .22s ease}
+button,.fb,.bn,.sn-item,.sz-item,.nmuc-card,.zn-row,.export-btn{
+  transition:background .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease,transform .12s ease;
+}
+button:active,.fb:active,.bn:active,.nmuc-card:active{transform:scale(.97)}
+.nmuc-card{box-shadow:0 1px 3px rgba(20,20,20,.05)}
+.nmuc-card:not(.nmuc-disabled):hover{box-shadow:0 6px 16px rgba(20,20,20,.10);transform:translateY(-2px)}
 
 /* ===== DESKTOP: thu hẹp như điện thoại ===== */
 @media(min-width:600px){
@@ -682,19 +692,19 @@ input::placeholder{color:var(--t3)}
 .qc-total{display:flex;justify-content:space-between;font-size:13px;border-top:1px solid var(--bd);margin-top:8px;padding-top:8px}
 .qc-total b{color:#C0232A}
 .qc-open{width:100%;margin-top:10px;padding:11px;border:none;border-radius:8px;background:#C0232A;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)}
-#don-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000}
-#don-modal-bg.on{display:block}
-#don-modal{display:none;position:fixed;z-index:9001;left:50%;top:50%;transform:translate(-50%,-50%);width:min(940px,94vw);max-height:92vh;background:var(--bg1);border-radius:14px;overflow:hidden;flex-direction:column;box-shadow:0 12px 48px rgba(0,0,0,.25)}
-#don-modal.on{display:flex}
+#don-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,visibility 0s linear .2s}
+#don-modal-bg.on{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .2s ease}
+#don-modal{position:fixed;z-index:9001;left:50%;top:50%;width:min(940px,94vw);max-height:92vh;background:var(--bg1);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 48px rgba(0,0,0,.25);opacity:0;visibility:hidden;pointer-events:none;transform:translate(-50%,-50%) scale(.96);transition:opacity .2s ease,transform .2s ease,visibility 0s linear .2s}
+#don-modal.on{opacity:1;visibility:visible;pointer-events:auto;transform:translate(-50%,-50%) scale(1);transition:opacity .2s ease,transform .2s ease}
 #don-modal-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#C0232A;color:#fff;flex-shrink:0}
 #don-modal-head b{font-size:15px;font-weight:700}
 #don-modal-head button{width:30px;height:30px;border:none;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;font-size:16px;cursor:pointer;font-family:var(--f)}
 
 /* Zalo nhanh modal — cùng khung với đơn hàng nhưng nhỏ gọn hơn */
-#zn-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000}
-#zn-modal-bg.on{display:block}
-#zn-modal{display:none;position:fixed;z-index:9001;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,94vw);max-height:88vh;background:var(--bg1);border-radius:14px;overflow:hidden;flex-direction:column;box-shadow:0 12px 48px rgba(0,0,0,.25)}
-#zn-modal.on{display:flex}
+#zn-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,visibility 0s linear .2s}
+#zn-modal-bg.on{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .2s ease}
+#zn-modal{position:fixed;z-index:9001;left:50%;top:50%;width:min(420px,94vw);max-height:88vh;background:var(--bg1);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 48px rgba(0,0,0,.25);opacity:0;visibility:hidden;pointer-events:none;transform:translate(-50%,-50%) scale(.96);transition:opacity .2s ease,transform .2s ease,visibility 0s linear .2s}
+#zn-modal.on{opacity:1;visibility:visible;pointer-events:auto;transform:translate(-50%,-50%) scale(1);transition:opacity .2s ease,transform .2s ease}
 #zn-modal #don-modal-head{background:#0068FF}
 .zn-row{padding:9px 10px;border:1px solid var(--bd);border-radius:var(--r8);margin-bottom:6px;cursor:pointer;font-size:13px;font-weight:600;transition:border-color .15s,background .15s}
 .zn-row:hover{border-color:#0068FF;background:#F0F7FF}
@@ -708,6 +718,7 @@ input::placeholder{color:var(--t3)}
 }
 @media(max-width:767px){
   #don-modal{width:100vw;height:100dvh;max-height:100dvh;top:0;left:0;transform:none;border-radius:0}
+  #don-modal.on{transform:none}
 }
 
 
