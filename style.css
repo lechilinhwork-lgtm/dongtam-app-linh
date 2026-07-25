@@ -167,6 +167,8 @@ button:active,.fb:active,.bn:active,.nmuc-card:active{transform:scale(.97)}
      Chỉ ẩn nút bấm (không ẩn #acct-wrap) vì menu tài khoản (#menu-taikhoan) là con của nó,
      ẩn cả wrap sẽ làm menu không hiện được khi bấm từ side-nav. */
   #btn-giohang,#btn-taikhoan-menu{display:none !important}
+  /* Giữ acct-wrap có kích thước tối thiểu để badge neo đúng vị trí */
+  #acct-wrap{min-width:24px;min-height:24px}
 
   /* Banner thông tin khách hàng */
   #thongtin-khachhang{margin-left:84px}
