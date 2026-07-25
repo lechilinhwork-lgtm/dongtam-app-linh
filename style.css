@@ -1453,4 +1453,13 @@ html{scroll-behavior:smooth}
   .mk [style*="background:#F0EEEC"]{background:var(--bg2) !important}
   /* Image no-photo placeholder */
   .mk [style*="color:#bbb"] span{color:var(--t3) !important}
+  /* Filter side count badge */
+  #fs-count{background:rgba(192,35,42,.15) !important;color:#FF6B6B !important}
+  /* Product detail price boxes */
+  .pr-box-primary{background:rgba(21,101,192,.15);border-color:rgba(21,101,192,.3)}
+  .pr-box-primary p:first-child{color:#90CAF9}
+  .pr-box-primary p:last-child{color:#90CAF9}
+  .pr-box-sale{background:rgba(192,35,42,.12);border-color:rgba(192,35,42,.3)}
+  /* Active states */
+  .mk:active,.loc-sec-hdr.active,.loc-sec-item.active{background:rgba(192,35,42,.15) !important}
 }
