@@ -5169,7 +5169,7 @@ function ct3BadgeHtml(ma){
     if(!document.getElementById('tra-head')){
       var sq=tra.querySelector('#sq');
       var searchRow=sq?sq.closest('div'):tra.children[0];
-      var filters=tra.querySelector('.filters');
+      var filters=tra.querySelector('.filters-wrap');
       var head=document.createElement('div'); head.id='tra-head';
       tra.insertBefore(head, tra.firstChild);
       if(searchRow) head.appendChild(searchRow);
