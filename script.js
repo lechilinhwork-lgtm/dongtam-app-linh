@@ -970,19 +970,12 @@ function render(){
     var div=document.createElement('div'); div.className='mk';
     if(isDesktop){
       // Desktop: ảnh nhỏ trái ~30%, thông tin đầy đủ bên phải
-      div.style.cssText='padding:0 !important;cursor:pointer;overflow:hidden;display:flex;align-items:stretch;min-height:120px';
+      div.style.cssText='cursor:pointer;overflow:hidden;display:flex;flex-direction:column;padding:0 !important';
       var badgeHtml=p.gio==='★'
-        ?'<span style="background:#8B0000;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;white-space:nowrap">★ CL</span>'
+        ?'<span style="background:#8B0000;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap">★ CL</span>'
         :p.gio==='●'
-        ?'<span style="background:#1B5E20;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;white-space:nowrap">🔥 Sale</span>'
+        ?'<span style="background:#1B5E20;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap">🔥 Sale</span>'
         :'';
-      var prRow=function(label,val,color){
-        return '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px">'
-          +'<span style="font-size:10px;color:#999;flex-shrink:0">'+label+'</span>'
-          +'<span style="font-size:12px;font-weight:700;color:'+color+'">'+val+'</span>'
-          +'</div>';
-      };
-      // Tra giá sale CT1/CT2 (sale tháng)
       // Tra giá sale CT1/CT2 (sale tháng) — field: nk=nhận kho, gh=giao hàng
       var ct1Info=(window.CT1_DATA||[]).find(function(x){return x.ma===p.ma;})
                 ||(window.CT2_DATA||[]).find(function(x){return x.ma===p.ma;});
@@ -996,28 +989,29 @@ function render(){
       var tkDot=tk?(tk.tier&&tk.tier.nhanh>0?'🟢':tk.tier&&tk.tier.mai>0?'🟡':'🔴'):'';
       var tkText=tk?tkDot+' Còn '+fmtTkCard(tk.tong,tk.dvt):'';
       var tkColor=tk?(tk.tier&&tk.tier.nhanh>0?'#2E7D32':tk.tier&&tk.tier.mai>0?'#E65100':'#C62828'):'#bbb';
-      var noImgHtml='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">'
-        +'<span style="font-size:22px">📷</span>'
-        +'<span style="font-size:9px;color:#bbb;text-align:center;line-height:1.2">Chưa<br>có ảnh</span>'
-        +'</div>';
+      var noImgHtml='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:6px"><span style="font-size:32px">📷</span><span style="font-size:10px;color:#bbb">Chưa có ảnh</span></div>';
+      var overlayBadges=(badgeHtml||ct3BadgeHtml(p.ma))
+        ?'<div style="position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap">'+badgeHtml+ct3BadgeHtml(p.ma)+'</div>'
+        :'';
       div.innerHTML=
-        '<div style="width:120px;height:120px;flex-shrink:0;background:#F0EEEC;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;align-self:center;margin:6px;border-radius:8px">'
-        +(imgUrl?'<img src="'+imgUrl+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display=\'none\'">':'')
+        '<div style="width:100%;height:160px;background:#F0EEEC;position:relative;overflow:hidden;flex-shrink:0">'
+        +(imgUrl?'<img src="'+imgUrl+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">':'')
         +noImgHtml
+        +overlayBadges
         +'</div>'
-        +'<div style="flex:1;padding:10px 10px 10px 4px;display:flex;flex-direction:column;justify-content:center;min-width:0">'
-        +'<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">'+badgeHtml+ct3BadgeHtml(p.ma)+'<span style="font-size:10px;color:#888">'+p.kc+'</span></div>'
-        +'<div style="font-size:13px;font-weight:700;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px">'+p.ma+'</div>'
-        +(p.le>0?prRow('Giá lẻ',p.le.toLocaleString('vi-VN')+'đ','#555'):'')
-        +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px">'
-        +'<span style="font-size:10px;color:#999;flex-shrink:0">Nhận kho</span>'
+        +'<div style="padding:12px;display:flex;flex-direction:column;gap:5px;flex:1">'
+        +'<div style="font-size:11px;color:#888;display:flex;align-items:center;gap:5px"><span>'+p.kc+'</span></div>'
+        +'<div style="font-size:14px;font-weight:700;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+p.ma+'</div>'
+        +(p.le>0?'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Giá lẻ</span><span style="font-size:12px;font-weight:600;color:#555">'+p.le.toLocaleString('vi-VN')+'đ</span></div>':'')
+        +'<div style="display:flex;justify-content:space-between;align-items:baseline">'
+        +'<span style="font-size:11px;color:#999">Nhận kho</span>'
         +'<span>'
-        +(hasCT1Sale||hasNsSale||hasSale?'<span style="font-size:10px;color:#bbb;text-decoration:line-through;margin-right:4px">'+priceNhan+'</span>':'')
-        +'<span style="font-size:12px;font-weight:700;color:#C0232A">'+giaNhan+'</span>'
+        +(hasCT1Sale||hasNsSale||hasSale?'<span style="font-size:11px;color:#bbb;text-decoration:line-through;margin-right:4px">'+priceNhan+'</span>':'')
+        +'<span style="font-size:14px;font-weight:800;color:#C0232A">'+giaNhan+'</span>'
         +'</span>'
         +'</div>'
-        +prRow('Giao hàng',giaGiao,'#1565C0')
-        +(tkText?'<div style="margin-top:5px;font-size:10px;font-weight:600;color:'+tkColor+'">'+tkText+'</div>':'')
+        +'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Giao hàng</span><span style="font-size:13px;font-weight:700;color:#1565C0">'+giaGiao+'</span></div>'
+        +(tkText?'<div style="font-size:11px;font-weight:600;color:'+tkColor+';margin-top:2px">'+tkText+'</div>':'')
         +'</div>';
     } else {
       // Mobile: layout dọc — ảnh + tên/kích cỡ + giá lẻ/nhận kho/giao + tồn kho

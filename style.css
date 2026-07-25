@@ -956,6 +956,10 @@ input::placeholder{color:var(--t3)}
 /* ===== BỘ LỌC DỌC DESKTOP (tab Gạch) — giữa lưới SP và giỏ hàng ===== */
 #filter-side{display:none}
 @media(min-width:1200px){
+  /* 4 cột sản phẩm trên màn hình rộng */
+  #plist{grid-template-columns:repeat(4,1fr) !important}
+  #slist.sale-grid{grid-template-columns:repeat(4,1fr) !important}
+
   #filter-side{
     position:fixed;right:0;top:57px;bottom:0;width:212px;
     overflow-y:auto;background:var(--bg1);border-left:1px solid var(--bd);
