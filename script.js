@@ -1750,6 +1750,7 @@ function showNgoi(ma){
   document.getElementById('nd-nhan2').textContent=fg(p.nhan2);
   document.getElementById('nd-giao2').textContent=(p.giao2>0?p.giao2.toLocaleString('vi-VN')+'đ/viên':'Liên hệ báo giá');
   document.getElementById('ngoi-detail').style.display='block';
+  document.getElementById('nk-backdrop').classList.add('on');
   document.getElementById('nd-soluong').value=100;
   tinhTienNgoi();
 }
@@ -1792,7 +1793,12 @@ function themNgoiVaoDon(){
   }
   updateDonBadge();
   showToast('✓ Đã thêm '+sl+' viên '+p.ten+' vào đơn!');
+  closeNgoiDetail();
+}
+function closeNgoiDetail(){
   document.getElementById('ngoi-detail').style.display='none';
+  var kd=document.getElementById('keo-detail');
+  if(!kd||kd.style.display!=='block') document.getElementById('nk-backdrop').classList.remove('on');
 }
 
 // --- TAB 4 Keo ---
@@ -1915,8 +1921,8 @@ function showKeo(ma){
   document.getElementById('kd-giao2').textContent=p.giao2.toLocaleString('vi-VN')+'đ';
   document.getElementById('kd-soluong').value=10;
   document.getElementById('keo-detail').style.display='block';
+  document.getElementById('nk-backdrop').classList.add('on');
   tinhTienKeo();
-  document.getElementById('keo-detail').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 function chinhSLKeo(d){
@@ -1960,7 +1966,12 @@ function themKeoVaoDon(){
   }
   updateDonBadge();
   showToast('✓ Đã thêm '+sl+' bao '+p.ten+' vào đơn!');
+  closeKeoDetail();
+}
+function closeKeoDetail(){
   document.getElementById('keo-detail').style.display='none';
+  var nd=document.getElementById('ngoi-detail');
+  if(!nd||nd.style.display!=='block') document.getElementById('nk-backdrop').classList.remove('on');
 }
 
 // --- TAB 5 Pitch ---

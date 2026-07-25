@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="DT Sales"/>
 <meta name="theme-color" content="#C0232A"/>
 <title>Đồng Tâm – Sales Tool</title>
-<link rel="stylesheet" href="style.css?v=nav18">
+<link rel="stylesheet" href="style.css?v=nav19">
 </head>
 <body>
 
@@ -315,7 +315,8 @@
 <!-- TAB 3: Ngói -->
 <div id="tab-ngoi" class="tc">
   <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Ngói tráng men Đồng Tâm · Giá <b>đồng/viên</b> · Hiệu lực đến 31/03/2027</p>
-  <div id="ngoi-detail" style="display:none;background:var(--bg1);border:2px solid #C0232A;border-radius:var(--r12);padding:14px;margin-bottom:12px">
+  <div id="nk-backdrop" onclick="closeNgoiDetail();closeKeoDetail()"></div>
+  <div id="ngoi-detail" class="nk-detail nk-red">
     <div id="nd-img-wrap" style="display:none;margin-bottom:10px;border-radius:var(--r8);overflow:hidden;aspect-ratio:1;background:var(--bg2);position:relative">
       <img id="nd-img" style="width:100%;height:100%;object-fit:cover;display:block"/>
       <button id="nd-img-prev" onclick="slideNdImg(-1)"
@@ -336,7 +337,7 @@
         <p id="nd-ten" style="font-size:14px;font-weight:600;margin-bottom:2px"></p>
         <p id="nd-kc" style="font-size:11px;color:var(--t2)"></p>
       </div>
-      <button onclick="document.getElementById('ngoi-detail').style.display='none'" style="font-size:13px;padding:4px 10px">✕</button>
+      <button onclick="closeNgoiDetail()" style="font-size:13px;padding:4px 10px">✕</button>
     </div>
     <div class="pr-grid">
       <div class="pr-box full"><p>Giá lẻ niêm yết</p><p id="nd-le"></p></div>
@@ -401,13 +402,13 @@
   </div>
   <div id="sub-keo-content" class="tab-wrap">
   <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Keo dán gạch GECKO Đồng Tâm · Giá <b>đồng/bao</b></p>
-  <div id="keo-detail" style="display:none;background:var(--bg1);border:2px solid #7B1FA2;border-radius:var(--r12);padding:14px;margin-bottom:12px">
+  <div id="keo-detail" class="nk-detail nk-purple">
     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
       <div>
         <p id="kd-ten" style="font-size:15px;font-weight:700;margin-bottom:2px"></p>
         <p style="font-size:11px;color:var(--t2)">Đơn vị: đồng/bao</p>
       </div>
-      <button onclick="document.getElementById('keo-detail').style.display='none'" style="font-size:13px;padding:4px 10px">✕</button>
+      <button onclick="closeKeoDetail()" style="font-size:13px;padding:4px 10px">✕</button>
     </div>
     <!-- Giá 2 tier -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
@@ -699,6 +700,6 @@
 
 
 
-<script src="script.js?v=nav17" defer></script>
+<script src="script.js?v=nav18" defer></script>
 </body>
 </html>
