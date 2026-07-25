@@ -772,6 +772,17 @@ input::placeholder{color:var(--t3)}
   /* Nhường chỗ cho size-sidebar cố định */
   #tab-sale{margin-left:314px !important}
   #sale-size-sidebar + div{margin-left:0 !important}
+
+  /* Ngói/Keo: đang chỉ đẹp trên điện thoại (thẻ xếp dọc 1 cột full-width).
+     Desktop: xếp lưới nhiều cột như tab Gạch/Sale, khung chi tiết gọn giữa màn hình
+     thay vì kéo full-width sát 2 bên. */
+  #ngoi-list-A,#ngoi-list-B,#keo-list,#kinh-list{
+    display:grid !important;
+    grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+    gap:12px;
+  }
+  #ngoi-list-A .mk,#ngoi-list-B .mk,#keo-list .mk,#kinh-list .mk{margin-bottom:0}
+  #ngoi-detail,#keo-detail{max-width:480px;margin-left:auto;margin-right:auto;box-shadow:0 8px 28px rgba(0,0,0,.12)}
 }
 @media(max-width:767px){
   #tab-tra #size-sidebar{position:sticky !important;top:var(--headBottom,150px) !important;align-self:flex-start;max-height:calc(100vh - var(--headBottom,150px) - 62px) !important}
