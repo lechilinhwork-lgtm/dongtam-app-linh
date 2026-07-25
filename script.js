@@ -1710,12 +1710,13 @@ function renderNgoiMau(){
   var elA=document.getElementById('ngoi-list-A'); elA.innerHTML='';
   var elB=document.getElementById('ngoi-list-B'); elB.innerHTML='';
 
-  // Nút tài liệu (khách lẻ cũng xem được)
+  // Nút tài liệu — sticky top, render vào #ngoi-cat-bar
+  var catBar=document.getElementById('ngoi-cat-bar'); catBar.innerHTML='';
   var doc=document.createElement('a');
   doc.href=NGOI_CATALOG_URL; doc.target='_blank';
-  doc.style.cssText='display:block;text-align:center;padding:9px;margin-bottom:10px;border:1.5px solid #C0232A;border-radius:8px;color:#C0232A;font-size:12px;font-weight:700;text-decoration:none';
+  doc.className='ngoi-cat-link';
   doc.textContent='📥 Catalogue & Hướng dẫn thi công (Google Drive)';
-  elA.appendChild(doc);
+  catBar.appendChild(doc);
 
   // Chọn dòng TITAN / ALPHA
   var bar=document.createElement('div');

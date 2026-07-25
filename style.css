@@ -436,6 +436,8 @@ input::placeholder{color:var(--t3)}
    (cố định, có nút tròn nổi lên -14px) che mất */
 .tc{display:none;padding-bottom:110px;box-sizing:border-box}.tc.on{display:block}
 .tab-wrap{padding:16px 18px}
+#ngoi-cat-bar{position:sticky;top:60px;z-index:20;background:var(--bg1);padding:8px 18px 6px;margin-bottom:0;border-bottom:1px solid var(--bd)}
+.ngoi-cat-link{display:block;text-align:center;padding:9px 12px;border:1.5px solid #C0232A;border-radius:8px;color:#C0232A;font-size:12px;font-weight:700;text-decoration:none}
 
 /* ===== SEARCH BAR (Tab Tra mã) ===== */
 .search-wrap{
