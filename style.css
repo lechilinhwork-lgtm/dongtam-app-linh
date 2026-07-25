@@ -1445,4 +1445,12 @@ html{scroll-behavior:smooth}
   #kinh-list div[style*="background:#E8F5E9"]{background:rgba(27,94,32,.2) !important}
   /* Skeleton light bg */
   .sk-img,.sk-line{background:var(--bg2)}
+  /* Desktop card hardcoded text colors */
+  .mk [style*="color:#111"]{color:var(--t1) !important}
+  .mk [style*="color:#888"]{color:var(--t2) !important}
+  .mk [style*="color:#999"]{color:var(--t2) !important}
+  .mk [style*="color:#bbb"]{color:var(--t3) !important}
+  .mk [style*="background:#F0EEEC"]{background:var(--bg2) !important}
+  /* Image no-photo placeholder */
+  .mk [style*="color:#bbb"] span{color:var(--t3) !important}
 }
