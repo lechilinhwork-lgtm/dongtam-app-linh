@@ -610,6 +610,7 @@ function renderTimKiemResults(){
   (typeof DATA!=='undefined'?DATA:[]).forEach(function(p){ if(khop(p)) ketQua.push({p:p, nganh:'gach', icon:'🔲', ten:'Gạch'}); });
   (typeof NGOI!=='undefined'?NGOI:[]).forEach(function(p){ if(khop(p)) ketQua.push({p:p, nganh:'ngoi', icon:'🏠', ten:'Ngói'}); });
   (typeof KEO!=='undefined'?KEO:[]).forEach(function(p){ if(khop(p)) ketQua.push({p:p, nganh:'keo', icon:'🧱', ten:'Keo'}); });
+  (typeof KINH!=='undefined'?KINH:[]).forEach(function(p){ if(khop(p)) ketQua.push({p:p, nganh:'kinh', icon:'💎', ten:'Gạch kính'}); });
 
   if(!ketQua.length){
     var empty = document.createElement('div');
@@ -655,6 +656,7 @@ function renderTimKiemResults(){
       if(r.nganh==='gach'){ swTab('tra'); showDP(p.ma); }
       else if(r.nganh==='ngoi'){ swTab('ngoi'); showNgoi(p.ma); }
       else if(r.nganh==='keo'){ swTab('keo'); showKeo(p.ma); }
+      else if(r.nganh==='kinh'){ swTab('kinh'); }
     });
 
     resultsEl.appendChild(row);

@@ -843,7 +843,10 @@ input::placeholder{color:var(--t3)}
 .ai-dot:nth-child(2){animation-delay:.15s}
 .ai-dot:nth-child(3){animation-delay:.3s}
 @keyframes aidot{0%,80%,100%{transform:scale(.65);opacity:.5}40%{transform:scale(1);opacity:1}}
-
+@media(min-width:768px){
+  #ai-fab{bottom:24px;right:24px;width:54px;height:54px;font-size:24px}
+  #ai-panel{bottom:90px;right:20px;width:380px;height:560px}
+}
 
 /* ===== next style block ===== */
 
@@ -943,6 +946,7 @@ input::placeholder{color:var(--t3)}
 
 /* ===== XEM THU SKU TAI MAU (room preview) ===== */
 #rp-fab{position:fixed;bottom:80px;left:16px;width:50px;height:50px;border-radius:50%;background:var(--red);border:none;color:#fff;font-size:22px;cursor:pointer;z-index:1000;box-shadow:0 4px 16px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;transition:transform .15s}
+@media(min-width:768px){#rp-fab{bottom:24px;left:24px;width:54px;height:54px;font-size:24px}}
 #rp-fab:active{transform:scale(.9)}
 #rp-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1100;align-items:center;justify-content:center;padding:14px}
 #rp-modal.open{display:flex}
