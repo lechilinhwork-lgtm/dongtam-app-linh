@@ -1328,16 +1328,14 @@ function renderSale(){
     if(isDesktop){
       var dcard = document.createElement('div');
       dcard.className='mk';
-      dcard.style.cssText='padding:0 !important;cursor:pointer;overflow:hidden;display:flex;align-items:stretch;min-height:110px';
-      var badgeHtml=(p.loai_sale==='ct1'?'<span style="background:#E8F5E9;color:#2E7D32;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px">🗓️CT1</span>':'')
-                  +(p.loai_sale==='ct2'?'<span style="background:#FFF3E0;color:#E65100;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px">📦CT2</span>':'')
-                  +(p.gio==='★'?'<span style="background:#8B0000;color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px">★ CL</span>':'')
-                  +ct3BadgeHtml(p.ma);
-      var prRow=function(label,val,color){
-        return '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:3px">'
-          +'<span style="font-size:10px;color:#999;flex-shrink:0">'+label+'</span>'
-          +'<span style="font-size:12px;font-weight:700;color:'+color+'">'+val+'</span></div>';
-      };
+      dcard.style.cssText='cursor:pointer;overflow:hidden;display:flex;flex-direction:column;padding:0 !important';
+      var saleOverlayBadge='<div style="position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap">'
+        +(p.loai_sale==='ct1'?'<span style="background:#2E7D32;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px">🗓️CT1</span>':'')
+        +(p.loai_sale==='ct2'?'<span style="background:#E65100;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px">📦CT2</span>':'')
+        +(p.gio==='★'?'<span style="background:#8B0000;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px">★ CL</span>':'')
+        +ct3BadgeHtml(p.ma)
+        +'</div>';
+      var saveBadge=save>0?'<div style="position:absolute;top:8px;right:8px"><span style="background:#C0232A;color:#fff;font-size:11px;font-weight:800;padding:3px 8px;border-radius:12px">-'+save+'%</span></div>':'';
       var baseP=(typeof DATA!=='undefined'?DATA:[]).find(function(x){return x.ma===p.ma;});
       var origNK=baseP?baseP.nhan:0;
       var origGH=baseP?baseP.giao:0;
@@ -1348,27 +1346,25 @@ function renderSale(){
       var tkText=tk?tkDot+' Còn '+fmtTkCard(tk.tong,tk.dvt):'';
       var tkColor=tk?(tk.tier&&tk.tier.nhanh>0?'#2E7D32':tk.tier&&tk.tier.mai>0?'#E65100':'#C62828'):'#bbb';
       dcard.innerHTML=
-        '<div style="width:110px;height:110px;flex-shrink:0;background:#F0EEEC;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;align-self:center;margin:6px;border-radius:8px"><div style="display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:20px">📷</span><span style="font-size:9px;color:#bbb;text-align:center;line-height:1.2">Chưa<br>có ảnh</span></div>'
-        +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display=\'none\'">':'')
+        '<div style="width:100%;height:150px;background:#F0EEEC;position:relative;overflow:hidden;flex-shrink:0">'
+        +'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px"><span style="font-size:28px">📷</span><span style="font-size:10px;color:#bbb">Chưa có ảnh</span></div>'
+        +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">':'')
+        +saleOverlayBadge+saveBadge
+        +'<div class="mk-hover-overlay">Xem chi tiết</div>'
         +'</div>'
-        +'<div style="flex:1;padding:8px 8px 8px 2px;display:flex;flex-direction:column;justify-content:center;min-width:0">'
-        +'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px">'+badgeHtml
-        +(save>0?'<span style="background:#C0232A;color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px">-'+save+'%</span>':'')
-        +'<span style="font-size:10px;color:#888">'+p.kc+'</span></div>'
-        +'<div style="font-size:13px;font-weight:700;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px">'+p.ma+'</div>'
-        +(p.le>0?prRow('Giá lẻ',p.le.toLocaleString('vi-VN')+'đ','#555'):'')
-        +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:3px">'
-        +'<span style="font-size:10px;color:#999;flex-shrink:0">Nhận kho</span>'
-        +'<span>'
+        +'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:4px;flex:1">'
+        +'<div style="font-size:11px;color:#888">'+p.kc+'</div>'
+        +'<div style="font-size:13px;font-weight:700;color:#111;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:break-all">'+p.ma+'</div>'
+        +(p.le>0?'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:10px;color:#999">Giá lẻ</span><span style="font-size:11px;font-weight:600;color:#555">'+p.le.toLocaleString('vi-VN')+'đ</span></div>':'')
+        +'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Nhận kho</span><span>'
         +(nkSale>0&&origNK>0&&origNK!==nkSale?'<span style="font-size:10px;color:#bbb;text-decoration:line-through;margin-right:4px">'+origNK.toLocaleString('vi-VN')+'đ</span>':'')
-        +'<span style="font-size:12px;font-weight:700;color:#C0232A">'+nkFmt+'</span>'
-        +'</span></div>'
-        +prRow('Giao hàng',ghFmt,'#1565C0')
-        +(tkText?'<div style="margin-top:5px;font-size:10px;font-weight:600;color:'+tkColor+'">'+tkText+'</div>':'')
-        +'<div style="display:flex;gap:4px;margin-top:6px">'
-        +'<button onclick="event.stopPropagation();chiaSeAnhSanPham(\''+p.ma+'\')" style="padding:4px 8px;font-size:11px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer">📤</button>'
-        +'<button onclick="event.stopPropagation();shareZaloSale(window.__salePTmp_'+p.ma.replace(/[^a-z0-9]/gi,'_')+')" style="padding:4px 8px;font-size:11px;border:none;border-radius:4px;background:#0068FF;color:#fff;font-weight:700;cursor:pointer">Zalo ↗</button>'
-        +'<button onclick="event.stopPropagation();addToDon(\''+p.ma+'\');showToast(\'✓ Đã thêm '+p.ma+'\')" style="flex:1;padding:4px 8px;font-size:11px;border:none;border-radius:4px;background:#C0232A;color:#fff;font-weight:700;cursor:pointer">+ Thêm</button>'
+        +'<span style="font-size:14px;font-weight:800;color:#C0232A">'+nkFmt+'</span></span></div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Giao hàng</span><span style="font-size:12px;font-weight:700;color:#1565C0">'+ghFmt+'</span></div>'
+        +(tkText?'<div style="font-size:10px;font-weight:600;color:'+tkColor+'">'+tkText+'</div>':'')
+        +'<div style="display:flex;gap:5px;margin-top:4px">'
+        +'<button onclick="event.stopPropagation();chiaSeAnhSanPham(\''+p.ma+'\')" style="padding:6px 8px;font-size:11px;border:1px solid var(--bd);border-radius:8px;background:var(--bg1);cursor:pointer">📤</button>'
+        +'<button onclick="event.stopPropagation();shareZaloSale(window.__salePTmp_'+p.ma.replace(/[^a-z0-9]/gi,'_')+')" style="padding:6px 8px;font-size:11px;border:none;border-radius:8px;background:#0068FF;color:#fff;font-weight:700;cursor:pointer">Zalo ↗</button>'
+        +'<button onclick="event.stopPropagation();addToDon(\''+p.ma+'\');showToast(\'✓ Đã thêm '+p.ma+'\')" style="flex:1;padding:6px 8px;font-size:11px;border:none;border-radius:8px;background:#C0232A;color:#fff;font-weight:700;cursor:pointer">+ Thêm</button>'
         +'</div>'
         +'</div>';
       var safeKey='__salePTmp_'+p.ma.replace(/[^a-z0-9]/gi,'_');

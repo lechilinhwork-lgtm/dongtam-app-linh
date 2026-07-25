@@ -1313,3 +1313,64 @@ html{scroll-behavior:smooth}
     box-shadow:0 0 0 3px rgba(192,35,42,.12) !important
   }
 }
+
+/* ============================================================
+   POLISH ROUND 4 — Sale cards desktop, mobile UX, topbar
+   ============================================================ */
+
+/* ── Sale grid desktop: 4 cột (đồng bộ với main grid) ── */
+@media(min-width:1200px){
+  #slist.sale-grid{grid-template-columns:repeat(4,1fr) !important}
+}
+
+/* ── Topbar mobile: bảo vệ title + sub khi tên dài ── */
+.topbar-brand{min-width:0;flex:1;overflow:hidden}
+.topbar-title{
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  max-width:calc(100vw - 160px)
+}
+@media(min-width:400px){.topbar-title{max-width:calc(100vw - 180px)}}
+.topbar-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:inherit}
+
+/* ── Mobile: topbar subtitle lớn hơn chút ── */
+@media(max-width:767px){
+  .topbar-sub{font-size:10.5px}
+}
+
+/* ── Pagination: highlight tốt hơn ── */
+.pag-btn.on{
+  font-weight:800;
+  box-shadow:0 4px 12px rgba(192,35,42,.35)
+}
+
+/* ── Card hover: transition mượt hơn ── */
+.mk{transition:box-shadow .2s ease,transform .2s ease,border-color .2s ease}
+
+/* ── Mobile: pcount text nhỏ hơn để vừa ── */
+@media(max-width:767px){
+  #pcount{font-size:11px;color:var(--t2)}
+}
+
+/* ── Scrollbar mượt hơn ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--t3)}
+
+/* ── Desktop: active card scale nhỏ hơn ── */
+@media(min-width:768px){
+  .mk:active{transform:scale(.98) !important;border-color:var(--red) !important}
+}
+
+/* ── Filter chip active: shadow đẹp hơn ── */
+.fb.on{
+  box-shadow:0 3px 12px rgba(192,35,42,.3);
+  font-weight:700
+}
+
+/* ── Gạch kính tab: đồng bộ hover ── */
+.mk-kinh:hover{
+  box-shadow:0 8px 20px rgba(20,20,20,.10) !important;
+  border-color:var(--red) !important;
+  transform:translateY(-2px)
+}
