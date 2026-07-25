@@ -1993,25 +1993,7 @@ function closeKeoDetail(){
   if(!nd||nd.style.display!=='block') document.getElementById('nk-backdrop').classList.remove('on');
 }
 
-// --- TAB 5 Pitch ---
-var PITCHES={
-  gia:{title:'Khi họ nói: "Anh Đạt / Thiên Phương bán rẻ hơn"',items:[
-    {icon:'⚠️',col:'#C0232A',t:'Phản đòn ngay',b:'"Giá rẻ đó họ dùng CK quý/năm cả nhóm để đạp. Nhóm tan là giá lên ngay – anh/chị bị phụ thuộc."'},
-    {icon:'🔥',col:'#C0232A',t:'Chỉ thẳng hàng sale',b:'Dùng tab Sale: tra ngay sản phẩm đang giảm giá tại chỗ – thực tế giảm 5-15%, không cần đạp giá riêng.'},
-    {icon:'🛡',col:'#388E3C',t:'Cam kết bảo vệ giá',b:'"Tôi bảo vệ giá sàn khu vực anh/chị – phát hiện ai đạp giá, tôi báo cáo công ty xử lý ngay."'}
-  ]},
-  luoi:{title:'Khi đại lý lười tư vấn Đồng Tâm',items:[
-    {icon:'📷',col:'#1976D2',t:'Dùng catalogue + app',b:'Gửi PDF qua Zalo, tra app ngay tại chỗ. Tab Ngói và Keo có đủ thông tin để tư vấn trọn gói.'},
-    {icon:'💰',col:'#C0232A',t:'Chỉ thẳng margin',b:'CATANIA 600x600: nhận kho 294k → bán 330k = lời 36k/m². Keo GECKO WALL: nhận 209k → bán 250k = lời 41k/bao.'},
-    {icon:'🏠',col:'#388E3C',t:'Chính sách trưng bày',b:'"Đại lý chính thức được hỗ trợ mẫu trưng bày, bảng giá, standee – khách vào thấy liền."'}
-  ]},
-  len:{title:'Pitch chuyển lên đại lý chính thức',items:[
-    {icon:'🏆',col:'#C0232A',t:'Mở bằng lợi ích số',b:'"Em muốn chia sẻ chính sách CK quý + năm cộng dồn lên đến 3.5% – nhiều anh em đang hưởng rồi."'},
-    {icon:'🏠',col:'#1976D2',t:'Hỗ trợ trưng bày',b:'Công ty hỗ trợ mẫu gạch, ngói, keo trưng bày + bảng giá. Bán được giá cao hơn, margin tốt hơn.'},
-    {icon:'👥',col:'#388E3C',t:'Bảo vệ khu vực',b:'"Là đại lý chính thức, em bảo vệ giá sàn khu vực anh/chị – không để ai đạp giá."'},
-    {icon:'→',col:'#C0232A',t:'Chốt bước tiếp theo',b:'"Form đăng ký đơn giản – em gửi qua Zalo, anh/chị điền 5 phút. Tuần tới em ghé hỗ trợ trưng bày?"'}
-  ]}
-};
+
 function saveImgStore(){ try{ localStorage.setItem('dt_imgs', JSON.stringify(imgStore)); }catch(e){} }
 
 function driveLink(url){

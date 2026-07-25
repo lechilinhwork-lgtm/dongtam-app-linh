@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="DT Sales"/>
 <meta name="theme-color" content="#C0232A"/>
 <title>Đồng Tâm – Sales Tool</title>
-<link rel="stylesheet" href="style.css?v=nav19">
+<link rel="stylesheet" href="style.css?v=nav20">
 </head>
 <body>
 
@@ -171,60 +171,60 @@
   <div id="dp-backdrop" onclick="closeDp()"></div>
   <div id="dp" class="dp">
     <div id="dp-drag"></div>
-    <div id="dp-scroll">
-    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
-      <div>
-        <p id="dp-ma" style="font-size:14px;font-weight:600;margin-bottom:2px"></p>
-        <p id="dp-kc" style="font-size:11px;color:var(--t2)"></p>
-        <p id="dp-quycach" style="font-size:11px;color:var(--t2);margin-top:2px;display:none"></p>
+    <div class="dp-head">
+      <div class="dp-head-info">
+        <p id="dp-ma" class="dp-head-ma"></p>
+        <p id="dp-kc" class="dp-head-sub"></p>
+        <p id="dp-quycach" class="dp-head-qc" style="display:none"></p>
       </div>
-      <button onclick="closeDp()" style="font-size:16px;padding:4px 12px;border:none;background:var(--bg2);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2)">✕</button>
+      <button onclick="closeDp()" class="dp-close-btn">✕</button>
     </div>
-    <p id="dp-sec-dl" style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px">GIÁ ĐẠI LÝ</p>
+    <div id="dp-scroll">
+    <p id="dp-gia-dl-label" class="dp-sec-label">GIÁ ĐẠI LÝ</p>
     <div class="pr-grid">
       <div class="pr-box"><p>Giá lẻ</p><p id="dp-le"></p></div>
-      <div class="pr-box"><p>Nhận kho</p><p id="dp-nhan"></p></div>
+      <div class="pr-box pr-box-primary"><p>Nhận kho</p><p id="dp-nhan"></p></div>
       <div class="pr-box full"><p>Giao hàng</p><p id="dp-giao"></p></div>
     </div>
     <div id="dp-sale-section" style="display:none">
-      <p style="font-size:11px;font-weight:700;color:#C0232A;margin-bottom:6px">🔥 GIÁ SALE</p>
+      <p class="dp-sec-label dp-sec-label-sale">🔥 GIÁ SALE</p>
       <div class="pr-grid">
-        <div class="pr-box sale"><p>Nhận kho Sale</p><p id="dp-ns"></p></div>
-        <div class="pr-box sale"><p>Giao Sale</p><p id="dp-gs"></p></div>
+        <div class="pr-box pr-box-sale"><p>Nhận kho Sale</p><p id="dp-ns"></p></div>
+        <div class="pr-box pr-box-sale"><p>Giao Sale</p><p id="dp-gs"></p></div>
       </div>
-      <div id="dp-save" style="background:#E8F5E9;border-radius:var(--r8);padding:8px 10px;font-size:12px;color:#1B5E20;text-align:center;margin-bottom:4px"></div>
+      <div id="dp-save" class="dp-save-chip"></div>
       <div style="text-align:center;margin-bottom:8px"><span id="dp-sale-badge" style="display:none"></span></div>
     </div>
-    <div style="background:var(--bg2);border-radius:var(--r8);padding:9px 11px;font-size:12px;color:var(--t2)">
-      Bán <input id="dp-sell" type="number" style="width:90px;display:inline;padding:3px 6px;font-size:12px" oninput="calcM()"/> đ/m² → lời <span id="dp-margin" style="font-weight:600;color:#388E3C">–</span>
+    <div class="dp-margin-row">
+      <span>Bán</span>
+      <input id="dp-sell" type="number" class="dp-sell-input" oninput="calcM()"/>
+      <span>đ/m² → lời</span>
+      <span id="dp-margin" class="dp-margin-val">–</span>
     </div>
-    <!-- Nhập số lượng theo thùng hoặc m² -->
-    <div id="dp-qty-section" style="background:var(--bg2);border-radius:var(--r8);padding:10px 11px;margin-top:8px">
-      <div style="display:flex;gap:6px;margin-bottom:8px">
-        <button id="dp-unit-m2" onclick="setDpUnit('m2')" style="flex:1;padding:6px;border-radius:8px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:11px;cursor:pointer;font-family:var(--f)">Theo m²</button>
-        <button id="dp-unit-thung" onclick="setDpUnit('thung')" style="flex:1;padding:6px;border-radius:8px;border:1.5px solid var(--bd);background:var(--bg1);color:var(--t2);font-weight:700;font-size:11px;cursor:pointer;font-family:var(--f)">Theo thùng</button>
+    <div id="dp-qty-section" class="dp-card">
+      <div class="dp-unit-toggle">
+        <button id="dp-unit-m2" onclick="setDpUnit('m2')" class="dp-unit-btn active">Theo m²</button>
+        <button id="dp-unit-thung" onclick="setDpUnit('thung')" class="dp-unit-btn">Theo thùng</button>
       </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <input id="dp-qty-input" type="number" value="1" min="0.01" step="0.01" oninput="calcDpQty()" style="flex:1;text-align:center;font-size:15px;font-weight:700;padding:8px;border:1.5px solid var(--bd2);border-radius:8px;background:var(--bg1);font-family:var(--f)"/>
-        <span id="dp-qty-unit-label" style="font-size:12px;color:var(--t2);min-width:30px">m²</span>
+      <div class="dp-qty-row">
+        <input id="dp-qty-input" type="number" value="1" min="0.01" step="0.01" oninput="calcDpQty()" class="dp-qty-input"/>
+        <span id="dp-qty-unit-label" class="dp-qty-unit">m²</span>
       </div>
-      <p id="dp-qty-convert" style="font-size:11px;color:#0D47A1;margin-top:6px;text-align:center"></p>
-      <div style="border-top:1px dashed var(--bd2);margin-top:9px;padding-top:9px">
-        <p style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px">📐 Tính theo diện tích phòng</p>
-        <div style="display:flex;align-items:center;gap:6px">
-          <input id="dp-room-dai" type="number" min="0" step="0.1" placeholder="Dài (m)" style="flex:1;text-align:center;font-size:13px;padding:7px;border:1px solid var(--bd2);border-radius:8px;background:var(--bg1);font-family:var(--f)"/>
-          <span style="font-size:12px;color:var(--t2)">×</span>
-          <input id="dp-room-rong" type="number" min="0" step="0.1" placeholder="Rộng (m)" style="flex:1;text-align:center;font-size:13px;padding:7px;border:1px solid var(--bd2);border-radius:8px;background:var(--bg1);font-family:var(--f)"/>
-          <button onclick="tinhTheoDienTichPhong()" style="padding:7px 12px;border:none;border-radius:8px;background:#0D47A1;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">Tính</button>
+      <p id="dp-qty-convert" class="dp-qty-convert"></p>
+      <div class="dp-room-section">
+        <p class="dp-room-label">📐 Tính theo diện tích phòng</p>
+        <div class="dp-room-inputs">
+          <input id="dp-room-dai" type="number" min="0" step="0.1" placeholder="Dài (m)" class="dp-room-input"/>
+          <span class="dp-room-x">×</span>
+          <input id="dp-room-rong" type="number" min="0" step="0.1" placeholder="Rộng (m)" class="dp-room-input"/>
+          <button onclick="tinhTheoDienTichPhong()" class="dp-room-btn">Tính</button>
         </div>
-        <p id="dp-room-result" style="font-size:11px;color:#0D47A1;margin-top:6px;text-align:center"></p>
+        <p id="dp-room-result" class="dp-room-result"></p>
       </div>
     </div>
-    <!-- Ảnh sản phẩm -->
     <div id="dp-img-section" style="margin-top:10px">
       <div id="dp-img-wrap" style="display:none;margin-bottom:8px;border-radius:var(--r8);overflow:hidden;background:var(--bg2);position:relative">
         <img id="dp-img" src="" style="width:100%;height:100%;object-fit:contain;display:block"/>
-        <!-- Nút lướt ảnh -->
         <button id="dp-img-prev" onclick="slideImg(-1)"
           style="display:none;position:absolute;left:4px;top:50%;transform:translateY(-50%);
           width:28px;height:28px;border-radius:50%;border:none;background:rgba(0,0,0,.45);
@@ -233,28 +233,24 @@
           style="display:none;position:absolute;right:4px;top:50%;transform:translateY(-50%);
           width:28px;height:28px;border-radius:50%;border:none;background:rgba(0,0,0,.45);
           color:#fff;font-size:16px;cursor:pointer;line-height:1">›</button>
-        <!-- Dots -->
         <div id="dp-img-dots" style="position:absolute;bottom:5px;left:0;right:0;
           display:flex;justify-content:center;gap:4px"></div>
-        <!-- Counter -->
         <span id="dp-img-counter" style="display:none;position:absolute;top:6px;right:8px;
           background:rgba(0,0,0,.5);color:#fff;font-size:10px;padding:2px 6px;border-radius:10px"></span>
       </div>
-    </div><!-- end dp-img-section -->
-    <!-- Sản phẩm liên quan (cùng kích cỡ) -->
+    </div>
     <div id="dp-related-wrap" style="display:none;margin-top:12px">
-      <p style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px">SẢN PHẨM LIÊN QUAN</p>
+      <p class="dp-sec-label">SẢN PHẨM LIÊN QUAN</p>
       <div id="dp-related" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px"></div>
     </div>
-    </div><!-- end dp-scroll -->
-    <!-- Footer nút cố định đáy panel -->
-    <div id="dp-footer" style="padding:10px 12px;border-top:1px solid var(--bd);background:var(--bg1);flex-shrink:0">
-      <div style="display:flex;gap:6px;margin-bottom:6px">
-        <button onclick="chiaSeAnhSanPham(curP_ma)" style="flex:1;font-size:11px;padding:9px 4px;border-radius:var(--r8);border:none;background:#388E3C;color:#fff;font-weight:600" title="Chia sẻ nhiều ảnh sản phẩm">🖼️ Chia sẻ hình ảnh</button>
-        <button id="dp-zalo-btn" onclick="shareZalo()" style="flex:1;font-size:11px;padding:9px 4px;border-radius:var(--r8);border:none;background:#0068FF;color:#fff;font-weight:600">💬 Tin nhắn Zalo</button>
-        <button onclick="addToDonWithQty()" style="flex:1;font-size:11px;padding:9px 4px;border-radius:var(--r8);border:none;background:#C0232A;color:#fff;font-weight:700;font-family:var(--f)">🛒 Thêm đơn</button>
+    </div>
+    <div id="dp-footer">
+      <div class="dp-footer-btns">
+        <button onclick="chiaSeAnhSanPham(curP_ma)" class="dp-btn dp-btn-green" title="Chia sẻ nhiều ảnh sản phẩm">🖼️ Chia sẻ ảnh</button>
+        <button id="dp-zalo-btn" onclick="shareZalo()" class="dp-btn dp-btn-blue">💬 Zalo</button>
+        <button onclick="addToDonWithQty()" class="dp-btn dp-btn-red">🛒 Thêm đơn</button>
       </div>
-      <button onclick="moTonKho(curP_ma)" style="width:100%;font-size:12px;padding:8px;border-radius:var(--r8);border:1.5px solid #C0232A;background:none;color:#C0232A;font-weight:700;font-family:var(--f);cursor:pointer">📦 Xem tồn kho theo kho/lô</button>
+      <button onclick="moTonKho(curP_ma)" class="dp-btn-outline">📦 Xem tồn kho theo kho/lô</button>
     </div>
   </div>
   <div id="tk-loading-bar" style="display:none;align-items:center;gap:8px;padding:7px 14px;background:#FFF8E1;border-bottom:1px solid #FFE082;font-size:12px;color:#795548">
