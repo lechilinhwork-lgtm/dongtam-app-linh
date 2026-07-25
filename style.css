@@ -1416,4 +1416,10 @@ html{scroll-behavior:smooth}
   .dp-sheet,.ngoi-detail-inner,.keo-detail-inner{background:var(--bg1)}
   /* Badge */
   .badge{background:#2D2200;color:#FFD54F}
+  /* Cart */
+  .qc-badge{background:rgba(192,35,42,.2);color:#FF6B6B}
+  /* Customer info bar */
+  #thongtin-khachhang{background:rgba(192,35,42,.12) !important;border-bottom-color:rgba(192,35,42,.25) !important;color:#FF9E9E !important}
+  /* Danger hover */
+  .acct-menu-danger:hover{background:rgba(192,35,42,.15)}
 }
