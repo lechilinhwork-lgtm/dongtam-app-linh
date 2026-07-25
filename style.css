@@ -573,6 +573,8 @@ input::placeholder{color:var(--t3)}
   pointer-events:none;
 }
 @media(min-width:768px){.mk:hover .mk-hover-overlay{opacity:1}}
+/* Ngói color swatches hover */
+#ngoi-list-A button:hover,#ngoi-list-B button:hover{transform:scale(1.18);z-index:2}
 #ct3-confirm-btn:disabled{opacity:.45;cursor:not-allowed}
 .badge{font-size:10px;padding:1px 6px;border-radius:5px;background:#FFF3CD;color:#856404;font-weight:600;margin-left:4px}
 

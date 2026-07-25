@@ -521,10 +521,13 @@ function renderDanhMucGrid(){
   var soGach = (typeof DATA!=='undefined' ? DATA.length : 0);
   var soNgoi = (typeof NGOI!=='undefined' ? NGOI.length : 0);
   var soKeo  = (typeof KEO!=='undefined' ? KEO.length : 0);
+  var soKinh = (typeof KINH!=='undefined' ? KINH.length : 0);
   var items = [
     {icon:'🔲', ten:'Gạch',              count:soGach+' mã', tab:'tra',  grad:'linear-gradient(160deg,#FDE4E4,#F8C6C8)'},
     {icon:'🏠', ten:'Ngói',              count:soNgoi+' mã', tab:'ngoi', grad:'linear-gradient(160deg,#F2E3D5,#E3C7A8)'},
     {icon:'🧱', ten:'Keo & bột chà ron', count:soKeo+' mã',  tab:'keo',  grad:'linear-gradient(160deg,#E1F0E4,#BFE0C6)'},
+    {icon:'💎', ten:'Gạch kính',         count:soKinh+' mã', tab:'kinh', grad:'linear-gradient(160deg,#E3F2FD,#BBDEFB)'},
+    {icon:'🔥', ten:'Đang Sale',         count:null,         tab:'sale', grad:'linear-gradient(160deg,#FFEBEE,#FFCDD2)', sale:true},
     {icon:'🚽', ten:'Thiết bị vệ sinh',  count:null,         tab:'tbvs', grad:'var(--bg2)', soon:true},
     {icon:'🪣', ten:'Sơn nước',          count:null,         tab:'son',  grad:'var(--bg2)', soon:true}
   ];
@@ -1721,9 +1724,10 @@ function ngoiGroupCard(list, isMain){
     var on=code===mauSel;
     var b=document.createElement('button');
     b.title=code+' – '+c.ten+(c.datHang?' (đặt hàng trước)':'')+(tk?(con?' · còn '+tk.tong.toLocaleString('vi-VN'):' · hết hàng'):'');
-    b.style.cssText='width:30px;height:30px;border-radius:8px;padding:0;position:relative;cursor:pointer;background:'+c.hex
+    b.style.cssText='width:36px;height:36px;border-radius:10px;padding:0;position:relative;cursor:pointer;background:'+c.hex
       +';border:'+(on?'2.5px solid #C0232A':(c.datHang?'1.5px dashed #999':'1px solid rgba(0,0,0,.18)'))
-      +';box-shadow:'+(on?'0 0 0 2px #fff inset':'none')
+      +';box-shadow:'+(on?'0 0 0 2px #fff inset,0 3px 8px rgba(192,35,42,.3)':'none')
+      +';transition:transform .15s,box-shadow .15s'
       +(tk&&!con?';opacity:.35':'');
     if(tk){
       b.innerHTML='<span style="position:absolute;right:-3px;top:-3px;width:9px;height:9px;border-radius:50%;border:1.5px solid var(--bg1,#fff);background:'+(con?'#2E7D32':'#9E9E9E')+'"></span>';
