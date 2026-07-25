@@ -1131,20 +1131,36 @@ function showDP(ma){
     else giaDlLabel.textContent='GIÁ ĐẠI LÝ';
   }
   // Tra giá sale từ CT1_DATA / CT2_DATA (nếu đã load)
+  // Lưu ý: mergeCTintoDATA gắn p.ns = c.nk (trường nk), không phải c.ns
+  // → phải ưu tiên saleInfo.nk trước saleInfo.ns để tránh hasSale=false
   var saleInfo = CT1_DATA.find(function(x){return x.ma===ma;})
                || CT2_DATA.find(function(x){return x.ma===ma;});
-  var ns_sale = saleInfo ? (saleInfo.ns||0) : (p.ns||0);
-  var gs_sale = saleInfo ? (saleInfo.gs||0) : (p.gs||0);
-  var loai_sale = saleInfo ? saleInfo.loai_sale : null;
+  var ns_sale = saleInfo ? (saleInfo.nk||saleInfo.ns||0) : (p.ns||0);
+  var gs_sale = saleInfo ? (saleInfo.gh||saleInfo.gs||0) : (p.gs||0);
+  // Fallback: nếu saleInfo không có giá nhưng p đã được gắn _fromCT thì dùng p.ns/p.gs
+  if(!ns_sale && isSaleItem) ns_sale = p.ns||0;
+  if(!gs_sale && isSaleItem) gs_sale = p.gs||0;
+  var loai_sale = saleInfo ? saleInfo.loai_sale : (isSaleItem?(p._fromCT==='CT1'?'ct1':'ct2'):null);
   var hasSale = ns_sale>0 || gs_sale>0;
   var saleSec = document.getElementById('dp-sale-section');
   saleSec.style.display = hasSale ? 'block' : 'none';
   if(hasSale){
     document.getElementById('dp-ns').textContent=fmt(ns_sale);
     document.getElementById('dp-gs').textContent=fmt(gs_sale);
-    var base=p.nhan||p.giao; var saleP=ns_sale||gs_sale;
-    if(base&&saleP){ var save=base-saleP; var pct=Math.round(save/base*100);
-      document.getElementById('dp-save').textContent='Tiết kiệm '+save.toLocaleString('vi-VN')+'đ/m² (giảm '+pct+'%)'; }
+    // base = giá thường (trước sale): p.nhan ưu tiên, fallback sang saleInfo.nhan
+    var base=p.nhan||p.giao||(saleInfo?(saleInfo.nhan||saleInfo.giao||0):0);
+    var saleP=ns_sale||gs_sale;
+    var saveEl=document.getElementById('dp-save');
+    if(base&&saleP&&base>saleP){
+      var save=base-saleP; var pct=Math.round(save/base*100);
+      saveEl.textContent='Tiết kiệm '+save.toLocaleString('vi-VN')+'đ/m² (giảm '+pct+'%)';
+      saveEl.style.display='block';
+    } else if(isSaleItem){
+      saveEl.textContent=(p._fromCT==='CT1'?'🔥 Sale tháng CT1 – Giảm 5% nhận hàng tại kho':'📦 Xả kho CT2 – Giá ưu đãi đặc biệt');
+      saveEl.style.display='block';
+    } else {
+      saveEl.style.display='none';
+    }
     // Hiện badge loại sale
     var badgeEl = document.getElementById('dp-sale-badge');
     if(badgeEl){
