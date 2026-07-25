@@ -906,6 +906,7 @@ input::placeholder{color:var(--t3)}
   grid-template-columns:1fr 1fr;
   gap:12px;
 }
+.nmuc-grid .nmuc-card:last-child:nth-child(odd){grid-column:1/-1}
 .nmuc-card{
   position:relative;
   background:var(--bg1);

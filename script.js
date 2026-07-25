@@ -490,12 +490,10 @@ function renderDanhMucGrid(){
   var soGach = (typeof DATA!=='undefined' ? DATA.length : 0);
   var soNgoi = (typeof NGOI!=='undefined' ? NGOI.length : 0);
   var soKeo  = (typeof KEO!=='undefined' ? KEO.length : 0);
-  var soSale = (typeof CT1_DATA!=='undefined' ? CT1_DATA.length : 0) + (typeof CT2_DATA!=='undefined' ? CT2_DATA.length : 0);
   var items = [
     {icon:'🔲', ten:'Gạch',              count:soGach+' mã', tab:'tra',  grad:'linear-gradient(160deg,#FDE4E4,#F8C6C8)'},
     {icon:'🏠', ten:'Ngói',              count:soNgoi+' mã', tab:'ngoi', grad:'linear-gradient(160deg,#F2E3D5,#E3C7A8)'},
     {icon:'🧱', ten:'Keo & bột chà ron', count:soKeo+' mã',  tab:'keo',  grad:'linear-gradient(160deg,#E1F0E4,#BFE0C6)'},
-    {icon:'🔥', ten:'Đang Sale',         count:soSale+' mã', tab:'sale', grad:'linear-gradient(160deg,#FFE3CC,#FFC299)', sale:true},
     {icon:'🚽', ten:'Thiết bị vệ sinh',  count:null,         tab:'tbvs', grad:'var(--bg2)', soon:true},
     {icon:'🪣', ten:'Sơn nước',          count:null,         tab:'son',  grad:'var(--bg2)', soon:true}
   ];
