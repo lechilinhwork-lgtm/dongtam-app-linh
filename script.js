@@ -2408,8 +2408,12 @@ function shareZaloNgoi(ma){
   // mã, thêm cột "CT150 Ngói" vào Sheet và đọc qua p.ns/p.ns2 sau).
   var ct1=p.ns>0?p.ns:Math.round(p.nhan*0.9);
   var ct2=Math.round(p.nhan2*0.9);
+  // Tên hiển thị giống popup chi tiết (VD "Ngói lợp TITAN001 – Cam đất nung") thay vì mã SAP thô
+  var info=p._new?ngoiParse(p):null;
+  var col=info?NGOI_COLORS[info.code]:null;
+  var tenHienThi=p.ten+(col?' – '+col.ten:'');
   var lines=['🏠 NGÓI ĐỒNG TÂM'];
-  lines.push('📌 Mã: '+p.ma);
+  lines.push('📌 Mã: '+tenHienThi);
   lines.push('📐 Quy cách: '+p.kc+' · '+p.dong_goi);
   lines.push('━━━━━━━━━━━━━━');
   if(p.le>0){ lines.push('1. Giá lẻ: '+f(p.le)); lines.push(''); }
