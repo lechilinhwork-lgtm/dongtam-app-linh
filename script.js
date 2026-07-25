@@ -5680,6 +5680,14 @@ function rpShareZalo(){
   document.getElementById('rp-zalo').addEventListener('click', rpShareZalo);
 })();
 
+// Nút cuộn lên đầu
+(function(){
+  var btn=document.getElementById('back-top'); if(!btn) return;
+  window.addEventListener('scroll',function(){
+    btn.classList.toggle('show', window.scrollY>300);
+  },{passive:true});
+})();
+
 // Desktop keyboard shortcuts
 if(window.innerWidth>=768){
   document.addEventListener('keydown',function(e){

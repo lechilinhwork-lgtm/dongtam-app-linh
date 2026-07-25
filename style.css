@@ -1387,6 +1387,23 @@ html{scroll-behavior:smooth}
   font-weight:700
 }
 
+/* ── Nút cuộn lên đầu ── */
+#back-top{
+  position:fixed;bottom:90px;right:16px;
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(192,35,42,.85);
+  color:#fff;font-size:18px;font-weight:700;
+  border:none;cursor:pointer;
+  display:none;align-items:center;justify-content:center;
+  box-shadow:0 3px 12px rgba(192,35,42,.35);
+  z-index:1050;
+  transition:opacity .2s,transform .2s;
+  backdrop-filter:blur(4px);
+}
+#back-top.show{display:flex}
+#back-top:hover{transform:translateY(-2px);background:var(--red)}
+@media(min-width:768px){#back-top{bottom:80px;right:calc(320px + 20px)}}
+
 /* ── Gạch kính tab: đồng bộ hover ── */
 .mk-kinh:hover{
   box-shadow:0 8px 20px rgba(20,20,20,.10) !important;
