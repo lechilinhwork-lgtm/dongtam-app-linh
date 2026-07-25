@@ -21,7 +21,10 @@ html,body{width:100%;height:100%;overflow-x:hidden;scroll-behavior:smooth}
 body{font-family:var(--f);font-size:14px;color:var(--t1);background:var(--bg);padding:0;margin:0}
 
 /* ===== POLISH TOÀN CỤC: mượt hơn khi chuyển tab/bấm nút, không phẳng lì ===== */
-@keyframes tcFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* Chỉ dùng opacity, KHÔNG dùng transform: transform trên .tc sẽ tạo containing-block mới
+   cho các phần tử con position:fixed (size-sidebar, sale-size-sidebar), khiến chúng bị lệch
+   vị trí (tính theo .tc thay vì viewport) trong lúc chạy animation. */
+@keyframes tcFadeIn{from{opacity:0}to{opacity:1}}
 .tc.on{animation:tcFadeIn .22s ease}
 button,.fb,.bn,.sn-item,.sz-item,.nmuc-card,.zn-row,.export-btn{
   transition:background .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease,transform .12s ease;

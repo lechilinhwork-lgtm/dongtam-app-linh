@@ -889,7 +889,7 @@ function capNhatTopPanels(){
   var tb=document.querySelector('.topbar');
   if(!tb) return;
   var h=Math.max(tb.offsetHeight,57);
-  ['size-sidebar','filter-side','tab-don'].forEach(function(id){
+  ['size-sidebar','filter-side','tab-don','sale-size-sidebar'].forEach(function(id){
     var el=document.getElementById(id);
     // setProperty important để thắng quy tắc top:57px !important trong CSS
     if(el) el.style.setProperty('top', h+'px', 'important');
