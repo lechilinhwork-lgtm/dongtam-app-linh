@@ -5655,3 +5655,25 @@ function rpShareZalo(){
   document.getElementById('rp-download').addEventListener('click', rpDownload);
   document.getElementById('rp-zalo').addEventListener('click', rpShareZalo);
 })();
+
+// Desktop keyboard shortcuts
+if(window.innerWidth>=768){
+  document.addEventListener('keydown',function(e){
+    // '/' → focus ô tìm kiếm toàn bộ
+    if(e.key==='/'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+      var active=document.activeElement;
+      if(active&&(active.tagName==='INPUT'||active.tagName==='TEXTAREA')) return;
+      e.preventDefault();
+      var inp=document.getElementById('tk-input');
+      if(inp){ swTab('timkiem'); setTimeout(function(){ inp.focus(); inp.select(); },60); }
+    }
+    // Escape → đóng popup đang mở
+    if(e.key==='Escape'){
+      if(document.getElementById('dp-backdrop')&&document.getElementById('dp-backdrop').classList.contains('on')) closeDp();
+      else if(document.getElementById('ngoi-detail')&&document.getElementById('ngoi-detail').style.display==='block') closeNgoiDetail();
+      else if(document.getElementById('keo-detail')&&document.getElementById('keo-detail').style.display==='block') closeKeoDetail();
+      else if(document.getElementById('rp-modal')&&document.getElementById('rp-modal').classList.contains('open')) rpClose();
+      else if(document.getElementById('ai-panel')&&document.getElementById('ai-panel').classList.contains('open')) toggleAIChat();
+    }
+  });
+}
