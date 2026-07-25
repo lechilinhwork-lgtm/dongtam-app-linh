@@ -451,15 +451,46 @@ function timBanner(i){
 function renderTrangChuBanners(){
   var el=document.getElementById('dm-banners'); if(!el) return;
   if(!TRANG_CHU_BANNERS.length){ el.innerHTML=''; return; }
-  el.innerHTML='<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px">'
+  var tid='bnt'+Date.now();
+  el.innerHTML=
+    '<div style="position:relative;overflow:hidden;border-radius:14px;margin-bottom:6px">'
+    +'<div id="'+tid+'" style="display:flex;transition:transform .4s cubic-bezier(.4,0,.2,1);will-change:transform">'
     +TRANG_CHU_BANNERS.map(function(b,i){
-      return '<div onclick="timBanner('+i+')" style="flex:0 0 240px;border-radius:14px;padding:16px;background:'+b.grad+';color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.12)">'
-        +'<div style="font-size:22px;margin-bottom:6px">'+b.icon+'</div>'
-        +'<div style="font-size:14px;font-weight:800;margin-bottom:3px">'+b.title+'</div>'
-        +'<div style="font-size:11px;opacity:.85">'+b.sub+'</div>'
+      return '<div onclick="timBanner('+i+')" style="flex:0 0 100%;border-radius:14px;padding:18px 20px;background:'+b.grad+';color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.12);min-height:96px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box">'
+        +'<div style="font-size:26px;margin-bottom:8px">'+b.icon+'</div>'
+        +'<div style="font-size:16px;font-weight:800;margin-bottom:4px;line-height:1.3">'+b.title+'</div>'
+        +'<div style="font-size:12px;opacity:.9;line-height:1.5">'+b.sub+'</div>'
         +'</div>';
     }).join('')
-    +'</div>';
+    +'</div>'
+    +'</div>'
+    +(TRANG_CHU_BANNERS.length>1
+      ?'<div id="'+tid+'d" style="display:flex;justify-content:center;gap:7px;margin-bottom:14px;padding-top:6px">'
+        +TRANG_CHU_BANNERS.map(function(b,i){return '<div class="bcarousel-dot'+(i===0?' on':'')+'" data-i="'+i+'"></div>';}).join('')
+        +'</div>'
+      :'<div style="margin-bottom:14px"></div>');
+  if(TRANG_CHU_BANNERS.length<2) return;
+  var track=document.getElementById(tid);
+  var dotWrap=document.getElementById(tid+'d');
+  var dots=dotWrap?dotWrap.querySelectorAll('.bcarousel-dot'):[];
+  var cur=0,timer=null;
+  function goBn(idx){
+    cur=(idx+TRANG_CHU_BANNERS.length)%TRANG_CHU_BANNERS.length;
+    track.style.transform='translateX(-'+cur*100+'%)';
+    dots.forEach(function(d,i){d.classList.toggle('on',i===cur);});
+  }
+  function startAuto(){timer=setInterval(function(){goBn(cur+1);},4000);}
+  function stopAuto(){clearInterval(timer);}
+  dots.forEach(function(d,i){d.onclick=function(e){e.stopPropagation();stopAuto();goBn(i);startAuto();};});
+  startAuto();
+  // Swipe support
+  var sx=0;
+  track.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;stopAuto();},{passive:true});
+  track.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-sx;
+    if(Math.abs(dx)>40) goBn(dx<0?cur+1:cur-1);
+    startAuto();
+  },{passive:true});
 }
 // ===== LỚP 1: Danh mục ngành hàng (grid) =====
 // Chỉ là màn hình "cửa vào" - bấm vào 1 ô sẽ nhảy sang tab ngành đó
@@ -998,10 +1029,11 @@ function render(){
         +(imgUrl?'<img src="'+imgUrl+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">':'')
         +noImgHtml
         +overlayBadges
+        +'<div class="mk-hover-overlay">Xem chi tiết</div>'
         +'</div>'
         +'<div style="padding:12px;display:flex;flex-direction:column;gap:5px;flex:1">'
         +'<div style="font-size:11px;color:#888;display:flex;align-items:center;gap:5px"><span>'+p.kc+'</span></div>'
-        +'<div style="font-size:14px;font-weight:700;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+p.ma+'</div>'
+        +'<div style="font-size:13px;font-weight:700;color:#111;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:break-all">'+p.ma+'</div>'
         +(p.le>0?'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Giá lẻ</span><span style="font-size:12px;font-weight:600;color:#555">'+p.le.toLocaleString('vi-VN')+'đ</span></div>':'')
         +'<div style="display:flex;justify-content:space-between;align-items:baseline">'
         +'<span style="font-size:11px;color:#999">Nhận kho</span>'
@@ -1029,8 +1061,8 @@ function render(){
       var mTkText=mTk?mTkDot+' Còn '+fmtTkCard(mTk.tong,mTk.dvt):'';
       var mTkColor=mTk?(mTk.tier&&mTk.tier.nhanh>0?'#2E7D32':mTk.tier&&mTk.tier.mai>0?'#E65100':'#C62828'):'#bbb';
       div.style.cssText='padding:12px;cursor:pointer;align-items:flex-start';
-      var mImgHtml='<div style="width:84px;flex-shrink:0;margin-right:10px;display:flex;flex-direction:column;align-items:center;gap:4px">'
-        +'<div style="width:84px;height:84px;border-radius:8px;background:#F0EEEC;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">'
+      var mImgHtml='<div style="width:96px;flex-shrink:0;margin-right:10px;display:flex;flex-direction:column;align-items:center;gap:4px">'
+        +'<div style="width:96px;height:96px;border-radius:10px;background:#F0EEEC;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">'
         +(imgUrl?'<img src="'+imgUrl+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display=\'none\'">'
           :'<div style="display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:20px">📷</span><span style="font-size:8px;color:#bbb;text-align:center;line-height:1.2">Chưa<br>có ảnh</span></div>')
         +'</div>'

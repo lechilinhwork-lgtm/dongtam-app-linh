@@ -201,6 +201,8 @@ button:active,.fb:active,.bn:active,.nmuc-card:active{transform:scale(.97)}
   /* Polish: nút bấm/chip đồng bộ transition + trạng thái active có bóng nhẹ */
   .fb,button,.export-btn{transition:box-shadow .15s ease,transform .12s ease,background .15s ease,border-color .15s ease}
   .fb.on{box-shadow:0 3px 10px rgba(192,35,42,.25)}
+  /* Filter chips desktop: to hơn, dễ đọc hơn */
+  #tab-tra .filters-wrap .fb{font-size:12px !important;padding:7px 14px !important}
   button:active,.fb:active{transform:scale(.97)}
 
   /* Polish: khoảng thở cho nội dung tab, tránh cảm giác bó sát */
@@ -550,6 +552,27 @@ input::placeholder{color:var(--t3)}
 .mk-old-price{font-size:11px;color:var(--t3);text-decoration:line-through}
 .mk-sale-label{font-size:10px;color:var(--red)}
 .sale-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--red);margin-left:4px;vertical-align:middle}
+
+/* ===== BANNER CAROUSEL ===== */
+.bcarousel-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--bd2);cursor:pointer;
+  transition:background .2s,width .25s;
+  flex-shrink:0;
+}
+.bcarousel-dot.on{background:var(--red);width:20px;border-radius:4px}
+
+/* ===== DESKTOP CARD HOVER OVERLAY ===== */
+.mk-hover-overlay{
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(to top,rgba(0,0,0,.65) 0%,transparent 100%);
+  color:#fff;font-size:12px;font-weight:700;letter-spacing:.3px;
+  display:flex;align-items:flex-end;justify-content:center;
+  padding-bottom:10px;height:70%;
+  opacity:0;transition:opacity .22s ease;
+  pointer-events:none;
+}
+@media(min-width:768px){.mk:hover .mk-hover-overlay{opacity:1}}
 #ct3-confirm-btn:disabled{opacity:.45;cursor:not-allowed}
 .badge{font-size:10px;padding:1px 6px;border-radius:5px;background:#FFF3CD;color:#856404;font-weight:600;margin-left:4px}
 
