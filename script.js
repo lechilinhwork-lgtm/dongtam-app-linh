@@ -1132,11 +1132,11 @@ function showDP(ma){
   }
   // Tra giá sale từ CT1_DATA / CT2_DATA (nếu đã load)
   // Lưu ý: mergeCTintoDATA gắn p.ns = c.nk (trường nk), không phải c.ns
-  // → phải ưu tiên saleInfo.nk trước saleInfo.ns để tránh hasSale=false
+  // → ct150nk/ct150gh là giá CT150 đúng; nk/gh là fallback
   var saleInfo = CT1_DATA.find(function(x){return x.ma===ma;})
                || CT2_DATA.find(function(x){return x.ma===ma;});
-  var ns_sale = saleInfo ? (saleInfo.nk||saleInfo.ns||0) : (p.ns||0);
-  var gs_sale = saleInfo ? (saleInfo.gh||saleInfo.gs||0) : (p.gs||0);
+  var ns_sale = saleInfo ? (saleInfo.ct150nk||saleInfo.nk||saleInfo.ns||0) : (p.ns||0);
+  var gs_sale = saleInfo ? (saleInfo.ct150gh||saleInfo.gh||saleInfo.gs||0) : (p.gs||0);
   // Fallback: nếu saleInfo không có giá nhưng p đã được gắn _fromCT thì dùng p.ns/p.gs
   if(!ns_sale && isSaleItem) ns_sale = p.ns||0;
   if(!gs_sale && isSaleItem) gs_sale = p.gs||0;
