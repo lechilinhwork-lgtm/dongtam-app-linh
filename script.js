@@ -2089,6 +2089,18 @@ function loadImg(ma){
   }
 }
 
+// Touch swipe cho popup ảnh Gạch
+(function(){
+  var wrap=document.getElementById('dp-img-wrap');
+  if(!wrap) return;
+  var sx=0;
+  wrap.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;},{passive:true});
+  wrap.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-sx;
+    if(Math.abs(dx)>40) slideImg(dx<0?1:-1);
+  },{passive:true});
+})();
+
 function convertImgUrl(url){
   if(!url) return '';
   // Google Drive: /file/d/ID → googleusercontent
@@ -2212,6 +2224,18 @@ function slideNdImg(dir){
   ndImgIdx = (ndImgIdx + dir + ndImgList.length) % ndImgList.length;
   renderNdImg();
 }
+
+// Touch swipe cho popup ảnh Ngói
+(function(){
+  var wrap=document.getElementById('nd-img-wrap');
+  if(!wrap) return;
+  var sx=0;
+  wrap.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;},{passive:true});
+  wrap.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-sx;
+    if(Math.abs(dx)>40) slideNdImg(dx<0?1:-1);
+  },{passive:true});
+})();
 
 // Dựng nội dung báo giá text (dùng chung cho popup chi tiết SP + Zalo nhanh)
 function layNoiDungBaoGia(ma){
