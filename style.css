@@ -1439,4 +1439,10 @@ html{scroll-behavior:smooth}
   #thongtin-khachhang{background:rgba(192,35,42,.12) !important;border-bottom-color:rgba(192,35,42,.25) !important;color:#FF9E9E !important}
   /* Danger hover */
   .acct-menu-danger:hover{background:rgba(192,35,42,.15)}
+  /* Gạch kính info bar */
+  #sub-kinh-content>div:first-child{background:rgba(13,71,161,.15) !important;color:#90CAF9 !important}
+  /* Kính price grid ≥50 boxes */
+  #kinh-list div[style*="background:#E8F5E9"]{background:rgba(27,94,32,.2) !important}
+  /* Skeleton light bg */
+  .sk-img,.sk-line{background:var(--bg2)}
 }
