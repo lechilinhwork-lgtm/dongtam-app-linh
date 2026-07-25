@@ -224,17 +224,18 @@ button:active,.fb:active,.bn:active,.nmuc-card:active{transform:scale(.97)}
     z-index:60;              /* dưới topbar (z:100) — không đè lên header */
     max-height:none !important;
     padding:10px !important;
-    display:flex;flex-direction:column;gap:7px;
+    display:grid;grid-template-columns:1fr 1fr;gap:7px;
     scroll-behavior:smooth;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+    align-content:start;
   }
   #size-sidebar .sz-item{
-    flex:0 0 auto;width:100%;
     border:1.5px solid var(--bd);
     border-radius:10px;
-    padding:11px 4px;font-size:12.5px;font-weight:600;
-    display:flex;align-items:center;justify-content:center;
+    padding:10px 4px;font-size:11.5px;font-weight:600;
+    display:flex;align-items:center;justify-content:center;text-align:center;
     transition:all .18s ease;
   }
+  #size-sidebar #sz-all,#size-sidebar #loc-sidebar{grid-column:1/-1}
   #size-sidebar .sz-item:hover{border-color:var(--red);color:var(--red);background:#FFF5F5;transform:translateY(-1px)}
   #size-sidebar .sz-item.on{background:var(--red);color:#fff;border-color:var(--red);box-shadow:0 3px 10px rgba(192,35,42,.3)}
   #size-sidebar>#loc-sidebar{flex-basis:100%}
