@@ -1795,6 +1795,17 @@ function themNgoiVaoDon(){
   showToast('✓ Đã thêm '+sl+' viên '+p.ten+' vào đơn!');
   closeNgoiDetail();
 }
+// Chuyển sản phẩm trước/sau ngay trong popup, không cần đóng ra mở lại
+function ngoiNav(delta){
+  var list = ngoiIsNew()
+    ? NGOI.filter(function(p){ var info=ngoiParse(p); return info && info.dong===curNgoiDong; })
+    : NGOI;
+  if(!list.length) return;
+  var idx=list.findIndex(function(p){return p.ma===curNgoiMa;});
+  if(idx<0) idx=0;
+  var next=list[(idx+delta+list.length)%list.length];
+  if(next) showNgoi(next.ma);
+}
 function closeNgoiDetail(){
   document.getElementById('ngoi-detail').style.display='none';
   var kd=document.getElementById('keo-detail');
@@ -1967,6 +1978,14 @@ function themKeoVaoDon(){
   updateDonBadge();
   showToast('✓ Đã thêm '+sl+' bao '+p.ten+' vào đơn!');
   closeKeoDetail();
+}
+// Chuyển sản phẩm trước/sau ngay trong popup, không cần đóng ra mở lại
+function keoNav(delta){
+  if(!KEO.length) return;
+  var idx=KEO.findIndex(function(p){return p.ma===curKeoMa;});
+  if(idx<0) idx=0;
+  var next=KEO[(idx+delta+KEO.length)%KEO.length];
+  if(next) showKeo(next.ma);
 }
 function closeKeoDetail(){
   document.getElementById('keo-detail').style.display='none';
