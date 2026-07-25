@@ -3221,9 +3221,14 @@ function showToast(msg){
 function updateDonBadge(){
   var badge=document.getElementById('don-badge');
   var total=donItems.reduce(function(s,x){return s+x.qty;},0);
-  if(badge){badge.textContent=total;badge.style.display=total>0?'inline':'none';}
+  if(badge){badge.textContent=total;badge.style.display=total>0?'inline-flex':'none';}
   var snBadge=document.getElementById('sn-don-badge');
   if(snBadge){snBadge.textContent=total;snBadge.style.display=total>0?'block':'none';}
+  var label=document.getElementById('don-cart-label');
+  if(label){
+    if(donItems.length===0){label.textContent='Giỏ hàng';}
+    else{label.textContent=donItems.length+' SP · '+total+' cái';}
+  }
   saveDonItemsToStorage();
 }
 
