@@ -97,7 +97,10 @@
   <button type="button" class="sn-item sn-soon" onclick="showToast('🔜 Video — sắp ra mắt')"><span class="sn-icon">🎬</span><span>Video</span></button>
   <button type="button" class="sn-item sn-soon" onclick="showToast('🔜 Tồn kho — sắp ra mắt')"><span class="sn-icon">📦</span><span>Tồn kho</span></button>
   <button type="button" class="sn-item sn-soon" onclick="showToast('🔜 AI tư vấn — sắp ra mắt')"><span class="sn-icon">🤖</span><span>AI tư vấn</span></button>
-  <button type="button" class="sn-item" onclick="toggleMenuTaiKhoan()"><span class="sn-icon">👤</span><span>Tài khoản</span></button>
+  <button type="button" class="sn-item sn-acct-btn" id="sn-taikhoan-btn" onclick="snTaiKhoanClick()">
+    <span class="sn-icon" id="sn-acct-icon">👤</span>
+    <span id="sn-acct-label">Tài khoản</span>
+  </button>
 </nav>
 
 <!-- Tìm kiếm toàn bộ ngành hàng (Gạch/Ngói/Keo — TBVS/Sơn chưa có dữ liệu) -->

@@ -2712,6 +2712,7 @@ function showApp(name){
   var canh = document.getElementById('ca-nhan-ten');
   if(canh) canh.textContent = name;
   capNhatAcctAvatar(name);
+  capNhatSnAcct();
   // Chỉ admin mới thấy nút Quản lý tài khoản
   var sessChk=checkSession();
   var btnQLTK=document.getElementById('btn-quanly-taikhoan');
@@ -2830,6 +2831,7 @@ function showGuestApp(){
   // Header: hiện "Khách lẻ" + nút Đăng nhập thay cho menu Tài khoản
   var canh = document.getElementById('ca-nhan-ten');
   if(canh) canh.textContent = 'Khách lẻ · Giá bán lẻ';
+  capNhatSnAcct();
   var btnTK = document.getElementById('btn-taikhoan-menu');
   if(btnTK){
     btnTK.innerHTML = '<span class="acct-avatar">🔐</span><span style="font-size:12px;font-weight:700;color:#fff;padding-right:2px">Đăng nhập</span>';
@@ -3918,6 +3920,67 @@ function capNhatAcctAvatar(text){
   var chars=clean.split(/\s+/).filter(Boolean);
   var initials=(chars[0]?chars[0][0]:'')+(chars.length>1?chars[chars.length-1][0]:'');
   av.textContent=initials.toUpperCase()||'👤';
+}
+
+// ===== SIDE-NAV: NÚT TÀI KHOẢN THÔNG MINH =====
+function snTaiKhoanClick(){
+  var sess=checkSession();
+  if(!sess){ showLoginScreen(); return; }
+  moThongTinTaiKhoan(sess);
+}
+
+function capNhatSnAcct(){
+  var icon=document.getElementById('sn-acct-icon');
+  var label=document.getElementById('sn-acct-label');
+  if(!icon||!label) return;
+  var sess=checkSession();
+  if(!sess){
+    icon.innerHTML='🔐'; label.textContent='Đăng nhập';
+    document.getElementById('sn-taikhoan-btn') && document.getElementById('sn-taikhoan-btn').classList.remove('sn-acct-loggedin');
+    return;
+  }
+  var words=(sess.name||sess.user||'U').trim().split(/\s+/);
+  var initials=((words[0]||'')[0]||'')+(words.length>1?(words[words.length-1][0]||''):'');
+  icon.innerHTML='<span class="sn-av-circle">'+initials.toUpperCase()+'</span>';
+  label.textContent=(words[words.length-1]||'TK');
+  document.getElementById('sn-taikhoan-btn') && document.getElementById('sn-taikhoan-btn').classList.add('sn-acct-loggedin');
+}
+
+function moThongTinTaiKhoan(sess){
+  var ex=document.getElementById('modal-tk-info'); if(ex){ex.remove();return;}
+  var roleMap={admin:'⭐ Admin',nv:'👔 Nhân viên',khachhang:'🏢 Khách hàng'};
+  var roleClr={admin:'#7B1FA2',nv:'#1565C0',khachhang:'#2E7D32'};
+  var roleBg ={admin:'#F3E5F5',nv:'#E3F2FD',khachhang:'#E8F5E9'};
+  var role=sess.role||'nv';
+  var words=(sess.name||sess.user||'U').trim().split(/\s+/);
+  var initials=((words[0]||'')[0]||'')+(words.length>1?(words[words.length-1][0]||''):'');
+  var modal=document.createElement('div');
+  modal.id='modal-tk-info';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML=
+    '<div class="tk-card" onclick="event.stopPropagation()">'+
+      '<div class="tk-card-head">'+
+        '<div class="tk-big-av">'+initials.toUpperCase()+'</div>'+
+        '<button class="tk-close-btn" onclick="document.getElementById(\'modal-tk-info\').remove()">✕</button>'+
+      '</div>'+
+      '<div class="tk-card-body">'+
+        '<p class="tk-name">'+(sess.name||sess.user||'')+'</p>'+
+        '<p class="tk-user">@'+(sess.user||'')+'</p>'+
+        '<span class="tk-role-badge" style="background:'+(roleBg[role]||'#eee')+';color:'+(roleClr[role]||'#333')+'">'+
+          (roleMap[role]||role)+
+        '</span>'+
+        (sess.tenCty?'<p class="tk-info-row">🏢 '+sess.tenCty+'</p>':'')+
+        (sess.diaChi?'<p class="tk-info-row">📍 '+sess.diaChi+'</p>':'')+
+        (sess.email?'<p class="tk-info-row">✉️ '+sess.email+'</p>':'')+
+        '<div class="tk-actions">'+
+          '<button class="tk-action-btn" onclick="document.getElementById(\'modal-tk-info\').remove();moLichSuDon()">🕘 Lịch sử đơn hàng</button>'+
+          (role==='admin'?'<button class="tk-action-btn" onclick="document.getElementById(\'modal-tk-info\').remove();moQuanLyTaiKhoan()">👤 Quản lý tài khoản</button>':'')+
+          '<button class="tk-action-btn tk-action-danger" onclick="document.getElementById(\'modal-tk-info\').remove();doLogout()">🚪 Đăng xuất</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  modal.addEventListener('click',function(e){if(e.target===modal)modal.remove();});
+  document.body.appendChild(modal);
 }
 
 // ===== QUẢN LÝ TÀI KHOẢN (chỉ admin) =====

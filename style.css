@@ -1036,6 +1036,57 @@ input::placeholder{color:var(--t3)}
 .acct-menu-danger:hover{background:#FDECEA}
 .acct-menu-sep{height:1px;background:var(--bd,#eee);margin:5px 4px}
 
+/* ===== SIDE-NAV ACCOUNT BUTTON ===== */
+.sn-acct-btn{margin-top:auto;border-top:1px solid var(--bd);padding-top:10px !important}
+.sn-av-circle{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:26px;height:26px;border-radius:50%;
+  background:var(--red);color:#fff;font-size:11px;font-weight:800;
+}
+.sn-acct-loggedin .sn-av-circle{background:var(--red)}
+
+/* ===== POPUP THÔNG TIN TÀI KHOẢN ===== */
+.tk-card{
+  background:var(--bg);border-radius:20px;overflow:hidden;
+  width:100%;max-width:340px;
+  box-shadow:0 12px 48px rgba(0,0,0,.22);
+}
+.tk-card-head{
+  background:var(--brand-grad);padding:28px 20px 20px;
+  position:relative;display:flex;justify-content:center;
+}
+.tk-big-av{
+  width:72px;height:72px;border-radius:50%;
+  background:#fff;color:var(--red);
+  font-size:26px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(0,0,0,.18);
+}
+.tk-close-btn{
+  position:absolute;top:12px;right:12px;
+  background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);
+  border-radius:50%;width:28px;height:28px;
+  color:#fff;font-size:13px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.tk-card-body{padding:20px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.tk-name{font-size:17px;font-weight:800;color:var(--t1);margin:0;text-align:center}
+.tk-user{font-size:12px;color:var(--t3);margin:0}
+.tk-role-badge{
+  font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:2px;
+}
+.tk-info-row{font-size:12px;color:var(--t2);margin:0;text-align:center}
+.tk-actions{width:100%;display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.tk-action-btn{
+  width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--bd);
+  background:var(--bg1);color:var(--t1);font-size:13px;font-weight:600;
+  font-family:var(--f);cursor:pointer;text-align:left;
+  transition:background .12s ease;
+}
+.tk-action-btn:hover{background:var(--bg2)}
+.tk-action-danger{color:#C0232A;border-color:#FFCDD2;background:#FFF5F5}
+.tk-action-danger:hover{background:#FDECEA}
+
 /* ===== KHÁCH LẺ: ẩn giỏ hàng bên phải — chỉ hiện khi đăng nhập ===== */
 @media(min-width:768px){
   body.guest-mode #tab-don{display:none !important}
