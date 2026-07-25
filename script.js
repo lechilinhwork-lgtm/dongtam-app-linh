@@ -897,6 +897,17 @@ function capNhatTopPanels(){
 }
 window.addEventListener('resize',capNhatTopPanels);
 setTimeout(capNhatTopPanels,300);
+// Resize cửa sổ (thu/phóng, kéo qua lại 2 màn hình) phải tính lại việc hiện/ẩn
+// bộ lọc dọc + số cột lưới — nếu không, display:block cũ (lúc còn >=1200px) bị
+// kẹt lại khi thu nhỏ xuống <1200px, đè lệch layout (Bộ lọc/Thuộc tính chồng lên đầu trang).
+var _rzTimer=null;
+window.addEventListener('resize',function(){
+  clearTimeout(_rzTimer);
+  _rzTimer=setTimeout(function(){
+    capNhatFilterSide();
+    if(typeof render==='function') render();
+  },150);
+});
 
 // Hiện/ẩn bộ lọc dọc: chỉ desktop rộng + đang ở tab Gạch
 function capNhatFilterSide(){
