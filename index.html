@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="DT Sales"/>
 <meta name="theme-color" content="#C0232A"/>
 <title>Đồng Tâm – Sales Tool</title>
-<link rel="stylesheet" href="style.css?v=nav13">
+<link rel="stylesheet" href="style.css?v=nav14">
 </head>
 <body>
 
@@ -49,12 +49,11 @@
     </div>
   </div>
   <div class="topbar-right">
-    <button type="button" id="btn-timkiem" onclick="moTimKiem()" title="Tìm kiếm tất cả ngành hàng" style="background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:999px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;flex-shrink:0">🔍</button>
-    <button type="button" id="btn-giohang" onclick="swTab('don')" title="Giỏ hàng" style="position:relative;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:999px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;flex-shrink:0">
+    <button type="button" id="btn-giohang" onclick="swTab('don')" title="Giỏ hàng" style="position:relative;background:#fff;border:1px solid rgba(255,255,255,.5);border-radius:999px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:19px;cursor:pointer;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.15)">
       🛒
       <span id="don-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#FF9500;color:#fff;border-radius:10px;min-width:16px;height:16px;font-size:9px;font-weight:800;align-items:center;justify-content:center;padding:0 3px"></span>
     </button>
-    <span id="gia-source-badge" onclick="fetchGiaFromSheet()">⏳</span>
+    <span id="gia-source-badge" onclick="fetchGiaFromSheet()" title="Đồng bộ giá từ Sheet">⏳</span>
     <div id="acct-wrap" style="position:relative;flex-shrink:0">
       <button type="button" id="btn-taikhoan-menu" onclick="toggleMenuTaiKhoan()" class="acct-pill">
         <span id="acct-avatar" class="acct-avatar">👤</span>
@@ -82,8 +81,8 @@
   <button class="bn" id="bn-tra" onclick="swTab('tra')"><span class="bn-icon">🔲</span><span>Gạch</span></button>
   <button class="bn" id="bn-ngoi" onclick="swTab('ngoi')"><span class="bn-icon">🏠</span><span>Ngói</span></button>
   <button class="bn" id="bn-keo" onclick="swTab('keo')"><span class="bn-icon">🧱</span><span>Keo</span></button>
-  <button class="bn" id="bn-tbvs" onclick="swTab('tbvs')"><span class="bn-icon">🚿</span><span>TBVS</span></button>
-  <button class="bn" id="bn-son" onclick="swTab('son')"><span class="bn-icon">🎨</span><span>Sơn nước</span></button>
+  <button class="bn" id="bn-tbvs" onclick="swTab('tbvs')"><span class="bn-icon">🚽</span><span>TBVS</span></button>
+  <button class="bn" id="bn-son" onclick="swTab('son')"><span class="bn-icon">🪣</span><span>Sơn nước</span></button>
 </nav>
 
 <!-- Sidebar điều hướng desktop (>=768px) — thay cho bottom-nav ngang.
@@ -700,6 +699,6 @@
 
 
 
-<script src="script.js?v=nav12" defer></script>
+<script src="script.js?v=nav13" defer></script>
 </body>
 </html>

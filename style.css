@@ -163,7 +163,7 @@ button:active,.fb:active,.bn:active,.nmuc-card:active{transform:scale(.97)}
   /* Tránh trùng lặp với side-nav: ẩn nút Tìm kiếm/Giỏ hàng/Tài khoản trên topbar.
      Chỉ ẩn nút bấm (không ẩn #acct-wrap) vì menu tài khoản (#menu-taikhoan) là con của nó,
      ẩn cả wrap sẽ làm menu không hiện được khi bấm từ side-nav. */
-  #btn-timkiem,#btn-giohang,#btn-taikhoan-menu{display:none !important}
+  #btn-giohang,#btn-taikhoan-menu{display:none !important}
 
   /* Banner thông tin khách hàng */
   #thongtin-khachhang{margin-left:84px}
@@ -355,8 +355,9 @@ input::placeholder{color:var(--t3)}
 /* ===== GIA BADGE ===== */
 #gia-source-wrap{background:var(--bg);padding:4px 16px;text-align:center;border-bottom:1px solid var(--bd)}
 #gia-source-badge{
-  font-size:10px;padding:2px 10px;border-radius:10px;
-  background:#FFFDE7;color:#795548;cursor:pointer;display:inline-block;
+  font-size:13px;width:26px;height:26px;border-radius:50%;
+  background:#FFFDE7;color:#795548;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
 }
 
 /* ===== BOTTOM TABS ===== */
@@ -370,14 +371,15 @@ input::placeholder{color:var(--t3)}
 }
 .bottom-nav::-webkit-scrollbar{display:none}
 .bn{
-  flex:0 0 auto;min-width:68px;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;padding:8px 4px;border:none;
+  flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:8px 2px;border:none;
   background:none;cursor:pointer;color:var(--t3);
   font-size:9px;font-weight:600;font-family:var(--f);
   gap:3px;transition:color .15s;
 }
 .bn.on{color:var(--red)}
-.bn-icon{font-size:20px;line-height:1}
+.bn-icon{font-size:19px;line-height:1}
+.bn span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 
 /* Sidebar điều hướng desktop — ẩn trên mobile, hiện thay bottom-nav ở >=768px */
 .side-nav{
