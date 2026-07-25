@@ -455,6 +455,9 @@ input::placeholder{color:var(--t3)}
   display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;
 }
 .filters-wrap::-webkit-scrollbar{display:none}
+/* Hàng filter tab Gạch: gọn để vừa 1 màn hình, không cần cuộn ngang */
+#tab-tra .filters-wrap{gap:4px;overflow-x:visible}
+#tab-tra .filters-wrap .fb{padding:5px 8px;font-size:10.5px;white-space:nowrap}
 .fb{
   flex-shrink:0;padding:6px 14px;border-radius:20px;
   border:1.5px solid var(--bd);background:var(--bg1);
