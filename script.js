@@ -440,14 +440,20 @@ function swTab(t){
 // ===== BANNER TRANG CHỦ (Danh mục) — sửa mảng này để đổi nội dung banner =====
 var TRANG_CHU_BANNERS=[
   {icon:'🔥',title:'Sale tháng — giảm đến 25%',sub:'Hàng trăm mã đang giảm giá',grad:'linear-gradient(120deg,#C0232A,#8B1A1A)',tab:'sale'},
+  {icon:'📦',title:'Sale xả kho — giá tốt nhất',sub:'Hàng tồn kho cần đẩy nhanh, số lượng có hạn',grad:'linear-gradient(120deg,#E65100,#BF360C)',tab:'sale',sf2:'ct2'},
   {icon:'🆕',title:'Mẫu mới về kho',sub:'Xem ngay mẫu gạch vừa cập nhật',grad:'linear-gradient(120deg,#3949AB,#1A237E)',tab:'tra'}
 ];
+function timBanner(i){
+  var b=TRANG_CHU_BANNERS[i]; if(!b) return;
+  swTab(b.tab);
+  if(b.sf2) setTimeout(function(){ setSF2(b.sf2); },0);
+}
 function renderTrangChuBanners(){
   var el=document.getElementById('dm-banners'); if(!el) return;
   if(!TRANG_CHU_BANNERS.length){ el.innerHTML=''; return; }
   el.innerHTML='<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px">'
     +TRANG_CHU_BANNERS.map(function(b,i){
-      return '<div onclick="swTab(\''+b.tab+'\')" style="flex:0 0 240px;border-radius:14px;padding:16px;background:'+b.grad+';color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.12)">'
+      return '<div onclick="timBanner('+i+')" style="flex:0 0 240px;border-radius:14px;padding:16px;background:'+b.grad+';color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.12)">'
         +'<div style="font-size:22px;margin-bottom:6px">'+b.icon+'</div>'
         +'<div style="font-size:14px;font-weight:800;margin-bottom:3px">'+b.title+'</div>'
         +'<div style="font-size:11px;opacity:.85">'+b.sub+'</div>'
