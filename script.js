@@ -134,7 +134,7 @@ function fetchAllFromSheet(){
     }
     try{ applyGiaGach(res.gach); }catch(e){ console.log('Lỗi áp giá gạch (getAll):', e); }
     try{ applyImagesData(res.images); }catch(e){ console.log('Lỗi áp ảnh (getAll):', e); }
-    try{ applySpExtraData(res.extra); }catch(e){ console.log('Lỗi áp spExtra (getAll):', e); }
+    try{ if(res.extra){ applySpExtraData(res.extra, res.maToSap); } else { fetchSpExtra(); } }catch(e){ fetchSpExtra(); }
     try{ applyThuocTinhData(res.thuocTinh); }catch(e){ console.log('Lỗi áp thuộc tính SP (getAll):', e); }
     try{ applyCTResult('ct1', res.ct1); }catch(e){ console.log('Lỗi áp CT1 (getAll):', e); }
     try{ applyCTResult('ct2', res.ct2); }catch(e){ console.log('Lỗi áp CT2 (getAll):', e); }
