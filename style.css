@@ -1411,6 +1411,15 @@ html{scroll-behavior:smooth}
   transform:translateY(-2px)
 }
 
+/* ===== PRODUCT EXTRA: mô tả + video ===== */
+.dp-mota-body p{font-size:13px;color:#333;line-height:1.6;margin:0 0 4px}
+.dp-highlights-body ul{margin:6px 0 0;padding-left:18px}
+.dp-highlights-body li{font-size:13px;color:#555;line-height:1.6;margin-bottom:3px}
+.dp-vid-tab{padding:6px 16px;border-radius:20px;border:1.5px solid #ddd;
+  background:#f5f5f5;color:#555;font-size:13px;cursor:pointer;
+  transition:background .18s,color .18s,border-color .18s}
+.dp-vid-tab.active{background:var(--red);color:#fff;border-color:var(--red)}
+
 /* ===== DARK MODE OVERRIDES — fix hardcoded whites ===== */
 @media(prefers-color-scheme:dark){
   /* Hover/active accent states */
@@ -1462,4 +1471,9 @@ html{scroll-behavior:smooth}
   .pr-box-sale{background:rgba(192,35,42,.12);border-color:rgba(192,35,42,.3)}
   /* Active states */
   .mk:active,.loc-sec-hdr.active,.loc-sec-item.active{background:rgba(192,35,42,.15) !important}
+  /* Extra: mô tả + video */
+  .dp-mota-body p{color:var(--t1)}
+  .dp-highlights-body li{color:var(--t2)}
+  .dp-vid-tab{background:var(--bg2);border-color:var(--bd);color:var(--t2)}
+  .dp-vid-tab.active{background:var(--red);color:#fff;border-color:var(--red)}
 }

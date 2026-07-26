@@ -42,6 +42,8 @@ function tinhVATvaTongThanhToan(tongTienHangTruocVAT){
 var curGiaoHang='nhan';
 var imgStore=(function(){ try{ return JSON.parse(localStorage.getItem('dt_imgs')||'{}'); }catch(e){ return {}; } })();
 var imgStoreMulti=(function(){ try{ return JSON.parse(localStorage.getItem('dt_imgs_multi')||'{}'); }catch(e){ return {}; } })();
+var spExtra=(function(){ try{ return JSON.parse(localStorage.getItem('dt_spextra')||'{}'); }catch(e){ return {}; } })();
+var maToSap={}; // maApp → maSAP, rebuilt mỗi lần fetch (không cache)
 // Mã sản phẩm đôi khi lệch hoa/thường hoặc dư khoảng trắng giữa tab "Ảnh sản phẩm"
 // và các tab giá (Kính/Ngói/Keo) -> chuẩn hóa để so khớp không bị bỏ lỡ ảnh.
 function normMa(s){ return String(s||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,''); }
@@ -123,7 +125,7 @@ function fetchAllFromSheet(){
       console.log('⚠️ getAll lỗi, rơi về gọi riêng lẻ:', res && res.msg);
       goiTuanTu([
         function(){ fetchGiaFromSheet(['gach']); },
-        function(){ fetchImagesFromSheet(); },
+        function(){ fetchSpExtra(); },
         function(){ fetchThuocTinhSP(); },
         function(){ fetchCT('ct1'); },
         function(){ fetchCT('ct2'); }
@@ -132,6 +134,7 @@ function fetchAllFromSheet(){
     }
     try{ applyGiaGach(res.gach); }catch(e){ console.log('Lỗi áp giá gạch (getAll):', e); }
     try{ applyImagesData(res.images); }catch(e){ console.log('Lỗi áp ảnh (getAll):', e); }
+    try{ applySpExtraData(res.extra); }catch(e){ console.log('Lỗi áp spExtra (getAll):', e); }
     try{ applyThuocTinhData(res.thuocTinh); }catch(e){ console.log('Lỗi áp thuộc tính SP (getAll):', e); }
     try{ applyCTResult('ct1', res.ct1); }catch(e){ console.log('Lỗi áp CT1 (getAll):', e); }
     try{ applyCTResult('ct2', res.ct2); }catch(e){ console.log('Lỗi áp CT2 (getAll):', e); }
@@ -145,7 +148,7 @@ function fetchAllFromSheet(){
     s.remove();
     goiTuanTu([
       function(){ fetchGiaFromSheet(['gach']); },
-      function(){ fetchImagesFromSheet(); },
+      function(){ fetchSpExtra(); },
       function(){ fetchThuocTinhSP(); },
       function(){ fetchCT('ct1'); },
       function(){ fetchCT('ct2'); }
@@ -375,6 +378,122 @@ function fetchImagesFromSheet(){
   };
   document.head.appendChild(s);
 }
+function applySpExtraData(extra, sapMap){
+  if(!extra && !sapMap) return;
+  if(sapMap){
+    Object.keys(sapMap).forEach(function(maApp){ maToSap[maApp]=sapMap[maApp]; });
+  }
+  if(extra){
+    Object.keys(extra).forEach(function(sap){ spExtra[sap]=extra[sap]; });
+    try{ localStorage.setItem('dt_spextra', JSON.stringify(spExtra)); }catch(e){}
+    console.log('✅ Đã tải extra info '+Object.keys(extra).length+' SP (keyed by SAP)');
+  }
+}
+
+function fetchSpExtra(){
+  var APPS_URL='https://script.google.com/macros/s/AKfycbyrO8symCYOkWsGG0nRWPF7gpndC3mzEVUk15UvWrA0O81ZUumW-kX_gEOZhtCJ34bMVQ/exec';
+  window._onSpExtra=function(data){
+    var old=document.getElementById('_spextra_script'); if(old) old.remove();
+    if(data && data.images) applyImagesData(data);
+    applySpExtraData(data && data.extra, data && data.maToSap);
+  };
+  var old=document.getElementById('_spextra_script'); if(old) old.remove();
+  var s=document.createElement('script');
+  s.id='_spextra_script';
+  s.src=APPS_URL+'?action=getSpExtra&k='+encodeURIComponent(APP_KEY)+'&callback=_onSpExtra';
+  s.onerror=function(){
+    console.log('⚠️ Không tải được spExtra – fallback getImages');
+    s.remove();
+    fetchImagesFromSheet();
+  };
+  document.head.appendChild(s);
+}
+
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+var _dpVidMa=null;
+function renderDpExtra(ma){
+  var sap=maToSap[ma];
+  var ex=sap?spExtra[sap]:null;
+  var wrapEl=document.getElementById('dp-extra-wrap');
+  if(!ex){ if(wrapEl) wrapEl.style.display='none'; return; }
+  if(wrapEl) wrapEl.style.display='block';
+  _dpVidMa=ma;
+
+  // Mô tả
+  var motaSec=document.getElementById('dp-mota-section');
+  var hasMota=ex.mo_ta||ex.highlights;
+  if(motaSec){
+    if(hasMota){
+      motaSec.style.display='block';
+      var motaEl=document.getElementById('dp-mota');
+      if(motaEl) motaEl.innerHTML=(ex.mo_ta||'').split('\n').map(function(l){ return l?'<p>'+escHtml(l)+'</p>':''; }).join('');
+      var hlEl=document.getElementById('dp-highlights');
+      if(hlEl){
+        if(ex.highlights){
+          var items=ex.highlights.split('\n').filter(Boolean);
+          hlEl.innerHTML='<ul>'+items.map(function(i){return '<li>'+escHtml(i)+'</li>';}).join('')+'</ul>';
+        } else { hlEl.innerHTML=''; }
+      }
+    } else { motaSec.style.display='none'; }
+  }
+
+  // Video
+  var vidSec=document.getElementById('dp-video-section');
+  var hasVid=ex.tiktok||ex.youtube;
+  if(vidSec){
+    if(hasVid){
+      vidSec.style.display='block';
+      var tabsEl=document.getElementById('dp-video-tabs');
+      var embedEl=document.getElementById('dp-video-embed');
+      if(embedEl) embedEl.innerHTML=''; // clear cũ
+      if(ex.tiktok&&ex.youtube){
+        tabsEl.innerHTML='<button class="dp-vid-tab active" onclick="dpShowVideo(\'tiktok\')">▶ TikTok</button>'
+                        +'<button class="dp-vid-tab" onclick="dpShowVideo(\'youtube\')">▶ YouTube</button>';
+        tabsEl.style.display='flex';
+      } else { tabsEl.innerHTML=''; tabsEl.style.display='none'; }
+      dpShowVideo(ex.tiktok?'tiktok':'youtube');
+    } else { vidSec.style.display='none'; }
+  }
+}
+
+function dpShowVideo(type){
+  var sap=maToSap[_dpVidMa];
+  var ex=sap?spExtra[sap]:null; if(!ex) return;
+  var embedEl=document.getElementById('dp-video-embed'); if(!embedEl) return;
+  document.querySelectorAll('.dp-vid-tab').forEach(function(b){
+    b.classList.toggle('active', b.textContent.toLowerCase().indexOf(type)>=0);
+  });
+  var url=type==='tiktok'?ex.tiktok:ex.youtube;
+  var iframeUrl='';
+  if(type==='tiktok'){
+    var m=url.match(/\/video\/(\d+)/);
+    iframeUrl=m?'https://www.tiktok.com/embed/v2/'+m[1]+'?lang=vi-VN':url;
+  } else {
+    var ym=url.match(/(?:youtu\.be\/|[?&]v=|\/shorts\/)([A-Za-z0-9_-]{11})/);
+    iframeUrl=ym?'https://www.youtube.com/embed/'+ym[1]:url;
+  }
+  embedEl.style.aspectRatio=type==='tiktok'?'9/16':'16/9';
+  embedEl.innerHTML='<iframe src="'+iframeUrl+'" style="width:100%;height:100%;border:none" allow="autoplay;encrypted-media" allowfullscreen loading="lazy"></iframe>';
+}
+
+function copyMotaZalo(){
+  var base=layNoiDungBaoGia(curP_ma);
+  var sap=maToSap[curP_ma];
+  var ex=sap?spExtra[sap]:null;
+  var lines=[base];
+  if(ex){
+    if(ex.mo_ta){ lines.push(''); lines.push('📋 MÔ TẢ KỸ THUẬT:'); lines.push(ex.mo_ta); }
+    if(ex.highlights){ lines.push(''); lines.push('✨ ĐẶC ĐIỂM NỔI BẬT:'); lines.push(ex.highlights); }
+    if(ex.tiktok){ lines.push(''); lines.push('▶ Video TikTok: '+ex.tiktok); }
+    if(ex.youtube){ lines.push('▶ Video YouTube: '+ex.youtube); }
+  }
+  var msg=lines.join('\n');
+  navigator.clipboard&&navigator.clipboard.writeText
+    ?navigator.clipboard.writeText(msg).then(function(){showToast('✅ Đã copy! Paste vào Zalo');}).catch(function(){fallbackCopy(msg);})
+    :fallbackCopy(msg);
+}
+
 function setSize(sz){
   curSize=sz;
   document.querySelectorAll('.sz-item').forEach(function(el){el.classList.remove('on');});
@@ -1236,6 +1355,7 @@ function showDP(ma){
   setTimeout(function(){ setDpUnit('m2'); },10);
   loadImg(ma);
   renderDpRelated(p);
+  renderDpExtra(ma);
 }
 // Sản phẩm liên quan: cùng kích cỡ (kc), khác mã, ưu tiên còn ảnh, tối đa 8
 function renderDpRelated(p){
