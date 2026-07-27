@@ -125,6 +125,7 @@ function fetchAllFromSheet(){
       console.log('⚠️ getAll lỗi, rơi về gọi riêng lẻ:', res && res.msg);
       goiTuanTu([
         function(){ fetchGiaFromSheet(['gach']); },
+        function(){ fetchImagesFromSheet(); },
         function(){ fetchSpExtra(); },
         function(){ fetchThuocTinhSP(); },
         function(){ fetchCT('ct1'); },
@@ -148,6 +149,7 @@ function fetchAllFromSheet(){
     s.remove();
     goiTuanTu([
       function(){ fetchGiaFromSheet(['gach']); },
+      function(){ fetchImagesFromSheet(); },
       function(){ fetchSpExtra(); },
       function(){ fetchThuocTinhSP(); },
       function(){ fetchCT('ct1'); },
@@ -394,7 +396,6 @@ function fetchSpExtra(){
   var APPS_URL='https://script.google.com/macros/s/AKfycbyrO8symCYOkWsGG0nRWPF7gpndC3mzEVUk15UvWrA0O81ZUumW-kX_gEOZhtCJ34bMVQ/exec';
   window._onSpExtra=function(data){
     var old=document.getElementById('_spextra_script'); if(old) old.remove();
-    if(data && data.images) applyImagesData(data);
     applySpExtraData(data && data.extra, data && data.maToSap);
   };
   var old=document.getElementById('_spextra_script'); if(old) old.remove();
