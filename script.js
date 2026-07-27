@@ -417,7 +417,11 @@ function renderDpExtra(ma){
   var sap=maToSap[ma];
   var ex=sap?spExtra[sap]:null;
   var wrapEl=document.getElementById('dp-extra-wrap');
-  if(!ex){ if(wrapEl) wrapEl.style.display='none'; return; }
+  if(!ex){
+    if(wrapEl) wrapEl.style.display='none';
+    var vb=document.getElementById('dp-tbtn-video'); if(vb) vb.style.display='none';
+    return;
+  }
   if(wrapEl) wrapEl.style.display='block';
   _dpVidMa=ma;
 
@@ -442,6 +446,8 @@ function renderDpExtra(ma){
   // Video
   var vidSec=document.getElementById('dp-video-section');
   var hasVid=ex.tiktok||ex.youtube;
+  var vidTabBtn=document.getElementById('dp-tbtn-video');
+  if(vidTabBtn) vidTabBtn.style.display=hasVid?'':'none';
   if(vidSec){
     if(hasVid){
       vidSec.style.display='block';
@@ -1340,6 +1346,7 @@ function showDP(ma){
     if(badgeEl2) badgeEl2.style.display='none';
   }
   document.getElementById('dp-sell').value=p.nhan>0?Math.round(p.nhan*1.07):'';
+  dpSetTab('gia');
   document.getElementById('dp').style.display='block';
   var isDesk=(window.innerWidth||document.documentElement.clientWidth||0)>=768;
   if(isDesk) document.body.classList.add('dp-open');
@@ -1373,6 +1380,14 @@ function renderDpRelated(p){
       +'<div style="font-size:10px;color:var(--t2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x.ma+'</div>'
       +'</div>';
   }).join('');
+}
+function dpSetTab(tab){
+  ['gia','mota','video'].forEach(function(t){
+    var panel=document.getElementById('dp-panel-'+t);
+    var btn=document.getElementById('dp-tbtn-'+t);
+    if(panel) panel.style.display=(t===tab)?'block':'none';
+    if(btn){ btn.classList.toggle('dp-tbtn-active',t===tab); }
+  });
 }
 function closeDp(){
   document.getElementById('dp').style.display='none';

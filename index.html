@@ -184,7 +184,13 @@
       </div>
       <button onclick="closeDp()" class="dp-close-btn">✕</button>
     </div>
+    <div id="dp-tab-bar">
+      <button id="dp-tbtn-gia" class="dp-tbtn dp-tbtn-active" onclick="dpSetTab('gia')">💰 Giá</button>
+      <button id="dp-tbtn-mota" class="dp-tbtn" onclick="dpSetTab('mota')">📋 Mô tả</button>
+      <button id="dp-tbtn-video" class="dp-tbtn" onclick="dpSetTab('video')" style="display:none">▶ Video</button>
+    </div>
     <div id="dp-scroll">
+    <div id="dp-panel-gia">
     <p id="dp-gia-dl-label" class="dp-sec-label">GIÁ ĐẠI LÝ</p>
     <div class="pr-grid">
       <div class="pr-box"><p>Giá lẻ</p><p id="dp-le"></p></div>
@@ -227,6 +233,8 @@
         <p id="dp-room-result" class="dp-room-result"></p>
       </div>
     </div>
+    </div><!-- end dp-panel-gia -->
+    <div id="dp-panel-mota" style="display:none">
     <div id="dp-img-section" style="margin-top:10px">
       <div id="dp-img-wrap" style="display:none;margin-bottom:8px;border-radius:var(--r8);overflow:hidden;background:var(--bg2);position:relative">
         <img id="dp-img" src="" style="width:100%;height:100%;object-fit:contain;display:block"/>
@@ -244,23 +252,25 @@
           background:rgba(0,0,0,.5);color:#fff;font-size:10px;padding:2px 6px;border-radius:10px"></span>
       </div>
     </div>
-    <div id="dp-extra-wrap" style="display:none;margin-top:14px">
+    <div id="dp-extra-wrap" style="margin-top:6px">
       <div id="dp-mota-section" style="display:none">
         <p class="dp-sec-label">MÔ TẢ SẢN PHẨM</p>
         <div id="dp-mota" class="dp-mota-body"></div>
         <div id="dp-highlights" class="dp-highlights-body"></div>
         <button onclick="copyMotaZalo()" class="dp-btn-outline" style="margin-top:8px;width:100%">📋 Copy mô tả sản phẩm</button>
       </div>
-      <div id="dp-video-section" style="display:none;margin-top:14px">
-        <p class="dp-sec-label">VIDEO SẢN PHẨM</p>
-        <div id="dp-video-tabs" style="display:none;gap:8px;margin-bottom:8px"></div>
-        <div id="dp-video-embed" style="border-radius:10px;overflow:hidden;background:#000;width:100%"></div>
-      </div>
     </div>
     <div id="dp-related-wrap" style="display:none;margin-top:12px">
       <p class="dp-sec-label">SẢN PHẨM LIÊN QUAN</p>
       <div id="dp-related" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px"></div>
     </div>
+    </div><!-- end dp-panel-mota -->
+    <div id="dp-panel-video" style="display:none">
+      <div id="dp-video-section" style="margin-top:10px">
+        <div id="dp-video-tabs" style="display:none;gap:8px;margin-bottom:8px"></div>
+        <div id="dp-video-embed" style="border-radius:10px;overflow:hidden;background:#000;width:100%"></div>
+      </div>
+    </div><!-- end dp-panel-video -->
     </div>
     <div id="dp-footer">
       <div class="dp-footer-btns">
