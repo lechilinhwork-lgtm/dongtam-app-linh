@@ -499,6 +499,34 @@ function copyMotaZalo(){
     :fallbackCopy(msg);
 }
 
+function chiaSeVideoSanPham(ma){
+  var p=DATA.find(function(x){return x.ma===ma;}); if(!p) return;
+  var sap=maToSap[ma];
+  var ex=sap?spExtra[sap]:null;
+  if(!ex||(!ex.tiktok&&!ex.youtube)){ showToast('⚠️ Sản phẩm này chưa có video'); return; }
+  var ten=p.ten||p.tenHD||ma;
+  var lines=['🎥 *Video tham khảo sản phẩm:*','*'+ten+'*','Mã: '+ma];
+  if(ex.tiktok)   lines.push('▶ TikTok: '+ex.tiktok);
+  if(ex.youtube)  lines.push('▶ YouTube: '+ex.youtube);
+  lines.push('','📍 Đồng Tâm KV23 – Lê Chí Linh');
+  var msg=lines.join('\n');
+  var firstUrl=ex.tiktok||ex.youtube;
+  // Mobile: dùng Web Share API để mở sheet Zalo
+  if(navigator.share){
+    navigator.share({text:msg,url:firstUrl}).catch(function(e){
+      if(e&&e.name==='AbortError') return;
+      _copyVideoMsg(msg);
+    });
+  } else {
+    _copyVideoMsg(msg);
+  }
+}
+function _copyVideoMsg(msg){
+  navigator.clipboard&&navigator.clipboard.writeText
+    ?navigator.clipboard.writeText(msg).then(function(){showToast('✅ Đã copy lời nhắn video – dán vào Zalo!');}).catch(function(){fallbackCopy(msg);})
+    :fallbackCopy(msg);
+}
+
 function setSize(sz){
   curSize=sz;
   document.querySelectorAll('.sz-item').forEach(function(el){el.classList.remove('on');});
