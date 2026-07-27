@@ -479,19 +479,17 @@ function dpShowVideo(type){
 }
 
 function copyMotaZalo(){
-  var base=layNoiDungBaoGia(curP_ma);
   var sap=maToSap[curP_ma];
   var ex=sap?spExtra[sap]:null;
-  var lines=[base];
+  var lines=[];
   if(ex){
-    if(ex.mo_ta){ lines.push(''); lines.push('📋 MÔ TẢ KỸ THUẬT:'); lines.push(ex.mo_ta); }
-    if(ex.highlights){ lines.push(''); lines.push('✨ ĐẶC ĐIỂM NỔI BẬT:'); lines.push(ex.highlights); }
-    if(ex.tiktok){ lines.push(''); lines.push('▶ Video TikTok: '+ex.tiktok); }
-    if(ex.youtube){ lines.push('▶ Video YouTube: '+ex.youtube); }
+    if(ex.mo_ta) lines.push(ex.mo_ta);
+    if(ex.highlights) lines.push(ex.highlights);
   }
-  var msg=lines.join('\n');
+  var msg=lines.join('\n\n');
+  if(!msg){ showToast('⚠️ Chưa có mô tả cho sản phẩm này'); return; }
   navigator.clipboard&&navigator.clipboard.writeText
-    ?navigator.clipboard.writeText(msg).then(function(){showToast('✅ Đã copy! Paste vào Zalo');}).catch(function(){fallbackCopy(msg);})
+    ?navigator.clipboard.writeText(msg).then(function(){showToast('✅ Đã copy mô tả!');}).catch(function(){fallbackCopy(msg);})
     :fallbackCopy(msg);
 }
 
