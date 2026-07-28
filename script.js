@@ -430,27 +430,33 @@ function fetchSpExtra(){
 function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 var _dpVidMa=null;
-function renderDpExtra(ma){
+// Hàm dùng chung hiển thị Mô tả + Video sản phẩm cho MỌI ngành hàng
+// (Gạch/Ngói/Keo) - mỗi popup truyền "prefix" riêng ứng với bộ id HTML
+// của popup đó (vd 'dp' cho Gạch, 'nd' cho Ngói, 'kd' cho Keo).
+// Nếu popup không có phần tab video riêng (chỉ Gạch có #dp-tbtn-video)
+// thì bỏ qua bước ẩn/hiện tab, không lỗi gì.
+var _extraVidMa={}; // ma hiện tại đang xem video, theo từng prefix (tránh đụng nhau giữa các popup)
+function renderExtraGeneric(ma, prefix){
   var sap=maToSap[ma];
   var ex=sap?spExtra[sap]:null;
-  var wrapEl=document.getElementById('dp-extra-wrap');
+  var wrapEl=document.getElementById(prefix+'-extra-wrap');
   if(!ex){
     if(wrapEl) wrapEl.style.display='none';
-    var vb=document.getElementById('dp-tbtn-video'); if(vb) vb.style.display='none';
+    var vb=document.getElementById(prefix+'-tbtn-video'); if(vb) vb.style.display='none';
     return;
   }
   if(wrapEl) wrapEl.style.display='block';
-  _dpVidMa=ma;
+  _extraVidMa[prefix]=ma;
 
   // Mô tả
-  var motaSec=document.getElementById('dp-mota-section');
+  var motaSec=document.getElementById(prefix+'-mota-section');
   var hasMota=ex.mo_ta||ex.highlights;
   if(motaSec){
     if(hasMota){
       motaSec.style.display='block';
-      var motaEl=document.getElementById('dp-mota');
+      var motaEl=document.getElementById(prefix+'-mota');
       if(motaEl) motaEl.innerHTML=(ex.mo_ta||'').split('\n').map(function(l){ return l?'<p>'+escHtml(l)+'</p>':''; }).join('');
-      var hlEl=document.getElementById('dp-highlights');
+      var hlEl=document.getElementById(prefix+'-highlights');
       if(hlEl){
         if(ex.highlights){
           var items=ex.highlights.split('\n').filter(Boolean);
@@ -461,34 +467,43 @@ function renderDpExtra(ma){
   }
 
   // Video
-  var vidSec=document.getElementById('dp-video-section');
+  var vidSec=document.getElementById(prefix+'-video-section');
   var hasVid=ex.tiktok||ex.youtube;
-  var vidTabBtn=document.getElementById('dp-tbtn-video');
+  var vidTabBtn=document.getElementById(prefix+'-tbtn-video');
   if(vidTabBtn) vidTabBtn.style.display=hasVid?'':'none';
   if(vidSec){
     if(hasVid){
       vidSec.style.display='block';
-      var tabsEl=document.getElementById('dp-video-tabs');
-      var embedEl=document.getElementById('dp-video-embed');
+      var tabsEl=document.getElementById(prefix+'-video-tabs');
+      var embedEl=document.getElementById(prefix+'-video-embed');
       if(embedEl) embedEl.innerHTML=''; // clear cũ
       if(ex.tiktok&&ex.youtube){
-        tabsEl.innerHTML='<button class="dp-vid-tab active" onclick="dpShowVideo(\'tiktok\')">▶ TikTok</button>'
-                        +'<button class="dp-vid-tab" onclick="dpShowVideo(\'youtube\')">▶ YouTube</button>';
+        tabsEl.innerHTML='<button class="dp-vid-tab active" onclick="extraShowVideo(\''+prefix+'\',\'tiktok\')">▶ TikTok</button>'
+                        +'<button class="dp-vid-tab" onclick="extraShowVideo(\''+prefix+'\',\'youtube\')">▶ YouTube</button>';
         tabsEl.style.display='flex';
       } else { tabsEl.innerHTML=''; tabsEl.style.display='none'; }
-      dpShowVideo(ex.tiktok?'tiktok':'youtube');
+      extraShowVideo(prefix, ex.tiktok?'tiktok':'youtube');
     } else { vidSec.style.display='none'; }
   }
 }
 
-function dpShowVideo(type){
-  var sap=maToSap[_dpVidMa];
+function extraShowVideo(prefix, type){
+  var ma=_extraVidMa[prefix];
+  var sap=maToSap[ma];
   var ex=sap?spExtra[sap]:null; if(!ex) return;
-  var embedEl=document.getElementById('dp-video-embed'); if(!embedEl) return;
-  document.querySelectorAll('.dp-vid-tab').forEach(function(b){
+  var embedEl=document.getElementById(prefix+'-video-embed'); if(!embedEl) return;
+  var tabsEl=document.getElementById(prefix+'-video-tabs');
+  if(tabsEl) Array.prototype.forEach.call(tabsEl.querySelectorAll('.dp-vid-tab'), function(b){
     b.classList.toggle('active', b.textContent.toLowerCase().indexOf(type)>=0);
   });
   var url=type==='tiktok'?ex.tiktok:ex.youtube;
+  embedEl.style.aspectRatio=type==='tiktok'?'9/16':'16/9';
+  embedEl.innerHTML=buildVideoIframeHtml(type,url);
+}
+
+// Tạo HTML iframe embed cho TikTok/YouTube từ URL gốc - dùng chung cho mọi nơi
+// hiển thị video (popup Gạch/Ngói/Keo và card Kính).
+function buildVideoIframeHtml(type,url){
   var iframeUrl='';
   if(type==='tiktok'){
     var m=url.match(/\/video\/(\d+)/);
@@ -497,9 +512,12 @@ function dpShowVideo(type){
     var ym=url.match(/(?:youtu\.be\/|[?&]v=|\/shorts\/)([A-Za-z0-9_-]{11})/);
     iframeUrl=ym?'https://www.youtube.com/embed/'+ym[1]:url;
   }
-  embedEl.style.aspectRatio=type==='tiktok'?'9/16':'16/9';
-  embedEl.innerHTML='<iframe src="'+iframeUrl+'" style="width:100%;height:100%;border:none" allow="autoplay;encrypted-media" allowfullscreen loading="lazy"></iframe>';
+  return '<iframe src="'+iframeUrl+'" style="width:100%;height:100%;border:none" allow="autoplay;encrypted-media" allowfullscreen loading="lazy"></iframe>';
 }
+
+// Giữ tên hàm cũ (dùng ở nhiều nơi khác) để không phải sửa các chỗ gọi cũ
+function renderDpExtra(ma){ renderExtraGeneric(ma, 'dp'); }
+function dpShowVideo(type){ extraShowVideo('dp', type); }
 
 function copyMotaZalo(){
   var sap=maToSap[curP_ma];
@@ -923,6 +941,27 @@ function renderKinhInGach(){
 
     html+='</div>';
 
+    // === Mô tả + Video (nếu Sheet có dữ liệu cho mã này) ===
+    var _sap=maToSap[p.ma];
+    var _ex=_sap?spExtra[_sap]:null;
+    if(_ex && (_ex.mo_ta||_ex.highlights)){
+      html+='<div style="margin-bottom:10px;padding:10px 12px;background:var(--bg2);border-radius:10px">'
+        +'<div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:4px">MÔ TẢ SẢN PHẨM</div>'
+        +(_ex.mo_ta?'<div style="font-size:12px;color:var(--t1);white-space:pre-line">'+escHtml(_ex.mo_ta)+'</div>':'')
+        +(_ex.highlights?'<ul style="margin:6px 0 0;padding-left:18px;font-size:11px;color:var(--t2)">'+_ex.highlights.split('\n').filter(Boolean).map(function(i){return '<li>'+escHtml(i)+'</li>';}).join('')+'</ul>':'')
+        +'</div>';
+    }
+    var _hasVid=_ex && (_ex.tiktok||_ex.youtube);
+    if(_hasVid){
+      html+='<button class="kinh-vid-btn" data-ma="'+p.ma+'" style="'
+        +'display:block;width:100%;margin-bottom:10px;padding:9px;border-radius:10px;'
+        +'border:1.5px solid #7B1FA2;background:none;color:#7B1FA2;font-size:12px;'
+        +'font-weight:700;cursor:pointer;font-family:var(--f);box-sizing:border-box">'
+        +'▶ Xem video sản phẩm'
+        +'</button>'
+        +'<div class="kinh-vid-embed" data-ma="'+p.ma+'" style="display:none;margin-bottom:10px;border-radius:10px;overflow:hidden;background:#000;aspect-ratio:'+(_ex.tiktok?'9/16':'16/9')+'"></div>';
+    }
+
     // === PHẦN 3: Nút thêm vào đơn + Zalo ở dưới cùng ===
     html+='<div style="display:flex;gap:8px">'
       +'<button class="kinh-add-btn" style="'
@@ -959,6 +998,25 @@ function renderKinhInGach(){
       div.querySelector('.kinh-img-click').addEventListener('click',function(){
         openImgLightbox(ma,ten);
       });
+      var vidBtn=div.querySelector('.kinh-vid-btn');
+      if(vidBtn){
+        vidBtn.addEventListener('click',function(){
+          var sap=maToSap[ma]; var ex=sap?spExtra[sap]:null; if(!ex) return;
+          var embedEl=div.querySelector('.kinh-vid-embed');
+          var opening = embedEl.style.display==='none';
+          if(opening){
+            var type=ex.tiktok?'tiktok':'youtube';
+            var url=type==='tiktok'?ex.tiktok:ex.youtube;
+            embedEl.innerHTML=buildVideoIframeHtml(type,url);
+            embedEl.style.display='block';
+            vidBtn.textContent='▲ Ẩn video';
+          } else {
+            embedEl.style.display='none';
+            embedEl.innerHTML='';
+            vidBtn.textContent='▶ Xem video sản phẩm';
+          }
+        });
+      }
       div.querySelector('.kinh-add-btn').addEventListener('click',function(){
         addToDonKinh(ma);
       });
@@ -2039,6 +2097,7 @@ function showNgoi(ma){
   document.getElementById('nk-backdrop').classList.add('on');
   document.getElementById('nd-soluong').value=100;
   tinhTienNgoi();
+  renderExtraGeneric(ma, 'nd');
 }
 
 
@@ -2220,6 +2279,7 @@ function showKeo(ma){
   document.getElementById('keo-detail').style.display='block';
   document.getElementById('nk-backdrop').classList.add('on');
   tinhTienKeo();
+  renderExtraGeneric(ma, 'kd');
 }
 
 function chinhSLKeo(d){
