@@ -2093,10 +2093,50 @@ function renderNgoiMau(){
     elB.appendChild(ngoiGroupCard(groups[k], false));
   });
 }
+// Dải chọn màu ngay trong popup: bấm màu khác trong CÙNG nhóm (vd "Ngói lợp" dòng TITAN)
+// sẽ chuyển thẳng giá/tồn kho/ảnh của màu đó, không cần đóng popup ra mở lại.
+function renderNdColorBar(ma){
+  var bar=document.getElementById('nd-color-bar');
+  if(!bar) return;
+  var p=NGOI.find(function(x){return x.ma===ma;});
+  var info=(p&&ngoiIsNew())?ngoiParse(p):null;
+  if(!info){ bar.style.display='none'; bar.innerHTML=''; return; }
+  var list=NGOI.filter(function(x){
+    var xi=ngoiParse(x);
+    return xi && xi.dong===info.dong && xi.nhom===info.nhom;
+  });
+  if(list.length<2){ bar.style.display='none'; bar.innerHTML=''; return; }
+  list.sort(function(a,b){ return ngoiParse(a).code<ngoiParse(b).code?-1:1; });
+  bar.innerHTML='';
+  bar.style.display='flex';
+  list.forEach(function(x){
+    var xi=ngoiParse(x);
+    var c=NGOI_COLORS[xi.code]||{ten:xi.code,hex:'#999'};
+    var tk=(typeof timTonKhoTheoQuyen==='function')?timTonKhoTheoQuyen(x.ma):null;
+    var con=tk&&tk.tong>0;
+    var on=x.ma===ma;
+    var b=document.createElement('button');
+    b.title=xi.code+' – '+c.ten+(c.datHang?' (đặt hàng trước)':'')+(tk?(con?' · còn '+tk.tong.toLocaleString('vi-VN'):' · hết hàng'):'');
+    b.style.cssText='width:32px;height:32px;border-radius:9px;padding:0;position:relative;cursor:pointer;flex-shrink:0;background:'+c.hex
+      +';border:'+(on?'2.5px solid #C0232A':(c.datHang?'1.5px dashed #999':'1px solid rgba(0,0,0,.18)'))
+      +';box-shadow:'+(on?'0 0 0 2px #fff inset,0 2px 6px rgba(192,35,42,.3)':'none')
+      +(tk&&!con?';opacity:.35':'');
+    if(tk){
+      b.innerHTML='<span style="position:absolute;right:-3px;top:-3px;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--bg1,#fff);background:'+(con?'#2E7D32':'#9E9E9E')+'"></span>';
+    }
+    b.onclick=function(e){
+      e.stopPropagation();
+      curNgoiMau[info.dong]=xi.code; // đồng bộ với thẻ ngoài danh sách
+      showNgoi(x.ma);
+    };
+    bar.appendChild(b);
+  });
+}
 function showNgoi(ma){
   curNgoiMa=ma;
   var p=NGOI.find(function(x){return x.ma===ma;}); if(!p) return;
   loadNdImg(p.ma);
+  renderNdColorBar(ma);
   // Tên hiển thị kèm tên màu (dữ liệu mới)
   var info=p._new?ngoiParse(p):null;
   var col=info?NGOI_COLORS[info.code]:null;
