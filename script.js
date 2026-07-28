@@ -397,8 +397,8 @@ function fetchImagesFromSheet(){
   };
   document.head.appendChild(s);
 }
-function applySpExtraData(extra, sapMap){
-  if(!extra && !sapMap) return;
+function applySpExtraData(extra, sapMap, images, imagesMulti){
+  if(!extra && !sapMap && !images && !imagesMulti) return;
   if(sapMap){
     Object.keys(sapMap).forEach(function(maApp){ maToSap[maApp]=sapMap[maApp]; });
   }
@@ -407,13 +407,19 @@ function applySpExtraData(extra, sapMap){
     try{ localStorage.setItem('dt_spextra', JSON.stringify(spExtra)); }catch(e){}
     console.log('✅ Đã tải extra info '+Object.keys(extra).length+' SP (keyed by SAP)');
   }
+  // Ảnh sản phẩm giờ lấy từ chính sheet mô tả/video (cột ảnh), không còn
+  // phụ thuộc tab "Ảnh sản phẩm" riêng (đã bị xóa) - dùng chung applyImagesData
+  // để merge vào imgStore/imgStoreMulti + ghi localStorage như luồng getImages cũ.
+  if(images || imagesMulti){
+    applyImagesData({images:images, imagesMulti:imagesMulti});
+  }
 }
 
 function fetchSpExtra(){
   var APPS_URL='https://script.google.com/macros/s/AKfycbyrO8symCYOkWsGG0nRWPF7gpndC3mzEVUk15UvWrA0O81ZUumW-kX_gEOZhtCJ34bMVQ/exec';
   window._onSpExtra=function(data){
     var old=document.getElementById('_spextra_script'); if(old) old.remove();
-    applySpExtraData(data && data.extra, data && data.maToSap);
+    applySpExtraData(data && data.extra, data && data.maToSap, data && data.images, data && data.imagesMulti);
   };
   var old=document.getElementById('_spextra_script'); if(old) old.remove();
   var s=document.createElement('script');
