@@ -114,6 +114,22 @@ function goiTuanTu(fns, khoangCach){
   fns.forEach(function(fn, i){ setTimeout(fn, i*(khoangCach||280)); });
 }
 
+// Mở thẳng popup sản phẩm khi link có dạng ...?ma=<mã_sp> (chia sẻ link trực tiếp).
+// Chỉ chạy 1 lần/phiên tải trang, sau khi DATA đã có dữ liệu (gọi trong _onGetAll).
+var _deepLinkDone = false;
+function tryOpenDeepLink(){
+  if(_deepLinkDone) return;
+  try{
+    var ma = new URLSearchParams(location.search).get('ma');
+    if(!ma || typeof DATA==='undefined') return;
+    var p = DATA.find(function(x){ return x.ma===ma; });
+    if(p){
+      _deepLinkDone = true;
+      setTimeout(function(){ showDP(ma); }, 50);
+    }
+  }catch(e){}
+}
+
 function fetchAllFromSheet(){
   var APPS_URL='https://script.google.com/macros/s/AKfycbyrO8symCYOkWsGG0nRWPF7gpndC3mzEVUk15UvWrA0O81ZUumW-kX_gEOZhtCJ34bMVQ/exec';
   var old=document.getElementById('_all_script');
@@ -134,6 +150,7 @@ function fetchAllFromSheet(){
       return;
     }
     try{ applyGiaGach(res.gach); }catch(e){ console.log('Lỗi áp giá gạch (getAll):', e); }
+    tryOpenDeepLink();
     try{ applyImagesData(res.images); }catch(e){ console.log('Lỗi áp ảnh (getAll):', e); }
     try{ if(res.extra){ applySpExtraData(res.extra, res.maToSap); } else { fetchSpExtra(); } }catch(e){ fetchSpExtra(); }
     try{ applyThuocTinhData(res.thuocTinh); }catch(e){ console.log('Lỗi áp thuộc tính SP (getAll):', e); }
@@ -497,6 +514,14 @@ function copyMotaZalo(){
   navigator.clipboard&&navigator.clipboard.writeText
     ?navigator.clipboard.writeText(msg).then(function(){showToast('✅ Đã copy mô tả!');}).catch(function(){fallbackCopy(msg);})
     :fallbackCopy(msg);
+}
+
+function copyLinkSanPham(ma){
+  if(!ma){ showToast('⚠️ Không xác định được mã sản phẩm'); return; }
+  var url = location.origin + location.pathname + '?ma=' + encodeURIComponent(ma);
+  navigator.clipboard&&navigator.clipboard.writeText
+    ?navigator.clipboard.writeText(url).then(function(){showToast('✅ Đã copy link sản phẩm!');}).catch(function(){fallbackCopy(url);})
+    :fallbackCopy(url);
 }
 
 function chiaSeVideoSanPham(ma){
