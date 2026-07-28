@@ -129,6 +129,27 @@ function tryOpenDeepLink(){
     }
   }catch(e){}
 }
+// Deep-link cho Ngói/Keo: mã SAP của 2 ngành hàng này chỉ có sau khi
+// fetchGiaFromSheet(['ngoi','keo','kinh']) tải xong (Gạch dùng getAll riêng,
+// xử lý ở tryOpenDeepLink() phía trên) - gọi hàm này sau khi NGOI/KEO đã đầy đủ.
+function tryOpenDeepLinkNgoiKeo(){
+  if(_deepLinkDone) return;
+  try{
+    var ma = new URLSearchParams(location.search).get('ma');
+    if(!ma) return;
+    var pN = (typeof NGOI!=='undefined') && NGOI.find(function(x){ return x.ma===ma; });
+    if(pN){
+      _deepLinkDone = true;
+      setTimeout(function(){ swTab('ngoi'); showNgoi(ma); }, 50);
+      return;
+    }
+    var pK = (typeof KEO!=='undefined') && KEO.find(function(x){ return x.ma===ma; });
+    if(pK){
+      _deepLinkDone = true;
+      setTimeout(function(){ swTab('keo'); showKeo(ma); }, 50);
+    }
+  }catch(e){}
+}
 
 function fetchAllFromSheet(){
   var APPS_URL='https://script.google.com/macros/s/AKfycbyrO8symCYOkWsGG0nRWPF7gpndC3mzEVUk15UvWrA0O81ZUumW-kX_gEOZhtCJ34bMVQ/exec';
@@ -321,6 +342,7 @@ function fetchGiaFromSheet(loaisOverride){
           }
           render();
           renderSale();
+          tryOpenDeepLinkNgoiKeo();
           console.log('🎉 Đã đồng bộ giá từ Sheet xong!');
         }
       }catch(e){ console.log('Lỗi parse giá '+loai+':', e.message); }
