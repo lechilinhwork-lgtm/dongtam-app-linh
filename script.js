@@ -373,18 +373,31 @@ function fetchGiaFromSheet(loaisOverride){
 // Fetch ảnh từ Google Sheet khi đăng nhập (dùng script tag để tránh CORS)
 // Áp dữ liệu ảnh (từ action=getImages hoặc phần "images" của getAll) vào
 // imgStore/imgStoreMulti - tách riêng để dùng chung cho cả 2 đường gọi.
+// Chỉ chấp nhận giá trị trông giống URL ảnh thật (http/https) - chặn trường hợp
+// Sheet bị gõ nhầm/lệch cột khiến cột ảnh chứa chữ (vd tên sản phẩm) thay vì link.
+function _isValidImgUrl(u){ return typeof u==='string' && /^https?:\/\//i.test(u); }
 function applyImagesData(data){
   try{
     if(data && data.images){
       var map=data.images, count=0;
+      var validMap={};
       Object.keys(map).forEach(function(ma){
-        if(map[ma]){ imgStore[ma]=map[ma]; count++; }
+        if(_isValidImgUrl(map[ma])){ validMap[ma]=map[ma]; count++; }
       });
+      // Thay hẳn theo dữ liệu mới nhất (không chỉ merge thêm) - mã nào đã bị xoá/sửa
+      // sai ở Sheet thì cũng bị xoá khỏi cache, tránh ảnh cũ/sai kẹt lại vĩnh viễn
+      // trong localStorage dù Sheet đã được sửa đúng.
+      Object.keys(imgStore).forEach(function(ma){ if(!(ma in validMap)) delete imgStore[ma]; });
+      Object.keys(validMap).forEach(function(ma){ imgStore[ma]=validMap[ma]; });
       // Build multi: data.imagesMulti[ma] = [url1,url2,...]
       if(data.imagesMulti){
+        var validMulti={};
         Object.keys(data.imagesMulti).forEach(function(ma){
-          imgStoreMulti[ma]=data.imagesMulti[ma];
+          var list=(data.imagesMulti[ma]||[]).filter(_isValidImgUrl);
+          if(list.length) validMulti[ma]=list;
         });
+        Object.keys(imgStoreMulti).forEach(function(ma){ if(!(ma in validMulti)) delete imgStoreMulti[ma]; });
+        Object.keys(validMulti).forEach(function(ma){ imgStoreMulti[ma]=validMulti[ma]; });
         try{ localStorage.setItem('dt_imgs_multi', JSON.stringify(imgStoreMulti)); }catch(e){}
       }
       try{ localStorage.setItem('dt_imgs', JSON.stringify(imgStore)); }catch(e){}
