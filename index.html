@@ -343,6 +343,24 @@
   <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Ngói tráng men Đồng Tâm · Giá <b>đồng/viên</b> · Hiệu lực đến 31/03/2027</p>
   <div id="nk-backdrop" onclick="closeNgoiDetail();closeKeoDetail()"></div>
   <div id="ngoi-detail" class="nk-detail nk-red">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <button onclick="ngoiNav(-1)" title="Sản phẩm trước" style="flex-shrink:0;width:32px;height:32px;border:1.5px solid var(--bd2);border-radius:50%;background:var(--bg1);font-size:16px;cursor:pointer;color:var(--t1)">‹</button>
+      <span style="flex:1;text-align:center;font-size:11px;color:var(--t2);font-weight:600">Chuyển sản phẩm</span>
+      <button onclick="ngoiNav(1)" title="Sản phẩm tiếp theo" style="flex-shrink:0;width:32px;height:32px;border:1.5px solid var(--bd2);border-radius:50%;background:var(--bg1);font-size:16px;cursor:pointer;color:var(--t1)">›</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+      <div>
+        <p id="nd-ten" style="font-size:14px;font-weight:600;margin-bottom:2px"></p>
+        <p id="nd-kc" style="font-size:11px;color:var(--t2)"></p>
+      </div>
+      <button onclick="closeNgoiDetail()" style="font-size:13px;padding:4px 10px">✕</button>
+    </div>
+    <div id="nd-tab-bar">
+      <button id="nd-tbtn-gia" class="dp-tbtn dp-tbtn-active" onclick="setTabGeneric('nd','gia')">💰 Giá</button>
+      <button id="nd-tbtn-mota" class="dp-tbtn" onclick="setTabGeneric('nd','mota')">📋 Mô tả</button>
+      <button id="nd-tbtn-video" class="dp-tbtn" onclick="setTabGeneric('nd','video')" style="display:none">▶ Video</button>
+    </div>
+    <div id="nd-panel-gia" style="margin-top:10px">
     <div id="nd-img-wrap" style="display:none;margin-bottom:10px;border-radius:var(--r8);overflow:hidden;aspect-ratio:1;background:var(--bg2);position:relative">
       <img id="nd-img" style="width:100%;height:100%;object-fit:cover;display:block"/>
       <button id="nd-img-prev" onclick="slideNdImg(-1)"
@@ -358,18 +376,6 @@
       <span id="nd-img-counter" style="display:none;position:absolute;top:6px;right:8px;
         background:rgba(0,0,0,.5);color:#fff;font-size:10px;padding:2px 6px;border-radius:10px"></span>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <button onclick="ngoiNav(-1)" title="Sản phẩm trước" style="flex-shrink:0;width:32px;height:32px;border:1.5px solid var(--bd2);border-radius:50%;background:var(--bg1);font-size:16px;cursor:pointer;color:var(--t1)">‹</button>
-      <span style="flex:1;text-align:center;font-size:11px;color:var(--t2);font-weight:600">Chuyển sản phẩm</span>
-      <button onclick="ngoiNav(1)" title="Sản phẩm tiếp theo" style="flex-shrink:0;width:32px;height:32px;border:1.5px solid var(--bd2);border-radius:50%;background:var(--bg1);font-size:16px;cursor:pointer;color:var(--t1)">›</button>
-    </div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:10px">
-      <div>
-        <p id="nd-ten" style="font-size:14px;font-weight:600;margin-bottom:2px"></p>
-        <p id="nd-kc" style="font-size:11px;color:var(--t2)"></p>
-      </div>
-      <button onclick="closeNgoiDetail()" style="font-size:13px;padding:4px 10px">✕</button>
-    </div>
     <div class="pr-grid">
       <div class="pr-box full"><p>Giá lẻ niêm yết</p><p id="nd-le"></p></div>
     </div>
@@ -383,7 +389,21 @@
       <div class="pr-box" style="background:#E8F5E9"><p>Nhận tại kho</p><p id="nd-nhan2" style="color:#1B5E20"></p></div>
       <div class="pr-box" style="background:#E8F5E9"><p>Giao hàng</p><p id="nd-giao2" style="color:#1B5E20"></p></div>
     </div>
-    <!-- Lên đơn ngói -->
+    </div><!-- end nd-panel-gia -->
+    <div id="nd-panel-mota" style="display:none;margin-top:10px">
+      <div id="nd-mota-section" style="display:none">
+        <p class="dp-sec-label">MÔ TẢ SẢN PHẨM</p>
+        <div id="nd-mota" class="dp-mota-body"></div>
+        <div id="nd-highlights" class="dp-highlights-body"></div>
+      </div>
+    </div><!-- end nd-panel-mota -->
+    <div id="nd-panel-video" style="display:none;margin-top:10px">
+      <div id="nd-video-section">
+        <div id="nd-video-tabs" style="display:none;gap:8px;margin-bottom:8px"></div>
+        <div id="nd-video-embed" style="border-radius:10px;overflow:hidden;background:#000;width:100%"></div>
+      </div>
+    </div><!-- end nd-panel-video -->
+    <!-- Lên đơn ngói - luôn hiện, không phụ thuộc tab đang chọn -->
     <div style="display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bd)">
       <span style="font-size:13px;color:var(--t2)">Số lượng:</span>
       <button onclick="chinhSLNgoi(-10)" style="width:32px;height:32px;border:1px solid var(--bd2);border-radius:6px;background:var(--bg2);font-size:14px;cursor:pointer">−</button>
@@ -416,18 +436,6 @@
       </button>
     </div>
     <button onclick="moTonKho(curNgoiMa)" style="width:100%;margin-top:6px;font-size:12px;padding:8px;border-radius:var(--r8);border:1.5px solid #C0232A;background:none;color:#C0232A;font-weight:700;font-family:var(--f);cursor:pointer">📦 Xem tồn kho theo kho/lô</button>
-    <div id="nd-extra-wrap" style="display:none;margin-top:12px">
-      <div id="nd-mota-section" style="display:none">
-        <p class="dp-sec-label">MÔ TẢ SẢN PHẨM</p>
-        <div id="nd-mota" class="dp-mota-body"></div>
-        <div id="nd-highlights" class="dp-highlights-body"></div>
-      </div>
-      <div id="nd-video-section" style="display:none;margin-top:14px">
-        <p class="dp-sec-label">VIDEO SẢN PHẨM</p>
-        <div id="nd-video-tabs" style="display:none;gap:8px;margin-bottom:8px"></div>
-        <div id="nd-video-embed" style="border-radius:10px;overflow:hidden;background:#000;width:100%"></div>
-      </div>
-    </div>
   </div>
   <div id="ngoi-cat-bar"></div>
   <div class="tab-wrap">
@@ -452,12 +460,33 @@
       <span style="flex:1;text-align:center;font-size:11px;color:var(--t2);font-weight:600">Chuyển sản phẩm</span>
       <button onclick="keoNav(1)" title="Sản phẩm tiếp theo" style="flex-shrink:0;width:32px;height:32px;border:1.5px solid var(--bd2);border-radius:50%;background:var(--bg1);font-size:16px;cursor:pointer;color:var(--t1)">›</button>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
       <div>
         <p id="kd-ten" style="font-size:15px;font-weight:700;margin-bottom:2px"></p>
         <p style="font-size:11px;color:var(--t2)">Đơn vị: đồng/bao</p>
       </div>
       <button onclick="closeKeoDetail()" style="font-size:13px;padding:4px 10px">✕</button>
+    </div>
+    <div id="kd-tab-bar">
+      <button id="kd-tbtn-gia" class="dp-tbtn dp-tbtn-active" onclick="setTabGeneric('kd','gia')">💰 Giá</button>
+      <button id="kd-tbtn-mota" class="dp-tbtn" onclick="setTabGeneric('kd','mota')">📋 Mô tả</button>
+      <button id="kd-tbtn-video" class="dp-tbtn" onclick="setTabGeneric('kd','video')" style="display:none">▶ Video</button>
+    </div>
+    <div id="kd-panel-gia" style="margin-top:10px">
+    <div id="kd-img-wrap" style="display:none;margin-bottom:10px;border-radius:var(--r8);overflow:hidden;aspect-ratio:1;background:var(--bg2);position:relative">
+      <img id="kd-img" style="width:100%;height:100%;object-fit:cover;display:block"/>
+      <button id="kd-img-prev" onclick="slideKdImg(-1)"
+        style="display:none;position:absolute;left:4px;top:50%;transform:translateY(-50%);
+        width:28px;height:28px;border-radius:50%;border:none;background:rgba(0,0,0,.45);
+        color:#fff;font-size:16px;cursor:pointer;line-height:1">‹</button>
+      <button id="kd-img-next" onclick="slideKdImg(1)"
+        style="display:none;position:absolute;right:4px;top:50%;transform:translateY(-50%);
+        width:28px;height:28px;border-radius:50%;border:none;background:rgba(0,0,0,.45);
+        color:#fff;font-size:16px;cursor:pointer;line-height:1">›</button>
+      <div id="kd-img-dots" style="position:absolute;bottom:5px;left:0;right:0;
+        display:flex;justify-content:center;gap:4px"></div>
+      <span id="kd-img-counter" style="display:none;position:absolute;top:6px;right:8px;
+        background:rgba(0,0,0,.5);color:#fff;font-size:10px;padding:2px 6px;border-radius:10px"></span>
     </div>
     <!-- Giá 2 tier -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
@@ -476,7 +505,21 @@
         <p style="font-size:10px;color:var(--t2)">giao hàng</p>
       </div>
     </div>
-    <!-- Nhập SL -->
+    </div><!-- end kd-panel-gia -->
+    <div id="kd-panel-mota" style="display:none;margin-top:10px">
+      <div id="kd-mota-section" style="display:none">
+        <p class="dp-sec-label">MÔ TẢ SẢN PHẨM</p>
+        <div id="kd-mota" class="dp-mota-body"></div>
+        <div id="kd-highlights" class="dp-highlights-body"></div>
+      </div>
+    </div><!-- end kd-panel-mota -->
+    <div id="kd-panel-video" style="display:none;margin-top:10px">
+      <div id="kd-video-section">
+        <div id="kd-video-tabs" style="display:none;gap:8px;margin-bottom:8px"></div>
+        <div id="kd-video-embed" style="border-radius:10px;overflow:hidden;background:#000;width:100%"></div>
+      </div>
+    </div><!-- end kd-panel-video -->
+    <!-- Nhập SL - luôn hiện, không phụ thuộc tab đang chọn -->
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
       <span style="font-size:13px;color:var(--t2)">Số lượng:</span>
       <button onclick="chinhSLKeo(-5)" style="width:32px;height:32px;border:1px solid var(--bd2);border-radius:6px;background:var(--bg2);font-size:14px;cursor:pointer">−</button>
@@ -503,18 +546,6 @@
       <button onclick="shareZaloKeo(curKeoMa)" style="padding:11px 14px;border:none;border-radius:var(--r8);background:#0068FF;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">Zalo ↗</button>
     </div>
     <button onclick="moTonKho(curKeoMa)" style="width:100%;font-size:12px;padding:8px;border-radius:var(--r8);border:1.5px solid #7B1FA2;background:none;color:#7B1FA2;font-weight:700;font-family:var(--f);cursor:pointer">📦 Xem tồn kho theo kho/lô</button>
-    <div id="kd-extra-wrap" style="display:none;margin-top:12px">
-      <div id="kd-mota-section" style="display:none">
-        <p class="dp-sec-label">MÔ TẢ SẢN PHẨM</p>
-        <div id="kd-mota" class="dp-mota-body"></div>
-        <div id="kd-highlights" class="dp-highlights-body"></div>
-      </div>
-      <div id="kd-video-section" style="display:none;margin-top:14px">
-        <p class="dp-sec-label">VIDEO SẢN PHẨM</p>
-        <div id="kd-video-tabs" style="display:none;gap:8px;margin-bottom:8px"></div>
-        <div id="kd-video-embed" style="border-radius:10px;overflow:hidden;background:#000;width:100%"></div>
-      </div>
-    </div>
   </div>
   <div id="keo-list"></div>
   </div><!-- /sub-keo-content -->
@@ -761,6 +792,6 @@
 
 
 
-<script src="script.js?v=nav22" defer></script>
+<script src="script.js?v=nav23" defer></script>
 </body>
 </html>

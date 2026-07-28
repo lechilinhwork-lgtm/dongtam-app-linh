@@ -1501,14 +1501,16 @@ function renderDpRelated(p){
       +'</div>';
   }).join('');
 }
-function dpSetTab(tab){
+// Chuyển tab Giá/Mô tả/Video - dùng chung cho popup Gạch (dp), Ngói (nd), Keo (kd)
+function setTabGeneric(prefix, tab){
   ['gia','mota','video'].forEach(function(t){
-    var panel=document.getElementById('dp-panel-'+t);
-    var btn=document.getElementById('dp-tbtn-'+t);
+    var panel=document.getElementById(prefix+'-panel-'+t);
+    var btn=document.getElementById(prefix+'-tbtn-'+t);
     if(panel) panel.style.display=(t===tab)?'block':'none';
     if(btn){ btn.classList.toggle('dp-tbtn-active',t===tab); }
   });
 }
+function dpSetTab(tab){ setTabGeneric('dp', tab); }
 function closeDp(){
   document.getElementById('dp').style.display='none';
   document.body.classList.remove('dp-open');
@@ -2097,6 +2099,7 @@ function showNgoi(ma){
   document.getElementById('nk-backdrop').classList.add('on');
   document.getElementById('nd-soluong').value=100;
   tinhTienNgoi();
+  setTabGeneric('nd','gia');
   renderExtraGeneric(ma, 'nd');
 }
 
@@ -2270,6 +2273,7 @@ function renderKeo(){
 function showKeo(ma){
   curKeoMa=ma;
   var p=KEO.find(function(x){return x.ma===ma;}); if(!p) return;
+  loadKdImg(p.ma);
   document.getElementById('kd-ten').textContent=p.ten;
   document.getElementById('kd-nhan1').textContent=p.nhan.toLocaleString('vi-VN')+'đ';
   document.getElementById('kd-giao1').textContent=p.giao.toLocaleString('vi-VN')+'đ';
@@ -2279,6 +2283,7 @@ function showKeo(ma){
   document.getElementById('keo-detail').style.display='block';
   document.getElementById('nk-backdrop').classList.add('on');
   tinhTienKeo();
+  setTabGeneric('kd','gia');
   renderExtraGeneric(ma, 'kd');
 }
 
@@ -2518,6 +2523,73 @@ function slideNdImg(dir){
   wrap.addEventListener('touchend',function(e){
     var dx=e.changedTouches[0].clientX-sx;
     if(Math.abs(dx)>40) slideNdImg(dx<0?1:-1);
+  },{passive:true});
+})();
+
+// ===== Lướt nhiều ảnh cho popup chi tiết Keo (giống cơ chế Ngói/Gạch) =====
+var kdImgIdx = 0;
+var kdImgList = [];
+function loadKdImg(ma){
+  var wrap = document.getElementById('kd-img-wrap');
+  kdImgList = timAnhMulti(ma);
+  kdImgIdx = 0;
+  if(kdImgList.length > 0){
+    wrap.style.display = 'block';
+    renderKdImg();
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+function renderKdImg(){
+  var img     = document.getElementById('kd-img');
+  var prev    = document.getElementById('kd-img-prev');
+  var next    = document.getElementById('kd-img-next');
+  var dots    = document.getElementById('kd-img-dots');
+  var counter = document.getElementById('kd-img-counter');
+  if(!kdImgList.length) return;
+
+  var url = convertImgUrl(kdImgList[kdImgIdx]);
+  img.src = url;
+  img.style.display = 'block';
+  img.onerror = function(){
+    if(this.src !== kdImgList[kdImgIdx]){
+      this.src = kdImgList[kdImgIdx];
+    } else {
+      this.style.display='none';
+    }
+  };
+
+  var multi = kdImgList.length > 1;
+  prev.style.display    = multi ? 'block' : 'none';
+  next.style.display    = multi ? 'block' : 'none';
+  counter.style.display = multi ? 'block' : 'none';
+  counter.textContent   = (kdImgIdx+1)+'/'+kdImgList.length;
+
+  dots.innerHTML = '';
+  if(multi){
+    kdImgList.forEach(function(_,i){
+      var d = document.createElement('span');
+      d.style.cssText = 'width:'+(i===kdImgIdx?'14':'6')+'px;height:6px;border-radius:3px;'
+        +'background:'+(i===kdImgIdx?'#fff':'rgba(255,255,255,.5)')+';transition:.2s';
+      dots.appendChild(d);
+    });
+  }
+}
+function slideKdImg(dir){
+  if(!kdImgList.length) return;
+  kdImgIdx = (kdImgIdx + dir + kdImgList.length) % kdImgList.length;
+  renderKdImg();
+}
+
+// Touch swipe cho popup ảnh Keo
+(function(){
+  var wrap=document.getElementById('kd-img-wrap');
+  if(!wrap) return;
+  var sx=0;
+  wrap.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;},{passive:true});
+  wrap.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-sx;
+    if(Math.abs(dx)>40) slideKdImg(dx<0?1:-1);
   },{passive:true});
 })();
 
