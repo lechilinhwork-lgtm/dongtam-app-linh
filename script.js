@@ -3041,14 +3041,14 @@ function showApp(name){
   // (thay vì 5 lần riêng) - giảm phí khởi động Apps Script khi mở app.
   fetchAllFromSheet();
   setTimeout(function(){ mergeCTintoDATA(); render(); }, 100);
-  // Tải danh sách khách hàng cũ để gợi ý tự động (chạy nền)
-  fetchKhachHangFromSheet();
-  // Tải tồn kho chi tiết theo kho + số lô (chạy nền)
-  fetchTonKhoChiTiet();
-  // Tải trọng lượng chính xác theo mã SAP (chạy nền)
-  fetchTrongLuong();
-  // Warm-up GAS: ping nhẹ ngay sau login để GAS "thức" sẵn cho các request sau
-  gasWarmUp();
+  // Các cuộc gọi KHÔNG quan trọng cho lần hiển thị đầu tiên (khách hàng gợi ý,
+  // tồn kho chi tiết, trọng lượng, ping warm-up) - giãn cách ra sau khi cụm giá
+  // chính (getAll + ngói/keo/kính) đã bắn xong, tránh bắn 9 request cùng lúc
+  // làm GAS xử lý chậm chồng chéo (ảnh hưởng tới tốc độ hiển thị giá).
+  setTimeout(function(){ fetchKhachHangFromSheet(); }, 600);
+  setTimeout(function(){ fetchTonKhoChiTiet(); }, 900);
+  setTimeout(function(){ fetchTrongLuong(); }, 1200);
+  setTimeout(function(){ gasWarmUp(); }, 1500);
   // Áp dụng phân quyền hiển thị lợi nhuận (chỉ Admin thấy)
   apDungPhanQuyenLoi();
 }
