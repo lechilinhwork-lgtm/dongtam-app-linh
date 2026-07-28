@@ -612,9 +612,17 @@ input::placeholder{color:var(--t3)}
   .nk-detail{
     left:50% !important;top:50% !important;bottom:auto !important;right:auto !important;
     transform:translate(-50%,-50%);
-    width:min(480px,92vw) !important;height:auto !important;max-height:88vh !important;
+    width:min(680px,92vw) !important;height:auto !important;max-height:88vh !important;
     border-radius:16px !important;border:1.5px solid var(--accent,#C0232A) !important;
   }
+  /* Bố cục ngang: ảnh bên trái, bảng giá bên phải - tránh cuộn dài trên desktop */
+  #nd-panel-gia,#kd-panel-gia{align-items:flex-start;gap:24px}
+  #nd-img-wrap,#kd-img-wrap{
+    width:236px;flex-shrink:0;margin-bottom:0 !important;
+    box-shadow:0 6px 18px rgba(0,0,0,.14);
+  }
+  .nk-price-col{flex:1;min-width:0}
+  .nk-price-col .pr-grid:first-child{margin-top:2px}
 }
 
 /* ===== DETAIL POPUP ===== */

@@ -1509,10 +1509,17 @@ function renderDpRelated(p){
 }
 // Chuyển tab Giá/Mô tả/Video - dùng chung cho popup Gạch (dp), Ngói (nd), Keo (kd)
 function setTabGeneric(prefix, tab){
+  // Panel "gia" của Ngói/Keo dùng layout ngang (ảnh trái/giá phải) trên desktop
+  // (display:flex qua CSS @media) nhưng vẫn stack dọc trên mobile (display:block).
+  var isNkGiaPanel = (prefix==='nd'||prefix==='kd');
+  var desktopFlex = isNkGiaPanel && window.matchMedia('(min-width:768px)').matches;
   ['gia','mota','video'].forEach(function(t){
     var panel=document.getElementById(prefix+'-panel-'+t);
     var btn=document.getElementById(prefix+'-tbtn-'+t);
-    if(panel) panel.style.display=(t===tab)?'block':'none';
+    if(panel){
+      if(t!==tab) panel.style.display='none';
+      else panel.style.display=(t==='gia'&&desktopFlex)?'flex':'block';
+    }
     if(btn){ btn.classList.toggle('dp-tbtn-active',t===tab); }
   });
 }
