@@ -728,7 +728,10 @@ function renderDanhMucGrid(){
     }
 
     if(coDuLieu){
-      card.addEventListener('click', function(){ swTab(it.tab); }); // GIỮ NGUYÊN điều hướng cũ
+      card.addEventListener('click', function(){
+        if(it.tab==='kinh'){ swTab('tra'); setF('kinh'); }
+        else swTab(it.tab);
+      });
     }
     el.appendChild(card);
   });
@@ -808,7 +811,7 @@ function renderTimKiemResults(){
       if(r.nganh==='gach'){ swTab('tra'); showDP(p.ma); }
       else if(r.nganh==='ngoi'){ swTab('ngoi'); showNgoi(p.ma); }
       else if(r.nganh==='keo'){ swTab('keo'); showKeo(p.ma); }
-      else if(r.nganh==='kinh'){ swTab('kinh'); }
+      else if(r.nganh==='kinh'){ swTab('tra'); setF('kinh'); }
     });
 
     resultsEl.appendChild(row);
@@ -840,7 +843,10 @@ function renderKinhInGach(){
 
     // === PHẦN 1: Header ảnh + tên (dọc hoàn toàn) ===
     var html='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+      +'<div class="kinh-img-click" data-ma="'+p.ma+'" style="cursor:pointer;position:relative">'
       +getImgHtml(p.ma,44,'💎')
+      +'<div style="position:absolute;bottom:0;right:8px;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;pointer-events:none">🔍</div>'
+      +'</div>'
       +'<div>'
       +'<div style="font-size:14px;font-weight:700;color:var(--t1)">'+p.ten+'</div>'
       +'<div style="font-size:11px;color:var(--t2);margin-top:2px">'+p.kc+' cm &middot; 6 viên/thùng</div>'
@@ -925,6 +931,9 @@ function renderKinhInGach(){
     div.innerHTML=html;
 
     (function(ma,ten){
+      div.querySelector('.kinh-img-click').addEventListener('click',function(){
+        openImgLightbox(ma,ten);
+      });
       div.querySelector('.kinh-add-btn').addEventListener('click',function(){
         addToDonKinh(ma);
       });
@@ -1806,6 +1815,34 @@ function getImgHtml(ma, size, emoji) {
   var url = timAnh(ma);
   if(url) return '<img src="'+url+'" style="width:'+size+'px;height:'+size+'px;object-fit:cover;border-radius:8px;margin-right:10px;flex-shrink:0" onerror="this.style.display=\'none\'">';
   return '<div style="width:'+size+'px;height:'+size+'px;border-radius:8px;background:var(--bg2);display:flex;align-items:center;justify-content:center;margin-right:10px;flex-shrink:0;font-size:'+(size*0.4)+'px">'+emoji+'</div>';
+}
+
+// Xem ảnh phóng to (lightbox) - dùng cho các nơi chưa có popup chi tiết đầy đủ (vd. Gạch kính)
+function openImgLightbox(ma, ten){
+  var imgs = timAnhMulti(ma);
+  if(!imgs.length){ showToast('⚠️ Sản phẩm này chưa có ảnh'); return; }
+  var idx = 0;
+  var ov = document.createElement('div');
+  ov.id = 'img-lightbox-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:10000;display:flex;align-items:center;justify-content:center';
+  function render(){
+    ov.innerHTML = '<button id="lb-close" style="position:absolute;top:14px;right:16px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:20px;cursor:pointer;z-index:1">✕</button>'
+      + (ten ? '<div style="position:absolute;top:16px;left:16px;color:#fff;font-size:13px;font-weight:600;max-width:70%">'+ten+'</div>' : '')
+      + '<img src="'+convertImgUrl(imgs[idx])+'" style="max-width:92vw;max-height:80vh;object-fit:contain;border-radius:8px">'
+      + (imgs.length>1 ? (
+          '<button id="lb-prev" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:20px;cursor:pointer">‹</button>'
+        + '<button id="lb-next" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:20px;cursor:pointer">›</button>'
+        + '<div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:#fff;font-size:12px;background:rgba(0,0,0,.5);padding:3px 10px;border-radius:10px">'+(idx+1)+'/'+imgs.length+'</div>'
+      ) : '');
+    ov.querySelector('#lb-close').onclick = function(){ document.body.removeChild(ov); };
+    if(imgs.length>1){
+      ov.querySelector('#lb-prev').onclick = function(){ idx=(idx-1+imgs.length)%imgs.length; render(); };
+      ov.querySelector('#lb-next').onclick = function(){ idx=(idx+1)%imgs.length; render(); };
+    }
+  }
+  render();
+  ov.addEventListener('click', function(e){ if(e.target===ov) document.body.removeChild(ov); });
+  document.body.appendChild(ov);
 }
 
 function renderNgoi(){
