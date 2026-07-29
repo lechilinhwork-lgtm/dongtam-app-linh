@@ -402,6 +402,11 @@ function applyImagesData(data){
       }
       try{ localStorage.setItem('dt_imgs', JSON.stringify(imgStore)); }catch(e){}
       if(curP_ma) loadImg(curP_ma);
+      // Ảnh thường tải xong SAU khi lưới sản phẩm đã render lần đầu (dữ liệu ảnh
+      // là request riêng, chậm hơn giá) - phải render lại lưới đang hiển thị (Tất cả/
+      // Danh mục) chứ không chỉ renderSale(), nếu không card sẽ kẹt ở "Chưa có ảnh"
+      // dù imgStore đã có đủ dữ liệu.
+      if(typeof render==='function') render();
       renderSale(); // refresh ảnh trong sale grid
       console.log('✅ Đã tải '+count+' ảnh từ Sheet');
     }
