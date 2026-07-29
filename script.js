@@ -382,7 +382,11 @@ function applyImagesData(data){
       var map=data.images, count=0;
       var validMap={};
       Object.keys(map).forEach(function(ma){
-        if(_isValidImgUrl(map[ma])){ validMap[ma]=map[ma]; count++; }
+        // Đổi link chia sẻ Drive (.../view?usp=...) sang dạng ảnh nhúng được
+        // (lh3.googleusercontent.com) NGAY LÚC LƯU - card ngoài danh sách chèn
+        // thẳng imgStore vào <img src> không tự đổi link như popup chi tiết,
+        // nếu để nguyên link chia sẻ thì ảnh sẽ không tải được (hiện "Chưa có ảnh").
+        if(_isValidImgUrl(map[ma])){ validMap[ma]=convertImgUrl(map[ma]); count++; }
       });
       // Thay hẳn theo dữ liệu mới nhất (không chỉ merge thêm) - mã nào đã bị xoá/sửa
       // sai ở Sheet thì cũng bị xoá khỏi cache, tránh ảnh cũ/sai kẹt lại vĩnh viễn
@@ -393,7 +397,7 @@ function applyImagesData(data){
       if(data.imagesMulti){
         var validMulti={};
         Object.keys(data.imagesMulti).forEach(function(ma){
-          var list=(data.imagesMulti[ma]||[]).filter(_isValidImgUrl);
+          var list=(data.imagesMulti[ma]||[]).filter(_isValidImgUrl).map(convertImgUrl);
           if(list.length) validMulti[ma]=list;
         });
         Object.keys(imgStoreMulti).forEach(function(ma){ if(!(ma in validMulti)) delete imgStoreMulti[ma]; });
