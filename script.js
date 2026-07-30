@@ -1321,8 +1321,17 @@ function render(){
   if(curLocGia) list=list.filter(khopLocGia);
   if(curLocCT.cl||curLocCT.sale||curLocCT.ct3) list=list.filter(khopLocCT);
   // Sắp xếp theo tồn kho nhiều nhất (nút 📦 Tồn nhiều cạnh bộ lọc)
+  // Đến hết 03/08/2026 (chương trình CT1/CT2/CT3 hiện tại kết thúc): ưu tiên
+  // đẩy SKU đang Sale/Xả kho/CT3 lên đầu để đẩy hàng tồn trước khi hết hạn.
   if(curSortTon){
-    list=list.slice().sort(function(a,b){ return tonKhoTongCuaMa(b.ma)-tonKhoTongCuaMa(a.ma); });
+    var uuTienCT123=new Date() < new Date('2026-08-04T00:00:00+07:00');
+    list=list.slice().sort(function(a,b){
+      if(uuTienCT123){
+        var aCT=isDangSaleCT123(a.ma)?1:0, bCT=isDangSaleCT123(b.ma)?1:0;
+        if(aCT!==bCT) return bCT-aCT;
+      }
+      return tonKhoTongCuaMa(b.ma)-tonKhoTongCuaMa(a.ma);
+    });
   } else if(curSortGia){
     list=list.slice().sort(function(a,b){ return (a.le||1e12)-(b.le||1e12); });
   }
@@ -5678,6 +5687,15 @@ function aiBuildChips(){
 // ===== CT3 SKU LINH HOẠT =====
 function isCT3(ma){
   if(ct3Loaded && CT3_DATA.length>0) return CT3_DATA.some(function(p){ return p.ma===ma; });
+  return false;
+}
+// Sản phẩm đang thuộc bất kỳ chương trình sale nào (CT1 Sale tháng / CT2 Xả
+// kho / CT3 SKU linh hoạt) - dùng để ưu tiên đẩy lên đầu khi bấm "Tồn nhiều",
+// đẩy hàng tồn của các chương trình sắp hết hạn (xem KICH_CAU_HET_HAN).
+function isDangSaleCT123(ma){
+  if((window.CT1_DATA||[]).some(function(x){return x.ma===ma;})) return true;
+  if((window.CT2_DATA||[]).some(function(x){return x.ma===ma;})) return true;
+  if(isCT3(ma)) return true;
   return false;
 }
 
