@@ -1564,7 +1564,6 @@ function showDP(ma){
     var badgeEl2 = document.getElementById('dp-sale-badge');
     if(badgeEl2) badgeEl2.style.display='none';
   }
-  document.getElementById('dp-sell').value=p.nhan>0?Math.round(p.nhan*1.07):'';
   dpSetTab('gia');
   document.getElementById('dp').style.display='block';
   var isDesk=(window.innerWidth||document.documentElement.clientWidth||0)>=768;
@@ -1572,7 +1571,6 @@ function showDP(ma){
   // Modal giữa màn hình (desktop) lẫn bottom-sheet (mobile) đều cần nền mờ phía sau
   var bd=document.getElementById('dp-backdrop'); if(bd) bd.classList.add('on');
   if(document.getElementById('dp-scroll')) document.getElementById('dp-scroll').scrollTop=0;
-  calcM();
   // Reset qty input về m² mặc định
   dpUnit='m2';
   var qtyInp=document.getElementById('dp-qty-input');
@@ -1623,15 +1621,6 @@ function closeDp(){
   var bd=document.getElementById('dp-backdrop'); if(bd) bd.classList.remove('on');
   if((window.innerWidth||document.documentElement.clientWidth||0)>=768) renderDon();
 }
-function calcM(){
-  var p=DATA.find(function(x){return x.ma===curP_ma;}); if(!p) return;
-  var sell=parseInt(document.getElementById('dp-sell').value)||0;
-  var cost=p.ns||p.nhan||0; var m=document.getElementById('dp-margin');
-  if(sell>0&&cost>0){ var pr=sell-cost; var pct=Math.round(pr/sell*100);
-    m.textContent=(pr>=0?'+':'')+pr.toLocaleString('vi-VN')+'đ ('+pct+'%)';
-    m.style.color=pr>=0?'#388E3C':'#C0232A'; } else m.textContent='–';
-}
-
 // --- TAB 2 Sale ---
 function setSF(f){
   curSF=f;
