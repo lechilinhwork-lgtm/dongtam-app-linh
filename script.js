@@ -2895,19 +2895,28 @@ function _thucHienChiaSe(urls, ma, tenSP){
   }
   if(!(navigator.share && navigator.canShare)){ moTabDuPhong(); return; }
   showToast('⏳ Đang chuẩn bị ảnh...');
-  Promise.all(urls.map(function(u){
+  // Dùng allSettled thay vì all: nếu 1 vài ảnh tải lỗi (mạng chập chờn) thì vẫn
+  // chia sẻ được các ảnh tải thành công, thay vì huỷ chia sẻ TOÀN BỘ chỉ vì
+  // 1 ảnh lỗi (đây là lý do sản phẩm nhiều ảnh hay bị "chia sẻ không hết").
+  Promise.allSettled(urls.map(function(u){
     return fetch(convertImgUrl(u)).then(function(res){
       if(!res.ok) throw new Error('fetch fail');
       return res.blob();
     });
-  })).then(function(blobs){
-    var files=blobs.map(function(b,i){
-      return new File([b],(ma||'anh')+'_'+(i+1)+'.jpg',{type:b.type||'image/jpeg'});
+  })).then(function(results){
+    var files=[];
+    results.forEach(function(r,i){
+      if(r.status==='fulfilled'){
+        files.push(new File([r.value],(ma||'anh')+'_'+(i+1)+'.jpg',{type:r.value.type||'image/jpeg'}));
+      }
     });
-    if(navigator.canShare({files:files})){
-      return navigator.share({files:files,title:tenSP||ma,text:tenSP||ma}).then(forcePaintStrong);
+    if(files.length && navigator.canShare({files:files})){
+      return navigator.share({files:files,title:tenSP||ma,text:tenSP||ma}).then(function(){
+        forcePaintStrong();
+        if(files.length<urls.length) showToast('⚠️ Chỉ chia sẻ được '+files.length+'/'+urls.length+' ảnh (1 số ảnh tải lỗi)');
+      });
     }
-    throw new Error('canShare false');
+    throw new Error('canShare false hoặc không có ảnh nào tải được');
   }).catch(function(err){
     forcePaintStrong();
     if(err&&err.name==='AbortError') return;
