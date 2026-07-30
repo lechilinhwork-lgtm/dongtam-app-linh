@@ -428,7 +428,7 @@
       <button onclick="themNgoiVaoDon()" style="flex:1;padding:11px;border:none;border-radius:var(--r8);background:#C0232A;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">
         🛒 Thêm vào đơn
       </button>
-      <button onclick="chiaSeAnhSanPham(curNgoiMa)" style="padding:11px 12px;border:none;border-radius:var(--r8);background:#388E3C;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)" title="Chia sẻ nhiều ảnh sản phẩm">📤 Ảnh</button>
+      <button onclick="chiaSeAnhSanPham(curNgoiMa, document.getElementById('nd-ten').textContent)" style="padding:11px 12px;border:none;border-radius:var(--r8);background:#388E3C;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)" title="Chia sẻ nhiều ảnh sản phẩm">📤 Ảnh</button>
       <button onclick="shareZaloNgoi(curNgoiMa)" style="padding:11px 14px;border:none;border-radius:var(--r8);background:#0068FF;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">
         Zalo ↗
       </button>
@@ -543,7 +543,7 @@
     <!-- Buttons -->
     <div style="display:flex;gap:8px;margin-bottom:6px">
       <button onclick="themKeoVaoDon()" style="flex:1;padding:11px;border:none;border-radius:var(--r8);background:#7B1FA2;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">🛒 Thêm vào đơn</button>
-      <button onclick="chiaSeAnhSanPham(curKeoMa)" style="padding:11px 12px;border:none;border-radius:var(--r8);background:#388E3C;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)" title="Chia sẻ ảnh">📤 Ảnh</button>
+      <button onclick="chiaSeAnhSanPham(curKeoMa, document.getElementById('kd-ten').textContent)" style="padding:11px 12px;border:none;border-radius:var(--r8);background:#388E3C;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)" title="Chia sẻ ảnh">📤 Ảnh</button>
       <button onclick="shareZaloKeo(curKeoMa)" style="padding:11px 14px;border:none;border-radius:var(--r8);background:#0068FF;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">Zalo ↗</button>
     </div>
     <button onclick="moTonKho(curKeoMa)" style="width:100%;font-size:12px;padding:8px;border-radius:var(--r8);border:1.5px solid #7B1FA2;background:none;color:#7B1FA2;font-weight:700;font-family:var(--f);cursor:pointer">📦 Xem tồn kho theo kho/lô</button>
