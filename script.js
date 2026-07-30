@@ -2888,10 +2888,15 @@ function copyZaloMsg(msg){
 // tên sản phẩm sang Zalo/Messenger/... giống nút Share gốc trên điện thoại.
 // Nếu máy/trình duyệt không hỗ trợ (thường là máy tính), tự mở từng ảnh ở
 // tab mới để nhân viên bấm giữ lưu ảnh rồi tự gửi qua Zalo.
+var CHIA_SE_ANH_MAX=5; // Giới hạn cứng số ảnh chia sẻ 1 lần - tránh trình duyệt
+// chặn popup (chế độ dự phòng mở nhiều tab) và tránh Web Share API bị lỗi khi
+// đính kèm quá nhiều file cùng lúc trên 1 số điện thoại.
 function _thucHienChiaSe(urls, ma, tenSP){
+  var bịCắt=urls.length>CHIA_SE_ANH_MAX;
+  urls=urls.slice(0,CHIA_SE_ANH_MAX);
   function moTabDuPhong(){
-    urls.slice(0,5).forEach(function(u){ window.open(convertImgUrl(u),'_blank'); });
-    showToast('📷 Đã mở '+Math.min(urls.length,5)+' ảnh ở tab mới — bấm giữ ảnh để lưu, rồi gửi qua Zalo');
+    urls.forEach(function(u){ window.open(convertImgUrl(u),'_blank'); });
+    showToast('📷 Đã mở '+urls.length+' ảnh ở tab mới'+(bịCắt?' (giới hạn tối đa '+CHIA_SE_ANH_MAX+' ảnh/lần)':'')+' — bấm giữ ảnh để lưu, rồi gửi qua Zalo');
   }
   if(!(navigator.share && navigator.canShare)){ moTabDuPhong(); return; }
   showToast('⏳ Đang chuẩn bị ảnh...');
@@ -2914,6 +2919,7 @@ function _thucHienChiaSe(urls, ma, tenSP){
       return navigator.share({files:files,title:tenSP||ma,text:tenSP||ma}).then(function(){
         forcePaintStrong();
         if(files.length<urls.length) showToast('⚠️ Chỉ chia sẻ được '+files.length+'/'+urls.length+' ảnh (1 số ảnh tải lỗi)');
+        else if(bịCắt) showToast('✅ Đã chia sẻ '+files.length+' ảnh (giới hạn tối đa '+CHIA_SE_ANH_MAX+' ảnh/lần)');
       });
     }
     throw new Error('canShare false hoặc không có ảnh nào tải được');
@@ -2955,9 +2961,12 @@ function chiaSeAnhSanPham(ma, tenSP){
           +'</div>';
       }).join('')
       +'</div>'
+      +(nSel>CHIA_SE_ANH_MAX
+        ?'<div style="padding:8px 16px;background:#FFF3CD;color:#856404;font-size:12px;text-align:center">⚠️ Chỉ chia sẻ được tối đa '+CHIA_SE_ANH_MAX+' ảnh/lần — sẽ dùng '+CHIA_SE_ANH_MAX+' ảnh đầu trong số đã chọn</div>'
+        :'')
       +'<div style="padding:10px 16px 20px;border-top:1px solid var(--bd)">'
       +'<button id="ipc-share" style="width:100%;padding:12px;border:none;border-radius:10px;background:'+(nSel>0?'var(--red)':'#ccc')+';color:#fff;font-size:14px;font-weight:700;cursor:pointer">'
-      +(nSel>0?'🖼️ Chia sẻ '+nSel+' ảnh':'Chưa chọn ảnh nào')
+      +(nSel>0?'🖼️ Chia sẻ '+Math.min(nSel,CHIA_SE_ANH_MAX)+' ảnh':'Chưa chọn ảnh nào')
       +'</button>'
       +'</div>'
       +'</div>';
