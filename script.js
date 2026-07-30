@@ -47,19 +47,67 @@ var maToSap={}; // maApp → maSAP, rebuilt mỗi lần fetch (không cache)
 // Mã sản phẩm đôi khi lệch hoa/thường hoặc dư khoảng trắng giữa tab "Ảnh sản phẩm"
 // và các tab giá (Kính/Ngói/Keo) -> chuẩn hóa để so khớp không bị bỏ lỡ ảnh.
 function normMa(s){ return String(s||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,''); }
+// Ảnh trong imgStore/imgStoreMulti giờ lưu theo Mã Sap (cột A, sheet mô tả/video)
+// - nhiều dòng cùng Mã Sap được gộp thành 1 mảng ảnh ở server (Images.gs).
+// Mỗi mã sản phẩm (ma) tra ra Mã Sap qua maToSap rồi mới tìm ảnh, để khớp đúng
+// dù mã sản phẩm nằm ở cột nào trong sheet.
 function timAnh(ma){
+  var sap=maToSap[ma]||ma;
+  if(imgStore[sap]) return imgStore[sap];
   if(imgStore[ma]) return imgStore[ma];
   var nm=normMa(ma);
   var k=Object.keys(imgStore).find(function(key){ return normMa(key)===nm; });
   return k?imgStore[k]:null;
 }
 function timAnhMulti(ma){
+  var sap=maToSap[ma]||ma;
+  if(imgStoreMulti[sap] && imgStoreMulti[sap].length) return imgStoreMulti[sap];
   if(imgStoreMulti[ma] && imgStoreMulti[ma].length) return imgStoreMulti[ma];
   var nm=normMa(ma);
   var k=Object.keys(imgStoreMulti).find(function(key){ return normMa(key)===nm; });
   if(k && imgStoreMulti[k] && imgStoreMulti[k].length) return imgStoreMulti[k];
   var single=timAnh(ma);
   return single?[single]:[];
+}
+
+// Tự động lướt qua các ảnh của 1 sản phẩm (mỗi 4s) ngay trên card danh sách,
+// CHỈ chạy khi card đang thực sự hiện trong khung nhìn (viewport) - dùng
+// IntersectionObserver dùng chung 1 lần cho mọi card, tránh mỗi card tự chạy
+// 1 timer gây tốn tài nguyên khi cuộn qua danh sách dài (nhiều trang/nhiều card).
+var _autoCycleObserver=null;
+var _autoCycleTimers=(typeof WeakMap!=='undefined')?new WeakMap():null;
+function _ensureAutoCycleObserver(){
+  if(_autoCycleObserver) return _autoCycleObserver;
+  _autoCycleObserver=new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      var el=entry.target;
+      if(entry.isIntersecting){
+        if(_autoCycleTimers.has(el)) return;
+        var ma=el.dataset.autoCycleMa;
+        var imgs=timAnhMulti(ma).map(convertImgUrl);
+        if(imgs.length<2) return;
+        var idx=0;
+        var img=el.querySelector('img');
+        if(!img) return;
+        var timer=setInterval(function(){
+          idx=(idx+1)%imgs.length;
+          img.src=imgs[idx];
+        },4000);
+        _autoCycleTimers.set(el,timer);
+      } else {
+        var t=_autoCycleTimers.get(el);
+        if(t){ clearInterval(t); _autoCycleTimers.delete(el); }
+      }
+    });
+  },{threshold:0.2});
+  return _autoCycleObserver;
+}
+function registerAutoCycle(thumbEl, ma){
+  if(!thumbEl || !ma || !_autoCycleTimers || typeof IntersectionObserver==='undefined') return;
+  var multi=timAnhMulti(ma);
+  if(multi.length<2) return;
+  thumbEl.dataset.autoCycleMa=ma;
+  _ensureAutoCycleObserver().observe(thumbEl);
 }
 
 // Fetch bảng giá từ Google Sheet (JSONP)
@@ -1312,7 +1360,7 @@ function render(){
     var priceNhan=p.nhan>0?p.nhan.toLocaleString('vi-VN')+'đ':'–';
     var priceGiao=p.giao>0?p.giao.toLocaleString('vi-VN')+'đ':'–';
     var priceNs=p.ns>0?p.ns.toLocaleString('vi-VN')+'đ':'–';
-    var imgUrl=imgStore&&imgStore[p.ma]?imgStore[p.ma]:'';
+    var imgUrl=timAnh(p.ma)||'';
     var isDesktop=window.innerWidth>=768;
     var div=document.createElement('div'); div.className='mk';
     if(isDesktop){
@@ -1341,7 +1389,7 @@ function render(){
         ?'<div style="position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap">'+badgeHtml+ct3BadgeHtml(p.ma)+'</div>'
         :'';
       div.innerHTML=
-        '<div style="width:100%;height:160px;background:#F0EEEC;position:relative;overflow:hidden;flex-shrink:0">'
+        '<div class="mk-thumb" style="width:100%;height:160px;background:#F0EEEC;position:relative;overflow:hidden;flex-shrink:0">'
         +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">':'')
         +noImgHtml
         +overlayBadges
@@ -1378,7 +1426,7 @@ function render(){
       var mTkColor=mTk?(mTk.tier&&mTk.tier.nhanh>0?'#2E7D32':mTk.tier&&mTk.tier.mai>0?'#E65100':'#C62828'):'#bbb';
       div.style.cssText='padding:12px;cursor:pointer;align-items:flex-start';
       var mImgHtml='<div style="width:96px;flex-shrink:0;margin-right:10px;display:flex;flex-direction:column;align-items:center;gap:4px">'
-        +'<div style="width:96px;height:96px;border-radius:10px;background:#F0EEEC;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">'
+        +'<div class="mk-thumb" style="width:96px;height:96px;border-radius:10px;background:#F0EEEC;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">'
         +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display=\'none\'">'
           :'<div style="display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:20px">📷</span><span style="font-size:8px;color:#bbb;text-align:center;line-height:1.2">Chưa<br>có ảnh</span></div>')
         +'</div>'
@@ -1407,6 +1455,7 @@ function render(){
     }
     div.addEventListener('click',function(){showDP(p.ma);});
     el.appendChild(div);
+    registerAutoCycle(div.querySelector('.mk-thumb'), p.ma);
   });
   // Render pagination
   var pagEl=document.getElementById('pagination');
@@ -1542,7 +1591,7 @@ function renderDpRelated(p){
   if(!list.length){ wrap.style.display='none'; el.innerHTML=''; return; }
   wrap.style.display='block';
   el.innerHTML=list.map(function(x){
-    var img=(typeof imgStore!=='undefined'&&imgStore[x.ma])?imgStore[x.ma]:'';
+    var img=timAnh(x.ma)||'';
     return '<div onclick="showDP(\''+x.ma+'\')" style="flex:0 0 84px;cursor:pointer;text-align:center">'
       +'<div style="width:84px;height:84px;border-radius:10px;overflow:hidden;background:var(--bg2);display:flex;align-items:center;justify-content:center">'
       +(img?'<img src="'+img+'" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">':'<span style="font-size:22px">📷</span>')
@@ -1639,7 +1688,7 @@ function renderSale(){
 
     // Lấy danh sách ảnh (khớp linh hoạt hoa/thường, dư khoảng trắng)
     var imgs = timAnhMulti(p.ma);
-    var imgUrl = (imgStore&&imgStore[p.ma])?imgStore[p.ma]:(imgs.length?imgs[0]:'');
+    var imgUrl = timAnh(p.ma)||(imgs.length?imgs[0]:'');
     var curIdx = 0;
 
     // === DESKTOP CARD ===
@@ -5584,7 +5633,7 @@ function isCT3(ma){
 // render card CT3 vào container el
 function renderCT3Card(p, el){
   var imgs=timAnhMulti(p.ma);
-  var imgUrl=(imgStore&&imgStore[p.ma])?imgStore[p.ma]:(imgs.length?imgs[0]:'');
+  var imgUrl=timAnh(p.ma)||(imgs.length?imgs[0]:'');
   var isDesktop=(window.innerWidth||0)>=768;
 
   var card=document.createElement('div');
@@ -5944,7 +5993,7 @@ function rpRenderSkuList(filterText){
     return chatNorm(p.ma).indexOf(norm) >= 0;
   }).slice(0, 60);
   list.forEach(function(p){
-    var img = (typeof imgStore !== 'undefined' && imgStore[p.ma]) ? imgStore[p.ma] : '';
+    var img = timAnh(p.ma)||'';
     var card = document.createElement('div');
     card.className = 'rp-sku-card';
     card.innerHTML = (img
@@ -6051,7 +6100,7 @@ function rpRenderCanvas(){
   var ctx = canvas.getContext('2d');
 
   var skuMa = rpCurSku.ma;
-  var skuUrlRaw = (typeof imgStore !== 'undefined' && imgStore[skuMa]) ? imgStore[skuMa] : null;
+  var skuUrlRaw = timAnh(skuMa);
   if(!skuUrlRaw){ note.textContent = 'Sản phẩm này chưa có ảnh, không thể xem thử.'; return; }
   var skuUrl = convertImgUrl(skuUrlRaw);
   var tplForRender = rpCurTpl, zoneForRender = rpCurZone;
