@@ -212,16 +212,17 @@
         <button id="dp-unit-thung" onclick="setDpUnit('thung')" class="dp-unit-btn">Theo thùng</button>
       </div>
       <div class="dp-qty-row">
-        <input id="dp-qty-input" type="number" value="1" min="0.01" step="0.01" oninput="calcDpQty()" class="dp-qty-input"/>
+        <input id="dp-qty-input" type="text" inputmode="decimal" value="1" oninput="calcDpQty()" class="dp-qty-input"/>
         <span id="dp-qty-unit-label" class="dp-qty-unit">m²</span>
       </div>
       <p id="dp-qty-convert" class="dp-qty-convert"></p>
+      <div id="dp-qty-snap" style="display:none;gap:6px;margin-bottom:8px"></div>
       <div class="dp-room-section">
         <p class="dp-room-label">📐 Tính theo diện tích phòng</p>
         <div class="dp-room-inputs">
-          <input id="dp-room-dai" type="number" min="0" step="0.1" placeholder="Dài (m)" class="dp-room-input"/>
+          <input id="dp-room-dai" type="text" inputmode="decimal" placeholder="Dài (m)" class="dp-room-input"/>
           <span class="dp-room-x">×</span>
-          <input id="dp-room-rong" type="number" min="0" step="0.1" placeholder="Rộng (m)" class="dp-room-input"/>
+          <input id="dp-room-rong" type="text" inputmode="decimal" placeholder="Rộng (m)" class="dp-room-input"/>
           <button onclick="tinhTheoDienTichPhong()" class="dp-room-btn">Tính</button>
         </div>
         <p id="dp-room-result" class="dp-room-result"></p>
@@ -793,6 +794,6 @@
 
 
 
-<script src="script.js?v=nav34" defer></script>
+<script src="script.js?v=nav35" defer></script>
 </body>
 </html>

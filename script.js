@@ -47,6 +47,10 @@ var maToSap={}; // maApp → maSAP, rebuilt mỗi lần fetch (không cache)
 // Mã sản phẩm đôi khi lệch hoa/thường hoặc dư khoảng trắng giữa tab "Ảnh sản phẩm"
 // và các tab giá (Kính/Ngói/Keo) -> chuẩn hóa để so khớp không bị bỏ lỡ ảnh.
 function normMa(s){ return String(s||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,''); }
+// Nhập số thập phân kiểu Việt Nam - bàn phím số điện thoại VN hay cho gõ dấu
+// PHẨY (,) làm dấu thập phân, nhưng parseFloat() chỉ hiểu dấu CHẤM (.) - hàm
+// này chấp nhận cả 2 kiểu để khách/nhân viên gõ 25,5 hay 25.5 đều ra đúng 25.5.
+function parseVN(s){ return parseFloat(String(s||'').trim().replace(',','.'))||0; }
 // Ảnh trong imgStore/imgStoreMulti giờ lưu theo Mã Sap (cột A, sheet mô tả/video)
 // - nhiều dòng cùng Mã Sap được gộp thành 1 mảng ảnh ở server (Images.gs).
 // Mỗi mã sản phẩm (ma) tra ra Mã Sap qua maToSap rồi mới tìm ảnh, để khớp đúng
@@ -3654,12 +3658,10 @@ function setDpUnit(u){
     bM2.style.background='var(--red)'; bM2.style.color='#fff'; bM2.style.border='none';
     bThung.style.background='var(--bg1)'; bThung.style.color='var(--t2)'; bThung.style.border='1.5px solid var(--bd)';
     label.textContent='m²';
-    document.getElementById('dp-qty-input').step='0.01';
   } else {
     bThung.style.background='var(--red)'; bThung.style.color='#fff'; bThung.style.border='none';
     bM2.style.background='var(--bg1)'; bM2.style.color='var(--t2)'; bM2.style.border='1.5px solid var(--bd)';
     label.textContent='thùng';
-    document.getElementById('dp-qty-input').step='1';
   }
   // Reset về 1 khi đổi đơn vị
   document.getElementById('dp-qty-input').value = 1;
@@ -3669,20 +3671,52 @@ function setDpUnit(u){
 function calcDpQty(){
   var p = DATA.find(function(x){return x.ma===curP_ma;});
   if(!p) return;
-  var val = parseFloat(document.getElementById('dp-qty-input').value)||0;
+  var val = parseVN(document.getElementById('dp-qty-input').value);
   var qc = getQuyCach(p.kc, p.cat);
   var convertEl = document.getElementById('dp-qty-convert');
-  if(!qc || !qc.m2){ convertEl.textContent=''; return; }
+  var snapEl = document.getElementById('dp-qty-snap');
+  if(!qc || !qc.m2){ convertEl.textContent=''; if(snapEl) snapEl.style.display='none'; return; }
 
   if(dpUnit==='thung'){
     var m2=Math.round(val*qc.m2*100)/100, vien=Math.round(val*qc.vien), kgV=qc.kg?Math.round(val*qc.kg*10)/10:0;
     convertEl.innerHTML='≈ <b>'+m2+'</b> m²'+(vien?' · <b>'+vien+'</b> viên':'')+(kgV?' · <b>'+kgV+'</b> kg':'');
+    if(snapEl) snapEl.style.display='none';
   } else {
     var thung=Math.round((val/qc.m2)*100)/100, thungN=Math.ceil(val/qc.m2);
     var vienT=qc.vien?Math.round(val/qc.m2*qc.vien):0, kgT=qc.kg?Math.round(val/qc.m2*qc.kg*10)/10:0;
     convertEl.innerHTML='≈ <b>'+thung+'</b> thùng (làm tròn: <b>'+thungN+'</b> thùng)'
       +(vienT?'<br>≈ <b>'+vienT+'</b> viên':'')+(kgT?' · <b>'+kgT+'</b> kg':'');
+    renderDpQtySnap(val, qc, snapEl);
   }
+}
+
+// Gạch chỉ bán được theo viên/thùng nguyên (không xuất kho được số m² lẻ),
+// nên khi khách/nhân viên gõ tay 1 số m² tuỳ ý, hiện sẵn 2 lựa chọn làm tròn
+// gần nhất (xuống/lên đúng 1 viên) để bấm chọn nhanh, khỏi tự tính tay.
+function renderDpQtySnap(val, qc, snapEl){
+  if(!snapEl || !qc.vien) { if(snapEl) snapEl.style.display='none'; return; }
+  var m2PerVien = qc.m2/qc.vien;
+  var vienExact = val/m2PerVien;
+  var vienDown = Math.floor(vienExact+1e-6);
+  if(vienDown<0) vienDown=0;
+  var vienUp = vienDown+1;
+  // Nếu số đang gõ đã đúng khớp 1 số nguyên viên rồi thì khỏi cần gợi ý
+  if(Math.abs(vienExact-vienDown)<1e-6){ snapEl.style.display='none'; return; }
+  function label(vienTong){
+    var m2=Math.round(vienTong*m2PerVien*100)/100;
+    var thungN=Math.floor(vienTong/qc.vien), vienDu=vienTong-thungN*qc.vien;
+    var thungStr=thungN+' thùng'+(vienDu>0?' + '+vienDu+' viên':'');
+    return {m2:m2, text:thungStr+' — '+m2+' m²'};
+  }
+  var down=label(vienDown), up=label(vienUp);
+  snapEl.style.display='flex';
+  snapEl.innerHTML=
+    '<button type="button" onclick="_snapDpQty('+down.m2+')" style="flex:1;padding:8px 6px;border-radius:8px;border:1.5px solid var(--bd2);background:var(--bg2);color:var(--t1);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--f)">↓ Làm tròn xuống<br>'+down.text+'</button>'
+    +'<button type="button" onclick="_snapDpQty('+up.m2+')" style="flex:1;padding:8px 6px;border-radius:8px;border:1.5px solid var(--bd2);background:var(--bg2);color:var(--t1);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--f)">↑ Làm tròn lên<br>'+up.text+'</button>';
+}
+function _snapDpQty(m2){
+  document.getElementById('dp-qty-input').value=m2;
+  calcDpQty();
 }
 
 // Tính số thùng cần mua từ kích thước phòng (dài x rộng) — hữu ích khi tư
@@ -3690,8 +3724,8 @@ function calcDpQty(){
 function tinhTheoDienTichPhong(){
   var p = DATA.find(function(x){return x.ma===curP_ma;});
   if(!p) return;
-  var dai=parseFloat(document.getElementById('dp-room-dai').value)||0;
-  var rong=parseFloat(document.getElementById('dp-room-rong').value)||0;
+  var dai=parseVN(document.getElementById('dp-room-dai').value);
+  var rong=parseVN(document.getElementById('dp-room-rong').value);
   var resultEl=document.getElementById('dp-room-result');
   if(dai<=0||rong<=0){ resultEl.textContent='Vui lòng nhập đủ chiều dài và chiều rộng!'; resultEl.style.color='#C0232A'; return; }
 
@@ -3719,7 +3753,7 @@ function tinhTheoDienTichPhong(){
 function addToDonWithQty(){
   var p = DATA.find(function(x){return x.ma===curP_ma;});
   if(!p) return;
-  var val = parseFloat(document.getElementById('dp-qty-input').value)||0;
+  var val = parseVN(document.getElementById('dp-qty-input').value);
   if(val<=0){ alert('Vui lòng nhập số lượng!'); return; }
 
   var qc = getQuyCach(p.kc, p.cat);
@@ -3886,7 +3920,7 @@ function renderDon(){
       +'</div>'
       +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">'
       +'<button data-qty="'+item.ma+'" data-d="-1" class="qty-btn" style="flex-shrink:0">−</button>'
-      +'<input type="number" data-inp="'+item.ma+'" value="'+item.qty+'" min="'+(item.loai==="kinh"?"1":"0.01")+'" step="'+(item.loai==="kinh"?"1":"0.01")+'" '
+      +'<input type="text" inputmode="decimal" data-inp="'+item.ma+'" value="'+item.qty+'" '
         +'style="width:72px;text-align:center;font-size:14px;font-weight:700;padding:4px 6px;'
         +'border:1.5px solid var(--bd2);border-radius:6px;background:var(--bg1);'
         +'font-family:var(--f);-moz-appearance:textfield;" />'
@@ -3945,9 +3979,17 @@ function renderDon(){
     var qb=e.target.closest('[data-qty]');
     if(qb){
       var ma=qb.dataset.qty;
+      var item=donItems.find(function(x){return x.ma===ma;});
       var inp=el.querySelector('input[data-inp="'+ma+'"]');
-      var cur=inp?Math.max(0.01,parseFloat(inp.value)||1):1;
-      var next=Math.round(Math.max(0.01,cur+parseInt(qb.dataset.d))*100)/100;
+      var cur=inp?Math.max(0.01,parseVN(inp.value)||1):1;
+      // Gạch tính theo m²: bước nhảy = đúng 1 viên (không phải 1m² cố định),
+      // đảm bảo +/- luôn dừng ở số nguyên viên - không bao giờ ra m² lẻ vô nghĩa.
+      var step=1;
+      if(item && item.loai==='gach' && item.unit==='m²'){
+        var qc=getQuyCach(item.kc,item.cat);
+        if(qc && qc.m2 && qc.vien) step=qc.m2/qc.vien;
+      }
+      var next=Math.round(Math.max(0.01,cur+step*parseInt(qb.dataset.d))*1000)/1000;
       if(inp) inp.value=next;
       setDonQty(ma,next);   // cập nhật donItems.qty → calcAndShowTotals
       return;
@@ -3956,7 +3998,7 @@ function renderDon(){
   el.oninput=function(e){
     var inp=e.target.closest('[data-inp]');
     if(!inp) return;
-    var val=parseFloat(inp.value)||0;
+    var val=parseVN(inp.value);
     if(val>0){
       setDonQty(inp.dataset.inp, val);
     }
@@ -3974,7 +4016,9 @@ function updateDonQty(ma,d){
 function setDonQty(ma,val){
   var item=donItems.find(function(x){return x.ma===ma;});
   if(!item) return;
-  val=Math.round((parseFloat(val)||0.01)*100)/100;
+  // Làm tròn tới 3 chữ số thập phân (không phải 2) - vài kích cỡ gạch có
+  // m²/viên lẻ tới 3 số (vd 0.045m²) nên làm tròn 2 số sẽ làm sai lệch số viên.
+  val=Math.round((parseVN(val)||0.01)*1000)/1000;
   if(val<0.01) val=0.01;
 
   // Gạch kính: chỉ bán nguyên thùng → làm tròn lên số nguyên
