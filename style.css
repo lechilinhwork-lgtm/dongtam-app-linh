@@ -418,7 +418,13 @@ input::placeholder{color:var(--t3)}
   gap:5px;transition:color .15s;
 }
 .bn.on{color:var(--red)}
-.bn-icon{font-size:27px;line-height:1}
+.bn-icon{
+  font-size:24px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  width:42px;height:42px;border-radius:50%;
+  background:transparent;transition:background .18s;
+}
+.bn.on .bn-icon{background:rgba(192,35,42,.12)}
 .bn span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 
 /* Sidebar điều hướng desktop — ẩn trên mobile, hiện thay bottom-nav ở >=768px */
