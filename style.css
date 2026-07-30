@@ -412,13 +412,13 @@ input::placeholder{color:var(--t3)}
 .bottom-nav::-webkit-scrollbar{display:none}
 .bn{
   flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;padding:8px 2px;border:none;
+  justify-content:center;padding:9px 2px;border:none;
   background:none;cursor:pointer;color:var(--t3);
-  font-size:9px;font-weight:600;font-family:var(--f);
-  gap:3px;transition:color .15s;
+  font-size:10.5px;font-weight:600;font-family:var(--f);
+  gap:4px;transition:color .15s;
 }
 .bn.on{color:var(--red)}
-.bn-icon{font-size:19px;line-height:1}
+.bn-icon{font-size:23px;line-height:1}
 .bn span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 
 /* Sidebar điều hướng desktop — ẩn trên mobile, hiện thay bottom-nav ở >=768px */
