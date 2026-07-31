@@ -127,7 +127,9 @@ function applyGiaGach(res){
     function pg(v){return parseFloat(String(v||'0').replace(/\./g,'').replace(/,/g,'.'))||0;}
     var le=pg(row.le), nhan=pg(row.nhan), giao=pg(row.giao);
     var nsSheet=pg(row.ns), nsCT1=pg(row.ns_ct1);
-    var ns = nsSheet>0 ? nsSheet : nsCT1>0 ? Math.round(nsCT1*0.95) : Math.round(nhan*0.95);
+    // CT150 đã kết thúc - KHÔNG còn tự bịa giá Sale = nhận kho × 0.95 khi
+    // không có dữ liệu Sale thật. Chỉ hiện "GIÁ SALE" khi Sheet có giá thật.
+    var ns = nsSheet>0 ? nsSheet : (nsCT1>0 ? Math.round(nsCT1*0.95) : 0);
     var gs = pg(row.gs)||giao;
 
     // Tìm trong DATA hiện tại
@@ -1546,7 +1548,10 @@ function showDP(ma){
   if(!ns_sale && isSaleItem) ns_sale = p.ns||0;
   if(!gs_sale && isSaleItem) gs_sale = p.gs||0;
   var loai_sale = saleInfo ? saleInfo.loai_sale : (isSaleItem?(p._fromCT==='CT1'?'ct1':'ct2'):null);
-  var hasSale = ns_sale>0 || gs_sale>0;
+  // Chỉ tính là "đang Sale" khi SP thực sự thuộc CT1/CT2 (có saleInfo hoặc
+  // đã gắn _fromCT) - không chỉ dựa vào giá > 0, vì gs_sale mặc định fallback
+  // về giá giao thường (luôn > 0) khiến mọi SP đều bị hiện nhầm "GIÁ SALE".
+  var hasSale = (isSaleItem || !!saleInfo) && (ns_sale>0 || gs_sale>0);
   var saleSec = document.getElementById('dp-sale-section');
   saleSec.style.display = hasSale ? 'block' : 'none';
   if(hasSale){
