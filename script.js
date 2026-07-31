@@ -1535,12 +1535,13 @@ function showDP(ma){
     else giaDlLabel.textContent='GIÁ ĐẠI LÝ';
   }
   // Tra giá sale từ CT1_DATA / CT2_DATA (nếu đã load)
-  // Lưu ý: mergeCTintoDATA gắn p.ns = c.nk (trường nk), không phải c.ns
-  // → ct150nk/ct150gh là giá CT150 đúng; nk/gh là fallback
+  // Lưu ý: mergeCTintoDATA gắn p.ns = c.nk (trường nk), không phải c.ns.
+  // Chương trình CT150 đã kết thúc - không còn ưu tiên ct150nk/ct150gh nữa,
+  // chỉ dùng giá Sale CT1/CT2 hiện hành (nk/gh).
   var saleInfo = CT1_DATA.find(function(x){return x.ma===ma;})
                || CT2_DATA.find(function(x){return x.ma===ma;});
-  var ns_sale = saleInfo ? (saleInfo.ct150nk||saleInfo.nk||saleInfo.ns||0) : (p.ns||0);
-  var gs_sale = saleInfo ? (saleInfo.ct150gh||saleInfo.gh||saleInfo.gs||0) : (p.gs||0);
+  var ns_sale = saleInfo ? (saleInfo.nk||saleInfo.ns||0) : (p.ns||0);
+  var gs_sale = saleInfo ? (saleInfo.gh||saleInfo.gs||0) : (p.gs||0);
   // Fallback: nếu saleInfo không có giá nhưng p đã được gắn _fromCT thì dùng p.ns/p.gs
   if(!ns_sale && isSaleItem) ns_sale = p.ns||0;
   if(!gs_sale && isSaleItem) gs_sale = p.gs||0;
@@ -2763,12 +2764,6 @@ function layNoiDungBaoGia(ma){
   var gh      = p.giao    || 0;  // Giá ĐL GH thường
   var saleNK  = p.ns      || (ctData?ctData.nk:0)      || 0;  // Giá Sale NK
   var saleGH  = p.gs      || (ctData?ctData.gh:0)      || 0;  // Giá Sale GH
-  var ct150nk = p.ct150nk || (ctData?ctData.ct150nk:0) || 0;
-  // CT150 fallback = NK × 95%
-  if(!ct150nk){
-    var baseForCT150 = isSale ? saleNK : nk;
-    if(baseForCT150 > 0) ct150nk = Math.round(baseForCT150 * 0.95);
-  }
   // SP thường: nếu nk=0 nhưng ns>0 (do merge) → vẫn dùng ns làm NK thường
   if(!isSale && nk===0 && saleNK>0) nk = saleNK;
   if(!isSale && gh===0 && saleGH>0) gh = saleGH;
@@ -2788,7 +2783,6 @@ function layNoiDungBaoGia(ma){
     if(le>0)      lines.push('');
     if(saleNK>0){
       lines.push('2. Giá Sale đại lý nhận kho: '+f(saleNK));
-      if(ct150nk>0) lines.push('---->>> Chương trình tháng 7 nhận kho giảm thêm 5% còn: '+f(ct150nk));
     }
     if(saleNK>0)  lines.push('');
     if(saleGH>0)  lines.push('3. Giá Sale đại lý đi giao tận nơi Hồ Chí Minh: '+f(saleGH));
@@ -2797,7 +2791,6 @@ function layNoiDungBaoGia(ma){
     if(le>0)      lines.push('');
     if(nk>0){
       lines.push('2. Giá đại lý nhận kho: '+f(nk));
-      if(ct150nk>0) lines.push('---->>> Chương trình tháng 7 nhận kho giảm thêm 5% còn: '+f(ct150nk));
     }
     if(nk>0)      lines.push('');
     if(gh>0)      lines.push('3. Giá đại lý đi giao tận nơi Hồ Chí Minh: '+f(gh));
@@ -2856,7 +2849,6 @@ function znCopyZalo(){
 function shareZaloSale(p){
   var isCT2=p.loai_sale==='ct2';
   var f=function(n){ return n>0?n.toLocaleString('vi-VN')+'đ/m²':'–'; };
-  var ct150Sale = p.ct150nk || (p.nk>0 ? Math.round(p.nk*0.95) : 0);
   var lines=['GẠCH ĐỒNG TÂM KV23'];
   lines.push('📌 Mã: '+p.ma+'  🔥 '+(isCT2?'Xả kho CT2':'Sale tháng 07'));
   lines.push('📐 Kích cỡ: '+(p.kc||''));
@@ -2867,7 +2859,6 @@ function shareZaloSale(p){
   }
   if(p.nk>0){
     lines.push('2. Giá Sale đại lý nhận kho: '+f(p.nk));
-    if(ct150Sale>0) lines.push('---->>> Chương trình tháng 7 nhận kho giảm thêm 5% còn: '+f(ct150Sale));
     lines.push('');
   }
   if(p.gh>0){
@@ -5482,20 +5473,10 @@ function xuatZalo(){
     // Giá lẻ
     if(le>0) lines.push('Giá lẻ: '+le.toLocaleString('vi-VN')+'đ/'+unit);
 
-    // Giá nhận kho
+    // Giá nhận kho (kèm giá Sale thật nếu có - CT1/CT2/CT3, không còn CT150)
     if(nhan>0){
-      var isGach = item.loai!=='ngoi'&&item.loai!=='keo'&&item.loai!=='kinh';
-      var ckNhan = Math.round(nhan*0.95); // CT150: giảm 5% gạch
-      var ckNgoi = Math.round(nhan*0.90); // CT150: giảm 10% ngói
-      if(isGach){
-        lines.push('Giá nhận tại kho: '+nhan.toLocaleString('vi-VN')+'đ/'+unit
-          +' Chương trình tháng 06 và tháng 7 còn '+(ns>0?ns:ckNhan).toLocaleString('vi-VN')+'đ/'+unit+' 🔥');
-      } else if(item.loai==='ngoi'){
-        lines.push('Giá nhận tại kho: '+nhan.toLocaleString('vi-VN')+'đ/'+unit
-          +' Chương trình tháng 06 và tháng 7 còn '+(ns>0?ns:ckNgoi).toLocaleString('vi-VN')+'đ/'+unit+' 🔥');
-      } else {
-        lines.push('Giá nhận tại kho: '+nhan.toLocaleString('vi-VN')+'đ/'+unit);
-      }
+      lines.push('Giá nhận tại kho: '+nhan.toLocaleString('vi-VN')+'đ/'+unit
+        +(ns>0?' — Giá Sale: '+ns.toLocaleString('vi-VN')+'đ/'+unit+' 🔥':''));
     }
 
     // Giá giao hàng
