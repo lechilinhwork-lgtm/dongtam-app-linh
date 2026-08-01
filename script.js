@@ -3879,9 +3879,8 @@ function showToast(msg,type){
 
 function updateDonBadge(){
   var badge=document.getElementById('don-badge');
-  var total=donItems.reduce(function(s,x){return s+x.qty;},0);
   var spCount=donItems.length;
-  if(badge){badge.textContent=total;badge.style.display=total>0?'inline-flex':'none';}
+  if(badge){badge.textContent=spCount;badge.style.display=spCount>0?'inline-flex':'none';}
   // Side-nav badge (desktop)
   var snBadge=document.getElementById('sn-don-badge');
   if(snBadge){
@@ -3891,7 +3890,22 @@ function updateDonBadge(){
   // Topbar cart label (mobile)
   var label=document.getElementById('don-cart-label');
   if(label){
-    label.textContent=spCount===0?'Giỏ hàng':spCount+' SP · '+total+' cái';
+    if(spCount===0){
+      label.textContent='Giỏ hàng';
+    } else {
+      // Gộp số lượng theo đúng đơn vị của từng dòng (m², bao, tấm...) thay vì
+      // cộng thẳng mọi đơn vị lại rồi gán nhãn "cái" - vừa sai vừa gây nhầm lẫn
+      var byUnit={};
+      donItems.forEach(function(x){
+        var u=x.unit||'m²';
+        byUnit[u]=(byUnit[u]||0)+x.qty;
+      });
+      var qtyText=Object.keys(byUnit).map(function(u){
+        var n=Math.round(byUnit[u]*100)/100;
+        return n.toLocaleString('vi-VN')+' '+u;
+      }).join(' · ');
+      label.textContent=spCount+' SP · '+qtyText;
+    }
   }
   saveDonItemsToStorage();
 }
