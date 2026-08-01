@@ -1521,12 +1521,11 @@ function showDP(ma){
     }
   }
   document.getElementById('dp-le').textContent=fmt(p.le);
-  // SP từ CT1/CT2 (đang Sale/Xả kho): ô đầu popup phải hiện ĐÚNG giá sale,
-  // không phải giá thường — dù mã đó vừa có giá thường vừa có giá sale
-  // (trước đây ưu tiên giá thường khi >0 nên hiện sai cho mã trùng cả 2).
+  // Ô "Nhận kho"/"Giao hàng" luôn hiện giá THƯỜNG (chưa sale) - giá Sale đã
+  // có mục riêng "GIÁ SALE" bên dưới, không trộn vào đây nữa (theo yêu cầu).
   var isSaleItem = p._fromCT==='CT1' || p._fromCT==='CT2';
-  var dispNhan = (isSaleItem && p.ns>0) ? p.ns : (p.nhan > 0 ? p.nhan : (p.ns || 0));
-  var dispGiao = (isSaleItem && p.gs>0) ? p.gs : (p.giao > 0 ? p.giao : (p.gs || 0));
+  var dispNhan = p.nhan>0 ? p.nhan : (p.ns||0);
+  var dispGiao = p.giao>0 ? p.giao : (p.gs||0);
   document.getElementById('dp-nhan').textContent = fmt(dispNhan);
   document.getElementById('dp-giao').textContent = fmt(dispGiao);
   // Cập nhật label GIÁ ĐẠI LÝ → GIÁ SALE nếu là SP từ CT1/CT2
