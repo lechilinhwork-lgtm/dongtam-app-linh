@@ -2788,28 +2788,31 @@ function layNoiDungBaoGia(ma){
   var gh      = p.giao    || 0;  // Giá ĐL GH thường
   var saleNK  = p.ns      || (ctData?ctData.nk:0)      || 0;  // Giá Sale NK
   var saleGH  = p.gs      || (ctData?ctData.gh:0)      || 0;  // Giá Sale GH
+  var vetNK   = p.ct150nk || (ctData?ctData.ct150nk:0) || 0;  // Giá VÉT KHO NK (chỉ CT2)
+  var vetGH   = p.ct150gh || (ctData?ctData.ct150gh:0) || 0;  // Giá VÉT KHO GH (chỉ CT2)
   // SP thường: nếu nk=0 nhưng ns>0 (do merge) → vẫn dùng ns làm NK thường
   if(!isSale && nk===0 && saleNK>0) nk = saleNK;
   if(!isSale && gh===0 && saleGH>0) gh = saleGH;
+  // % giảm luôn tính so với Giá lẻ (không phải so với giá ĐL gốc)
+  var pct = function(sale){ return (le>0 && sale>0) ? Math.round((le-sale)/le*100) : 0; };
 
-  var lines = ['GẠCH ĐỒNG TÂM KV23'];
-
-  if(isSale){
-    lines.push('📌 Mã: '+p.ma+'  🔥 '+(isCT2?'Xả kho CT2':'Sale tháng 07'));
-  } else {
-    lines.push('📌 Mã: '+p.ma);
-  }
+  var lines = ['GẠCH ĐỒNG TÂM KV23'+(isSale?(isCT2?' – XẢ KHO CT2':' – SALE THÁNG 07'):'')];
+  lines.push('📌 Mã: '+p.ma);
   lines.push('📐 Kích cỡ: '+p.kc);
   lines.push('━━━━━━━━━━━━━━');
 
   if(isSale){
-    if(le>0)      lines.push('1. Giá lẻ: '+f(le));
+    if(le>0)      lines.push('Giá lẻ: '+f(le));
     if(le>0)      lines.push('');
-    if(saleNK>0){
-      lines.push('2. Giá Sale đại lý nhận kho: '+f(saleNK));
+    if(saleNK>0)  lines.push('Giá ĐL Nhận kho: '+f(saleNK)+(pct(saleNK)>0?' (giảm '+pct(saleNK)+'% so với giá lẻ)':''));
+    if(saleGH>0)  lines.push('Giá ĐL Đi giao (HCM): '+f(saleGH)+(pct(saleGH)>0?' (giảm '+pct(saleGH)+'% so với giá lẻ)':''));
+    if(isCT2 && (vetNK>0 || vetGH>0)){
+      lines.push('');
+      if(vetNK>0) lines.push('VÉT KHO – Nhận kho: '+f(vetNK)+(pct(vetNK)>0?' (giảm '+pct(vetNK)+'% so với giá lẻ)':''));
+      if(vetGH>0) lines.push('VÉT KHO – Đi giao (HCM): '+f(vetGH)+(pct(vetGH)>0?' (giảm '+pct(vetGH)+'% so với giá lẻ)':''));
     }
-    if(saleNK>0)  lines.push('');
-    if(saleGH>0)  lines.push('3. Giá Sale đại lý đi giao tận nơi Hồ Chí Minh: '+f(saleGH));
+    lines.push('━━━━━━━━━━━━━━');
+    lines.push(isCT2?'Xả kho – số lượng có hạn, hết là hết!':'Ưu đãi trong tháng – đặt hàng sớm để giữ giá tốt nhất!');
   } else {
     if(le>0)      lines.push('1. Giá lẻ: '+f(le));
     if(le>0)      lines.push('');
@@ -2873,21 +2876,25 @@ function znCopyZalo(){
 function shareZaloSale(p){
   var isCT2=p.loai_sale==='ct2';
   var f=function(n){ return n>0?n.toLocaleString('vi-VN')+'đ/m²':'–'; };
-  var lines=['GẠCH ĐỒNG TÂM KV23'];
-  lines.push('📌 Mã: '+p.ma+'  🔥 '+(isCT2?'Xả kho CT2':'Sale tháng 07'));
+  // % giảm luôn tính so với Giá lẻ (không phải so với giá ĐL gốc)
+  var pct=function(sale){ return (p.le>0 && sale>0) ? Math.round((p.le-sale)/p.le*100) : 0; };
+  var lines=['GẠCH ĐỒNG TÂM KV23'+(isCT2?' – XẢ KHO CT2':' – SALE THÁNG 07')];
+  lines.push('📌 Mã: '+p.ma);
   lines.push('📐 Kích cỡ: '+(p.kc||''));
   lines.push('━━━━━━━━━━━━━━');
   if(p.le>0){
-    lines.push('1. Giá lẻ: '+f(p.le));
+    lines.push('Giá lẻ: '+f(p.le));
     lines.push('');
   }
-  if(p.nk>0){
-    lines.push('2. Giá Sale đại lý nhận kho: '+f(p.nk));
+  if(p.nk>0) lines.push('Giá ĐL Nhận kho: '+f(p.nk)+(pct(p.nk)>0?' (giảm '+pct(p.nk)+'% so với giá lẻ)':''));
+  if(p.gh>0) lines.push('Giá ĐL Đi giao (HCM): '+f(p.gh)+(pct(p.gh)>0?' (giảm '+pct(p.gh)+'% so với giá lẻ)':''));
+  if(isCT2 && ((p.ct150nk||0)>0 || (p.ct150gh||0)>0)){
     lines.push('');
+    if(p.ct150nk>0) lines.push('VÉT KHO – Nhận kho: '+f(p.ct150nk)+(pct(p.ct150nk)>0?' (giảm '+pct(p.ct150nk)+'% so với giá lẻ)':''));
+    if(p.ct150gh>0) lines.push('VÉT KHO – Đi giao (HCM): '+f(p.ct150gh)+(pct(p.ct150gh)>0?' (giảm '+pct(p.ct150gh)+'% so với giá lẻ)':''));
   }
-  if(p.gh>0){
-    lines.push('3. Giá Sale đại lý đi giao tận nơi Hồ Chí Minh: '+f(p.gh));
-  }
+  lines.push('━━━━━━━━━━━━━━');
+  lines.push(isCT2?'Xả kho – số lượng có hạn, hết là hết!':'Ưu đãi trong tháng – đặt hàng sớm để giữ giá tốt nhất!');
   var msg=lines.join('\n');
   navigator.clipboard&&navigator.clipboard.writeText
     ?navigator.clipboard.writeText(msg).then(function(){showToast('✅ Đã copy! Paste vào Zalo');}).catch(function(){fallbackCopy(msg);})
