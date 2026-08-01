@@ -1548,13 +1548,12 @@ function showDP(ma){
   if(!ns_sale && isSaleItem) ns_sale = p.ns||0;
   if(!gs_sale && isSaleItem) gs_sale = p.gs||0;
   var loai_sale = saleInfo ? saleInfo.loai_sale : (isSaleItem?(p._fromCT==='CT1'?'ct1':'ct2'):null);
-  var isCT1 = loai_sale==='ct1';
-  // TẠM THỜI TẮT "GIÁ SALE" cho CT1 - hiện tại giá Sale (nk/gh) CT1 đang
-  // trùng y hệt giá thường (không giảm thật), hiện ra sẽ gây hiểu lầm.
-  // Chỉ tính là "đang Sale" khi SP thực sự thuộc CT2 (có saleInfo hoặc
-  // đã gắn _fromCT) - không chỉ dựa vào giá > 0, vì gs_sale mặc định fallback
-  // về giá giao thường (luôn > 0) khiến mọi SP đều bị hiện nhầm "GIÁ SALE".
-  var hasSale = !isCT1 && (isSaleItem || !!saleInfo) && (ns_sale>0 || gs_sale>0);
+  // Hiện "GIÁ SALE" bình thường cho cả CT1 lẫn CT2 (giá thường + giá sale
+  // song song). Chỉ tính là "đang Sale" khi SP thực sự thuộc CT1/CT2 (có
+  // saleInfo hoặc đã gắn _fromCT) - không chỉ dựa vào giá > 0, vì gs_sale
+  // mặc định fallback về giá giao thường (luôn > 0) khiến mọi SP đều bị
+  // hiện nhầm "GIÁ SALE".
+  var hasSale = (isSaleItem || !!saleInfo) && (ns_sale>0 || gs_sale>0);
   // Giá xả kho đặc biệt (chỉ CT2) - tái sử dụng cột ct150nk/ct150gh cũ, giờ
   // mang ý nghĩa mới: 1 mức giá xả kho riêng, chỉ có ở 1 số mã CT2.
   var xaKhoNK = (saleInfo && loai_sale==='ct2') ? (saleInfo.ct150nk||0) : 0;
@@ -1583,7 +1582,7 @@ function showDP(ma){
       saveEl.textContent='Tiết kiệm '+save.toLocaleString('vi-VN')+'đ/m² (giảm '+pct+'%)';
       saveEl.style.display='block';
     } else if(isSaleItem){
-      saveEl.textContent='📦 Xả kho CT2 – Giá ưu đãi đặc biệt';
+      saveEl.textContent=(loai_sale==='ct1'?'🔥 Sale tháng CT1 – Giá ưu đãi':'📦 Xả kho CT2 – Giá ưu đãi đặc biệt');
       saveEl.style.display='block';
     } else {
       saveEl.style.display='none';
