@@ -1548,12 +1548,29 @@ function showDP(ma){
   if(!ns_sale && isSaleItem) ns_sale = p.ns||0;
   if(!gs_sale && isSaleItem) gs_sale = p.gs||0;
   var loai_sale = saleInfo ? saleInfo.loai_sale : (isSaleItem?(p._fromCT==='CT1'?'ct1':'ct2'):null);
-  // Chỉ tính là "đang Sale" khi SP thực sự thuộc CT1/CT2 (có saleInfo hoặc
+  var isCT1 = loai_sale==='ct1';
+  // TẠM THỜI TẮT "GIÁ SALE" cho CT1 - hiện tại giá Sale (nk/gh) CT1 đang
+  // trùng y hệt giá thường (không giảm thật), hiện ra sẽ gây hiểu lầm.
+  // Chỉ tính là "đang Sale" khi SP thực sự thuộc CT2 (có saleInfo hoặc
   // đã gắn _fromCT) - không chỉ dựa vào giá > 0, vì gs_sale mặc định fallback
   // về giá giao thường (luôn > 0) khiến mọi SP đều bị hiện nhầm "GIÁ SALE".
-  var hasSale = (isSaleItem || !!saleInfo) && (ns_sale>0 || gs_sale>0);
+  var hasSale = !isCT1 && (isSaleItem || !!saleInfo) && (ns_sale>0 || gs_sale>0);
+  // Giá xả kho đặc biệt (chỉ CT2) - tái sử dụng cột ct150nk/ct150gh cũ, giờ
+  // mang ý nghĩa mới: 1 mức giá xả kho riêng, chỉ có ở 1 số mã CT2.
+  var xaKhoNK = (saleInfo && loai_sale==='ct2') ? (saleInfo.ct150nk||0) : 0;
+  var xaKhoGH = (saleInfo && loai_sale==='ct2') ? (saleInfo.ct150gh||0) : 0;
+  var hasXaKho = xaKhoNK>0 || xaKhoGH>0;
   var saleSec = document.getElementById('dp-sale-section');
-  saleSec.style.display = hasSale ? 'block' : 'none';
+  var showSec = hasSale || hasXaKho;
+  saleSec.style.display = showSec ? 'block' : 'none';
+  var saleGridWrap = document.getElementById('dp-sale-grid-wrap');
+  if(saleGridWrap) saleGridWrap.style.display = hasSale ? 'block' : 'none';
+  var xaKhoWrap = document.getElementById('dp-xakho-wrap');
+  if(xaKhoWrap) xaKhoWrap.style.display = hasXaKho ? 'block' : 'none';
+  if(hasXaKho){
+    document.getElementById('dp-xk-nk').textContent = xaKhoNK>0 ? fmt(xaKhoNK) : '–';
+    document.getElementById('dp-xk-gh').textContent = xaKhoGH>0 ? fmt(xaKhoGH) : '–';
+  }
   if(hasSale){
     document.getElementById('dp-ns').textContent=fmt(ns_sale);
     document.getElementById('dp-gs').textContent=fmt(gs_sale);
@@ -1566,17 +1583,21 @@ function showDP(ma){
       saveEl.textContent='Tiết kiệm '+save.toLocaleString('vi-VN')+'đ/m² (giảm '+pct+'%)';
       saveEl.style.display='block';
     } else if(isSaleItem){
-      saveEl.textContent=(p._fromCT==='CT1'?'🔥 Sale tháng CT1 – Giảm 5% nhận hàng tại kho':'📦 Xả kho CT2 – Giá ưu đãi đặc biệt');
+      saveEl.textContent='📦 Xả kho CT2 – Giá ưu đãi đặc biệt';
       saveEl.style.display='block';
     } else {
       saveEl.style.display='none';
     }
+  } else {
+    var saveEl2=document.getElementById('dp-save');
+    if(saveEl2) saveEl2.style.display='none';
+  }
+  if(showSec){
     // Hiện badge loại sale
     var badgeEl = document.getElementById('dp-sale-badge');
     if(badgeEl){
-      badgeEl.style.display='inline';
-      if(loai_sale==='ct1') { badgeEl.textContent='🗓️ Sale tháng'; badgeEl.style.cssText='display:inline;font-size:10px;background:#E8F5E9;color:#2E7D32;padding:2px 6px;border-radius:4px;margin-left:6px'; }
-      else if(loai_sale==='ct2') { badgeEl.textContent='📦 Xả kho'; badgeEl.style.cssText='display:inline;font-size:10px;background:#FFF3E0;color:#E65100;padding:2px 6px;border-radius:4px;margin-left:6px'; }
+      if(hasSale && loai_sale==='ct1') { badgeEl.style.display='inline'; badgeEl.textContent='🗓️ Sale tháng'; badgeEl.style.cssText='display:inline;font-size:10px;background:#E8F5E9;color:#2E7D32;padding:2px 6px;border-radius:4px;margin-left:6px'; }
+      else if(hasSale && loai_sale==='ct2') { badgeEl.style.display='inline'; badgeEl.textContent='📦 Xả kho'; badgeEl.style.cssText='display:inline;font-size:10px;background:#FFF3E0;color:#E65100;padding:2px 6px;border-radius:4px;margin-left:6px'; }
       else badgeEl.style.display='none';
     }
   } else {
