@@ -48,6 +48,30 @@ var maToSap={}; // maApp → maSAP, rebuilt mỗi lần fetch (không cache)
 // chưa - dùng để tránh hiện số đếm "cũ" (VD số NGÓI mặc định trong code) rồi
 // vài giây sau mới nhảy sang số thật khi Sheet trả về (xem renderDanhMucGrid).
 var _syncFlags={gach:false, ngoi:false, keo:false, kinh:false};
+// CT1 "Mua tặng" (177) + CT2 "Xả kho %" (184) - chương trình Kích cầu Xây
+// Dựng 08-09/2026, chỉ hiện cho NVKD/Admin (thông tin nội bộ), khoá theo Mã
+// SAP (ổn định, không đổi theo tên) chứ không theo mã hiển thị app.
+var CT_MUATANG_MAP={}, CT_XAKHO_PCT_MAP={};
+function applyCTMuaTangXaKho(resMuaTang, resXaKho){
+  if(resMuaTang && resMuaTang.status==='ok' && resMuaTang.data){
+    CT_MUATANG_MAP={};
+    resMuaTang.data.forEach(function(r){ if(r.sap) CT_MUATANG_MAP[r.sap]=r; });
+  }
+  if(resXaKho && resXaKho.status==='ok' && resXaKho.data){
+    CT_XAKHO_PCT_MAP={};
+    resXaKho.data.forEach(function(r){ if(r.sap) CT_XAKHO_PCT_MAP[r.sap]=r; });
+  }
+}
+function timMuaTang(ma){
+  var p=(typeof DATA!=='undefined'?DATA:[]).find(function(x){return x.ma===ma;});
+  if(!p || !p.sap) return null;
+  return CT_MUATANG_MAP[p.sap]||null;
+}
+function timXaKhoPct(ma){
+  var p=(typeof DATA!=='undefined'?DATA:[]).find(function(x){return x.ma===ma;});
+  if(!p || !p.sap) return null;
+  return CT_XAKHO_PCT_MAP[p.sap]||null;
+}
 // Mã sản phẩm đôi khi lệch hoa/thường hoặc dư khoảng trắng giữa tab "Ảnh sản phẩm"
 // và các tab giá (Kính/Ngói/Keo) -> chuẩn hóa để so khớp không bị bỏ lỡ ảnh.
 function normMa(s){ return String(s||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,''); }
@@ -145,12 +169,13 @@ function applyGiaGach(res){
       if(giao>0) p.giao=giao;
       if(ns>0)   p.ns=ns;
       if(gs>0)   p.gs=gs;
+      if(row.sap) p.sap=String(row.sap).trim();
       // Tên hóa đơn (dùng khi xuất PDF/Excel để khớp đúng tên trên hóa đơn VAT)
       if(row.tenHD) p.tenHD=String(row.tenHD).trim();
     } else {
       // Mã MỚI trong Sheet → thêm vào DATA
       DATA.push({
-        ma:ma, kc:String(row.kc||'').trim().replace(/X/g,'x'), cat:String(row.cat||'').toLowerCase(),
+        ma:ma, sap:String(row.sap||'').trim(), kc:String(row.kc||'').trim().replace(/X/g,'x'), cat:String(row.cat||'').toLowerCase(),
         gio:String(row.gio||''), ten:String(row.ten||ma),
         tenHD:String(row.tenHD||'').trim(),
         le:le, nhan:nhan, giao:giao, ns:ns, gs:gs
@@ -235,6 +260,7 @@ function fetchAllFromSheet(){
     try{ applyThuocTinhData(res.thuocTinh); }catch(e){ console.log('Lỗi áp thuộc tính SP (getAll):', e); }
     try{ applyCTResult('ct1', res.ct1); }catch(e){ console.log('Lỗi áp CT1 (getAll):', e); }
     try{ applyCTResult('ct2', res.ct2); }catch(e){ console.log('Lỗi áp CT2 (getAll):', e); }
+    try{ applyCTMuaTangXaKho(res.ctMuaTang, res.ctXaKho); }catch(e){ console.log('Lỗi áp CT Mua Tặng/Xả Kho (getAll):', e); }
   };
   var s=document.createElement('script');
   s.id='_all_script';
@@ -1792,6 +1818,22 @@ function renderSale(){
       var tkDot=tk?(tk.tier&&tk.tier.nhanh>0?'🟢':tk.tier&&tk.tier.mai>0?'🟡':'🔴'):'';
       var tkText=tk?tkDot+' Còn '+fmtTkCard(tk.tong,tk.dvt):'';
       var tkColor=tk?(tk.tier&&tk.tier.nhanh>0?'#2E7D32':tk.tier&&tk.tier.mai>0?'#E65100':'#C62828'):'#bbb';
+      // Chương trình Kích cầu Xây Dựng 08-09/2026 - chỉ NVKD/Admin thấy.
+      var ctKichCauHtmlD='';
+      if(!laKhachHang()){
+        var mtD=timMuaTang(p.ma);
+        var xkD=timXaKhoPct(p.ma);
+        if(mtD && mtD.tangThung>0){
+          ctKichCauHtmlD+='<div style="padding:4px 6px;background:#E8F5E9;border-radius:6px;font-size:10px;color:#2E7D32;font-weight:600">'
+            +'🎁 NV: Mua '+mtD.muaThung+' tặng '+mtD.tangThung+' cùng SKU'
+            +(mtD.ghiChu?'<div style="font-weight:400;margin-top:1px">🗺️ Vét kho toàn Miền</div>':'')
+            +'</div>';
+        }
+        if(xkD && (xkD.minPct>0 || xkD.maxPct>0)){
+          ctKichCauHtmlD+='<div style="padding:4px 6px;background:#FFF3E0;border-radius:6px;font-size:10px;color:#E65100;font-weight:600">'
+            +'🏷️ NV: giảm thêm '+xkD.minPct+'–'+xkD.maxPct+'%</div>';
+        }
+      }
       dcard.innerHTML=
         '<div style="width:100%;height:150px;background:#F0EEEC;position:relative;overflow:hidden;flex-shrink:0">'
         +'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px"><span style="font-size:28px">📷</span><span style="font-size:10px;color:#bbb">Chưa có ảnh</span></div>'
@@ -1808,6 +1850,7 @@ function renderSale(){
         +'<span style="font-size:14px;font-weight:800;color:#C0232A">'+nkFmt+'</span></span></div>'
         +'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Giao hàng</span><span style="font-size:12px;font-weight:700;color:#1565C0">'+ghFmt+'</span></div>'
         +(tkText?'<div style="font-size:10px;font-weight:600;color:'+tkColor+'">'+tkText+'</div>':'')
+        +ctKichCauHtmlD
         +'<div style="display:flex;gap:5px;margin-top:4px">'
         +'<button onclick="event.stopPropagation();chiaSeAnhSanPham(\''+p.ma+'\')" style="padding:6px 8px;font-size:11px;border:1px solid var(--bd);border-radius:8px;background:var(--bg1);cursor:pointer">📤</button>'
         +'<button onclick="event.stopPropagation();shareZaloSale(window.__salePTmp_'+p.ma.replace(/[^a-z0-9]/gi,'_')+')" style="padding:6px 8px;font-size:11px;border:none;border-radius:8px;background:#0068FF;color:#fff;font-weight:700;cursor:pointer">Zalo ↗</button>'
@@ -1880,11 +1923,28 @@ function renderSale(){
     var badgeCT=(p.loai_sale==='ct1'?' <span style="font-size:9px;background:#E8F5E9;color:#2E7D32;padding:1px 5px;border-radius:4px">🗓️CT1</span>':'')
               +(p.loai_sale==='ct2'?' <span style="font-size:9px;background:#FFF3E0;color:#E65100;padding:1px 5px;border-radius:4px">📦CT2</span>':'')
               +(p.gio==='★'?' <span style="font-size:9px;background:#FFF3CD;color:#856404;padding:1px 5px;border-radius:4px">★ CL</span>':'');
+    // Chương trình Kích cầu Xây Dựng 08-09/2026 (CT1 177 mua tặng + CT2 184
+    // giảm thêm %) - THÔNG TIN NỘI BỘ, chỉ NVKD/Admin thấy, khách hàng không thấy.
+    var ctKichCauHtml='';
+    if(!laKhachHang()){
+      var mt=timMuaTang(p.ma);
+      var xk=timXaKhoPct(p.ma);
+      if(mt && mt.tangThung>0){
+        ctKichCauHtml+='<div style="margin-top:4px;padding:4px 6px;background:#E8F5E9;border-radius:6px;font-size:10px;color:#2E7D32;font-weight:600">'
+          +'🎁 NV: Mua '+mt.muaThung+' tặng '+mt.tangThung+' cùng SKU'
+          +(mt.ghiChu?'<div style="font-weight:400;margin-top:1px">🗺️ Vét kho toàn Miền</div>':'')
+          +'</div>';
+      }
+      if(xk && (xk.minPct>0 || xk.maxPct>0)){
+        ctKichCauHtml+='<div style="margin-top:4px;padding:4px 6px;background:#FFF3E0;border-radius:6px;font-size:10px;color:#E65100;font-weight:600">'
+          +'🏷️ NV: giảm thêm '+xk.minPct+'–'+xk.maxPct+'%</div>';
+      }
+    }
     info.innerHTML='<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px">'
       +'<div><p style="font-size:12px;font-weight:700;margin-bottom:1px">'+p.ma+'</p>'
       +'<p style="font-size:10px;color:var(--t2)">'+p.kc+badgeCT+'</p></div>'
       +(save>0?'<span class="sale-badge">-'+save+'%</span>':'')+'</div>'
-      +priceHtml;
+      +priceHtml+ctKichCauHtml;
     card.appendChild(info);
 
     var btnRow=document.createElement('div');
