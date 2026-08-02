@@ -3759,6 +3759,32 @@ function tinhSoVien(item){
   return {soVien:soVien, soVienExact:soVienExact, vienPerM2:Math.round(vienPerM2*10)/10, kg:kgFallback, kgChinhXac:kgPerVien>0};
 }
 
+// Hàng CT1/CT2 (có giá Sale) CHỈ được hưởng giá Sale khi lấy đủ thùng
+// nguyên - phần dư ra không đủ 1 thùng (viên lẻ) tính theo giá ĐL thường
+// (không sale). Chỉ áp dụng với kích cỡ bán được lẻ viên (kích cỡ "chỉ bán
+// thùng" thì đã luôn làm tròn lên thùng nguyên từ trước, không bao giờ có
+// phần lẻ). Trả về null nếu không cần tách (không phải hàng sale, hoặc mua
+// vừa đúng khớp bội số thùng - không có phần lẻ).
+function tinhTachGiaSale(item){
+  if(item.loai!=='gach' || item.unit!=='m²') return null;
+  if(!((item.ns>0)||(item.gs>0))) return null;
+  var t=tinhThung(item);
+  if(!t || !t.banVienDuoc || !t.m2perThung) return null;
+  var m2PerThung=t.m2perThung;
+  var qty=parseFloat(item.qty)||0;
+  var thungNguyen=Math.floor(qty/m2PerThung+1e-6);
+  var m2Sale=Math.round(thungNguyen*m2PerThung*1000)/1000;
+  var m2Thuong=Math.round((qty-m2Sale)*1000)/1000;
+  if(m2Thuong<=0.001) return null;
+  var qc=getQuyCach(item.kc,item.cat);
+  var m2PerVien=qc&&qc.vien?m2PerThung/qc.vien:0;
+  var vienLe=m2PerVien?Math.round(m2Thuong/m2PerVien):0;
+  var vienConThieu=m2PerVien?Math.round((m2PerThung-m2Thuong)/m2PerVien):0;
+  var m2ConThieu=Math.round((m2PerThung-m2Thuong)*1000)/1000;
+  return {thungNguyen:thungNguyen, m2Sale:m2Sale, m2Thuong:m2Thuong, m2PerThung:m2PerThung,
+          vienLe:vienLe, vienConThieu:vienConThieu, m2ConThieu:m2ConThieu};
+}
+
 function laTronQtyTheoQuyDinh(item){
   var t=tinhThung(item);
   if(!t||t.banVienDuoc) return parseFloat(item.qty)||0;
@@ -4146,20 +4172,37 @@ function renderDon(){
         return s;
       })()
       +'</div>'
-      // Bảng giá 3 hàng
+      // Bảng giá 3 hàng (hoặc tách 2 phần Sale/Thường nếu mua lẻ không đủ thùng)
       +'<div style="background:var(--bg2);border-radius:var(--r8);padding:8px 10px;font-size:12px">'
       +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:0.5px solid var(--bd)">'
       +'<span style="color:var(--t2)">Giá lẻ (KH)</span>'
       +'<span style="font-weight:600">'+(item.le>0?item.le.toLocaleString('vi-VN')+'đ/'+unit+' → '+(item.le*item.qty).toLocaleString('vi-VN')+'đ':'Liên hệ')+'</span>'
       +'</div>'
-      +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:0.5px solid var(--bd)">'
-      +'<span style="color:#1B5E20">Giá ĐL nhận kho</span>'
-      +'<span style="font-weight:700;color:#1B5E20">'+(nhanVal>0?nhanVal.toLocaleString('vi-VN')+'đ/'+unit+' → '+(nhanVal*item.qty).toLocaleString('vi-VN')+'đ':'–')+'</span>'
-      +'</div>'
-      +'<div style="display:flex;justify-content:space-between;padding:3px 0">'
-      +'<span style="color:#0D47A1">Giá ĐL đi giao</span>'
-      +'<span style="font-weight:700;color:#0D47A1">'+(giaoVal>0?giaoVal.toLocaleString('vi-VN')+'đ/'+unit+' → '+(giaoVal*item.qty).toLocaleString('vi-VN')+'đ':'–')+'</span>'
-      +'</div>'
+      +(function(){
+        var split=tinhTachGiaSale(item);
+        if(!split){
+          return '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:0.5px solid var(--bd)">'
+            +'<span style="color:#1B5E20">Giá ĐL nhận kho</span>'
+            +'<span style="font-weight:700;color:#1B5E20">'+(nhanVal>0?nhanVal.toLocaleString('vi-VN')+'đ/'+unit+' → '+(nhanVal*item.qty).toLocaleString('vi-VN')+'đ':'–')+'</span>'
+            +'</div>'
+            +'<div style="display:flex;justify-content:space-between;padding:3px 0">'
+            +'<span style="color:#0D47A1">Giá ĐL đi giao</span>'
+            +'<span style="font-weight:700;color:#0D47A1">'+(giaoVal>0?giaoVal.toLocaleString('vi-VN')+'đ/'+unit+' → '+(giaoVal*item.qty).toLocaleString('vi-VN')+'đ':'–')+'</span>'
+            +'</div>';
+        }
+        var giaTinh=curGiaoHang==='nhan'?(item.nhan||0):(item.giao||0);
+        var giaSale=curGiaoHang==='nhan'?(item.ns||item.nhan||0):(item.gs||item.giao||0);
+        var tienSale=giaSale*split.m2Sale, tienThuong=giaTinh*split.m2Thuong;
+        return '<div style="padding:5px 0;border-bottom:0.5px dashed var(--bd)">'
+          +'<div style="display:flex;justify-content:space-between;font-size:11px">'
+          +'<span style="color:#C0232A">🔥 Sale: '+split.thungNguyen+' thùng ('+split.m2Sale+'m²) × '+giaSale.toLocaleString('vi-VN')+'đ</span>'
+          +'<span style="font-weight:700;color:#C0232A">'+Math.round(tienSale).toLocaleString('vi-VN')+'đ</span></div>'
+          +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-top:2px">'
+          +'<span style="color:var(--t2)">Giá thường: '+split.vienLe+' viên lẻ ('+split.m2Thuong+'m²) × '+giaTinh.toLocaleString('vi-VN')+'đ</span>'
+          +'<span style="font-weight:700;color:var(--t1)">'+Math.round(tienThuong).toLocaleString('vi-VN')+'đ</span></div>'
+          +'<div style="font-size:10px;color:#0D47A1;margin-top:3px">💡 Mua thêm '+split.vienConThieu+' viên nữa ('+split.m2ConThieu+'m²) để đủ thùng — được giá Sale toàn bộ</div>'
+          +'</div>';
+      })()
       +'</div>';
     el.appendChild(div);
   });
@@ -4989,9 +5032,17 @@ function calcAndShowTotals(){
     }
     // Tính theo đúng cách hóa đơn VAT: làm tròn giá-trước-VAT từng dòng rồi
     // mới nhân số lượng, thay vì nhân thẳng giá-có-VAT (gây lệch vài đồng).
-    totalLe  +=tienHangTruocVAT(item.le||0, item.qty);
-    totalNhan+=tienHangTruocVAT(nhanVal||0, item.qty);
-    totalGiao+=tienHangTruocVAT(giaoVal||0, item.qty);
+    totalLe+=tienHangTruocVAT(item.le||0, item.qty);
+    // Hàng CT1/CT2 mua lẻ không đủ thùng: phần đủ thùng tính giá Sale, phần
+    // dư (viên lẻ) tính giá ĐL thường - không cộng thẳng nhanVal*qty như cũ.
+    var split2=tinhTachGiaSale(item);
+    if(split2){
+      totalNhan+=tienHangTruocVAT(item.ns||item.nhan||0, split2.m2Sale)+tienHangTruocVAT(item.nhan||0, split2.m2Thuong);
+      totalGiao+=tienHangTruocVAT(item.gs||item.giao||0, split2.m2Sale)+tienHangTruocVAT(item.giao||0, split2.m2Thuong);
+    } else {
+      totalNhan+=tienHangTruocVAT(nhanVal||0, item.qty);
+      totalGiao+=tienHangTruocVAT(giaoVal||0, item.qty);
+    }
   });
   // Cộng VAT 1 lần trên tổng (giống cách hóa đơn thật tính)
   totalLe  =tinhVATvaTongThanhToan(totalLe).tong;
