@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="DT Sales"/>
 <meta name="theme-color" content="#C0232A"/>
 <title>Đồng Tâm – Sales Tool</title>
-<link rel="stylesheet" href="style.css?v=nav26">
+<link rel="stylesheet" href="style.css?v=nav27">
 </head>
 <body>
 
@@ -221,7 +221,9 @@
         <button id="dp-unit-thung" onclick="setDpUnit('thung')" class="dp-unit-btn">Theo thùng</button>
       </div>
       <div class="dp-qty-row">
+        <button type="button" onclick="stepDpQty(-1)" class="dp-qty-step-btn">−</button>
         <input id="dp-qty-input" type="text" inputmode="decimal" value="1" oninput="calcDpQty()" class="dp-qty-input"/>
+        <button type="button" onclick="stepDpQty(1)" class="dp-qty-step-btn">+</button>
         <span id="dp-qty-unit-label" class="dp-qty-unit">m²</span>
       </div>
       <p id="dp-qty-convert" class="dp-qty-convert"></p>
@@ -803,6 +805,6 @@
 
 
 
-<script src="script.js?v=nav48" defer></script>
+<script src="script.js?v=nav49" defer></script>
 </body>
 </html>

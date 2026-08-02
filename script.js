@@ -3805,6 +3805,22 @@ function setDpUnit(u){
   calcDpQty();
 }
 
+// Nút +/- trong popup chi tiết SP - bước nhảy = đúng 1 viên (đơn vị m²) hoặc
+// 1 thùng (đơn vị thùng), giống hệt cơ chế +/- trong giỏ hàng (renderDon),
+// để không bao giờ dừng ở số m² lẻ vô nghĩa.
+function stepDpQty(dir){
+  var p = DATA.find(function(x){return x.ma===curP_ma;});
+  var inp = document.getElementById('dp-qty-input');
+  if(!p || !inp) return;
+  var cur = Math.max(0, parseVN(inp.value)||0);
+  var qc = getQuyCach(p.kc, p.cat);
+  var step = 1;
+  if(dpUnit==='m2' && qc && qc.m2 && qc.vien) step = qc.m2/qc.vien;
+  var next = Math.round(Math.max(0.01, cur+step*dir)*1000)/1000;
+  inp.value = next;
+  calcDpQty();
+}
+
 function calcDpQty(){
   var p = DATA.find(function(x){return x.ma===curP_ma;});
   if(!p) return;
