@@ -44,6 +44,10 @@ var imgStore=(function(){ try{ return JSON.parse(localStorage.getItem('dt_imgs')
 var imgStoreMulti=(function(){ try{ return JSON.parse(localStorage.getItem('dt_imgs_multi')||'{}'); }catch(e){ return {}; } })();
 var spExtra=(function(){ try{ return JSON.parse(localStorage.getItem('dt_spextra')||'{}'); }catch(e){ return {}; } })();
 var maToSap={}; // maApp → maSAP, rebuilt mỗi lần fetch (không cache)
+// Cờ đánh dấu từng nhóm dữ liệu đã đồng bộ xong từ Sheet lần tải trang này
+// chưa - dùng để tránh hiện số đếm "cũ" (VD số NGÓI mặc định trong code) rồi
+// vài giây sau mới nhảy sang số thật khi Sheet trả về (xem renderDanhMucGrid).
+var _syncFlags={gach:false, ngoi:false, keo:false, kinh:false};
 // Mã sản phẩm đôi khi lệch hoa/thường hoặc dư khoảng trắng giữa tab "Ảnh sản phẩm"
 // và các tab giá (Kính/Ngói/Keo) -> chuẩn hóa để so khớp không bị bỏ lỡ ảnh.
 function normMa(s){ return String(s||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,''); }
@@ -224,7 +228,7 @@ function fetchAllFromSheet(){
       ]);
       return;
     }
-    try{ applyGiaGach(res.gach); }catch(e){ console.log('Lỗi áp giá gạch (getAll):', e); }
+    try{ applyGiaGach(res.gach); _syncFlags.gach=true; }catch(e){ console.log('Lỗi áp giá gạch (getAll):', e); }
     tryOpenDeepLink();
     try{ applyImagesData(res.images); }catch(e){ console.log('Lỗi áp ảnh (getAll):', e); }
     try{ if(res.extra){ applySpExtraData(res.extra, res.maToSap); } else { fetchSpExtra(); } }catch(e){ fetchSpExtra(); }
@@ -384,6 +388,7 @@ function fetchGiaFromSheet(loaisOverride){
           }
         }
         
+        _syncFlags[loai]=true;
         loaded++;
         if(loaded===loais.length){
           // Render lại sau khi cập nhật xong
@@ -817,15 +822,22 @@ function renderDanhMucGrid(){
   el.innerHTML = '';
   el.classList.add('nmuc-grid');
   // Chỉ đếm mã bằng bien du lieu that trong app - khong bia so.
+  // Trong lúc dữ liệu còn đang tải/gộp dần (gạch tải trước, CT1/CT2 gộp thêm
+  // mã mới vào sau vài giây) -> hiện "..." thay vì số tạm-chưa-đủ, tránh cảm
+  // giác trang hiện "số cũ/sai" rồi tự nhảy số vài giây sau.
   var soGach = (typeof DATA!=='undefined' ? DATA.length : 0);
   var soNgoi = (typeof NGOI!=='undefined' ? NGOI.length : 0);
   var soKeo  = (typeof KEO!=='undefined' ? KEO.length : 0);
   var soKinh = (typeof KINH!=='undefined' ? KINH.length : 0);
+  var txtGach = (_syncFlags.gach && soGach>0) ? soGach+' mã' : '…';
+  var txtNgoi = (_syncFlags.ngoi && soNgoi>0) ? soNgoi+' mã' : '…';
+  var txtKeo  = (_syncFlags.keo  && soKeo>0)  ? soKeo+' mã'  : '…';
+  var txtKinh = (_syncFlags.kinh && soKinh>0) ? soKinh+' mã' : '…';
   var items = [
-    {icon:'🔲', ten:'Gạch',              count:soGach+' mã', tab:'tra',  grad:'linear-gradient(160deg,#FDE4E4,#F8C6C8)'},
-    {icon:'🏠', ten:'Ngói',              count:soNgoi+' mã', tab:'ngoi', grad:'linear-gradient(160deg,#F2E3D5,#E3C7A8)'},
-    {icon:'🧱', ten:'Keo & bột chà ron', count:soKeo+' mã',  tab:'keo',  grad:'linear-gradient(160deg,#E1F0E4,#BFE0C6)'},
-    {icon:'💎', ten:'Gạch kính',         count:soKinh+' mã', tab:'kinh', grad:'linear-gradient(160deg,#E3F2FD,#BBDEFB)'},
+    {icon:'🔲', ten:'Gạch',              count:txtGach, tab:'tra',  grad:'linear-gradient(160deg,#FDE4E4,#F8C6C8)'},
+    {icon:'🏠', ten:'Ngói',              count:txtNgoi, tab:'ngoi', grad:'linear-gradient(160deg,#F2E3D5,#E3C7A8)'},
+    {icon:'🧱', ten:'Keo & bột chà ron', count:txtKeo,  tab:'keo',  grad:'linear-gradient(160deg,#E1F0E4,#BFE0C6)'},
+    {icon:'💎', ten:'Gạch kính',         count:txtKinh, tab:'kinh', grad:'linear-gradient(160deg,#E3F2FD,#BBDEFB)'},
     {icon:'🔥', ten:'Đang Sale',         count:null,         tab:'sale', grad:'linear-gradient(160deg,#FFEBEE,#FFCDD2)', sale:true},
     {icon:'🚽', ten:'Thiết bị vệ sinh',  count:null,         tab:'tbvs', grad:'var(--bg2)', soon:true},
     {icon:'🪣', ten:'Sơn nước',          count:null,         tab:'son',  grad:'var(--bg2)', soon:true}
