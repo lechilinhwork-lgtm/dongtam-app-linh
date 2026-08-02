@@ -3789,6 +3789,29 @@ function tinhTachGiaSale(item){
           vienLe:vienLe, vienConThieu:vienConThieu, m2ConThieu:m2ConThieu};
 }
 
+// Bản tổng quát (không phân biệt sale/không sale) - CHỈ tách số lượng ra 2
+// phần thùng nguyên + viên lẻ, dùng cho việc XUẤT CHỨNG TỪ (Excel/PDF) cần
+// liệt kê rõ "mua bao nhiêu thùng, bao nhiêu viên lẻ" trên 2 dòng riêng theo
+// đúng mẫu báo giá thật - áp dụng cho MỌI sản phẩm gạch bán được lẻ viên,
+// không chỉ hàng CT1/CT2. Việc tính GIÁ cho từng dòng xử lý riêng ở nơi gọi.
+function tinhTachThungVien(item){
+  if(item.loai!=='gach' || item.unit!=='m²') return null;
+  var t=tinhThung(item);
+  if(!t || !t.banVienDuoc || !t.m2perThung) return null;
+  var qc=getQuyCach(item.kc,item.cat);
+  if(!qc || !qc.vien) return null;
+  var m2PerThung=t.m2perThung;
+  var qty=parseFloat(item.qty)||0;
+  var thungNguyen=Math.floor(qty/m2PerThung+1e-6);
+  var m2Thung=Math.round(thungNguyen*m2PerThung*1000)/1000;
+  var m2Vien=Math.round((qty-m2Thung)*1000)/1000;
+  if(m2Vien<=0.001) return null; // đủ thùng tròn, không cần tách dòng
+  var m2PerVien=m2PerThung/qc.vien;
+  var vienLe=Math.round(m2Vien/m2PerVien);
+  return {thungNguyen:thungNguyen, m2Thung:m2Thung, m2Vien:m2Vien, vienLe:vienLe,
+          m2PerThung:m2PerThung, m2PerVien:m2PerVien};
+}
+
 function laTronQtyTheoQuyDinh(item){
   var t=tinhThung(item);
   if(!t||t.banVienDuoc) return parseFloat(item.qty)||0;
@@ -5459,24 +5482,30 @@ function xuatExcel(){
 
   // Tiêu đề bảng - theo đúng mẫu "BÁO GIÁ NHẬN TẠI KHO/ĐI GIAO": STT | Mã hàng |
   // Tên sản phẩm theo hóa đơn | ĐVT | Số lượng | Đơn giá | Thành tiền.
-  // Hàng CT1/CT2 mua có phần lẻ không đủ thùng → tách thành 2 dòng (Thùng giá
-  // Sale + Viên giá thường), giống hệt cách giỏ hàng đang tính (tinhTachGiaSale).
+  // MỌI sản phẩm gạch bán được lẻ viên mà mua có phần dư không đủ thùng đều
+  // tách thành 2 dòng riêng (Thùng + Viên) - kể cả hàng KHÔNG sale (theo đúng
+  // mẫu thật anh gửi). Khác biệt duy nhất là GIÁ:
+  //  - Hàng CT1/CT2 (sale thật): dòng Thùng dùng giá Sale, dòng Viên lẻ dùng
+  //    giá ĐL thường (không sale) - đúng chính sách "mua tròn thùng mới được
+  //    giá sale, viên lẻ tính giá thường".
+  //  - Hàng không sale: cả 2 dòng đều dùng CHUNG 1 giá ĐL thường như nhau -
+  //    tách dòng chỉ để liệt kê rõ số lượng, không đổi gì về giá.
   var giaHangLabel = curGiaoHang==='nhan'?'NHẬN TẠI KHO':'ĐI GIAO';
   var tongCongTpl=0;
   var rowsTpl=[];
   donItems.forEach(function(item){
     var giaTinh = curGiaoHang==='nhan' ? (item.nhan||0) : (item.giao||0);
-    var giaSale = curGiaoHang==='nhan' ? (item.ns||item.nhan||0) : (item.gs||item.giao||0);
+    var laSale = item._fromCT==='CT1' || item._fromCT==='CT2';
+    var giaSale = laSale ? (curGiaoHang==='nhan' ? (item.ns||item.nhan||0) : (item.gs||item.giao||0)) : giaTinh;
     var qc = getQuyCach(item.kc, item.cat);
     var tenSp = (item.ten&&item.ten!==item.ma)?item.ten:item.ma;
-    var split = tinhTachGiaSale(item);
-    if(split && qc && qc.vien){
-      var m2PerVien = qc.m2/qc.vien;
+    var split = tinhTachThungVien(item);
+    if(split){
       var donGiaThung = Math.round(giaSale*split.m2PerThung);
       var tienThung = donGiaThung*split.thungNguyen;
       rowsTpl.push({ma:item.ma, ten:tenSp, dvt:'Thùng', sl:split.thungNguyen, donGia:donGiaThung, thanhTien:tienThung});
       tongCongTpl+=tienThung;
-      var donGiaVien = Math.round(giaTinh*m2PerVien);
+      var donGiaVien = Math.round(giaTinh*split.m2PerVien);
       var tienVien = donGiaVien*split.vienLe;
       rowsTpl.push({ma:item.ma, ten:tenSp, dvt:'Viên', sl:split.vienLe, donGia:donGiaVien, thanhTien:tienVien});
       tongCongTpl+=tienVien;
@@ -5485,7 +5514,7 @@ function xuatExcel(){
       var dvt='Thùng', sl, donGia, thanhTien;
       if(t && qc && qc.m2>0){
         sl = t.chiBanThung ? t.thungNguyen : Math.round((item.qty/qc.m2)*100)/100;
-        donGia = Math.round(giaTinh*qc.m2);
+        donGia = Math.round(giaSale*qc.m2);
         thanhTien = Math.round(donGia*sl);
       } else if(item.loai==='keo'){
         dvt='Bao'; sl=item.qty; donGia=Math.round(giaTinh); thanhTien=Math.round(donGia*sl);
