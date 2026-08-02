@@ -253,27 +253,24 @@ function fetchAllFromSheet(){
     ]);
   };
   document.head.appendChild(s);
-  // getAll (GAS) chỉ gộp gạch/ảnh/thuộc tính SP/CT1/CT2 - Ngói/Keo/Kính
-  // vẫn phải gọi riêng qua fetchGiaFromSheet (không nằm trong getAll).
+  // Ngói/Keo/Kính gộp thành 1 request duy nhất (getGiaNgoiKeoKinh) thay vì
+  // 3 request rời - mỗi request tốn thời gian khởi động riêng của Apps
+  // Script, gộp lại giúp F5/đăng nhập lại hiển thị đủ giá nhanh hơn hẳn.
   // Giãn cách với getAll ở trên để không bắn đồng thời.
-  setTimeout(function(){ fetchGiaFromSheet(['ngoi','keo','kinh']); }, 280);
+  setTimeout(function(){ fetchNgoiKeoKinhCombined(); }, 280);
 }
 
-function fetchGiaFromSheet(loaisOverride){
-  var APPS_URL='https://script.google.com/macros/s/AKfycbyrO8symCYOkWsGG0nRWPF7gpndC3mzEVUk15UvWrA0O81ZUumW-kX_gEOZhtCJ34bMVQ/exec';
-  var loais = loaisOverride || ['gach','ngoi','keo','kinh'];
-  var loaded = 0;
+// Áp dữ liệu giá của 1 nhóm (gach/ngoi/keo/kinh) vào biến toàn cục tương ứng.
+// Dùng chung cho cả đường gọi rời (fetchGiaFromSheet) lẫn đường gộp
+// (fetchNgoiKeoKinhCombined) để không lặp lại logic 2 nơi.
+function _apDungGiaLoai(loai, res){
+  if(!res||!res.data||!res.data.length) return;
+  var rows = res.data;
 
-  loais.forEach(function(loai, _idx){
-    window['_onGia_'+loai] = function(res){
-      try{
-        if(!res||!res.data||!res.data.length) return;
-        var rows = res.data;
-
-        if(loai==='gach'){
-          applyGiaGach(res);
-        }
-        else if(loai==='ngoi'){
+  if(loai==='gach'){
+    applyGiaGach(res);
+  }
+  else if(loai==='ngoi'){
           function pg2(v){return parseFloat(String(v||'0').replace(/\./g,'').replace(/,/g,'.'))||0;}
           // Cấu trúc MỚI: mã = Mã SAP, tên chứa mã màu (Ngói lợp TITAN003...)
           var newRows = rows.filter(function(r){ return /(TITAN|ALPHA)\s?0*\d/i.test(String(r.ten||'')); });
@@ -386,33 +383,77 @@ function fetchGiaFromSheet(loaisOverride){
             });
             console.log('✅ Cập nhật giá kính từ Sheet: '+rows.length+' mã');
           }
-        }
-        
-        _syncFlags[loai]=true;
+  }
+
+  _syncFlags[loai]=true;
+}
+
+function _hoanTatDongBoGia(){
+  var badge = document.getElementById('gia-source-badge');
+  if(badge){
+    badge.textContent = '✅';
+    badge.style.background = '#E8F5E9';
+    badge.style.color = '#1B5E20';
+  }
+  render();
+  renderSale();
+  tryOpenDeepLinkNgoiKeo();
+  console.log('🎉 Đã đồng bộ giá từ Sheet xong!');
+}
+
+// Ngói+Keo+Kính gộp thành 1 request duy nhất (action=getGiaNgoiKeoKinh) -
+// nhanh hơn hẳn so với bắn 3 request rời, mỗi request tốn thời gian khởi
+// động riêng của Apps Script (đặc biệt rõ khi F5/đăng nhập lại).
+function fetchNgoiKeoKinhCombined(){
+  var APPS_URL='https://script.google.com/macros/s/AKfycbyrO8symCYOkWsGG0nRWPF7gpndC3mzEVUk15UvWrA0O81ZUumW-kX_gEOZhtCJ34bMVQ/exec';
+  window._onGiaNgoiKeoKinh=function(res){
+    try{
+      if(res && res.status==='ok'){
+        _apDungGiaLoai('ngoi', res.ngoi);
+        _apDungGiaLoai('keo',  res.keo);
+        _apDungGiaLoai('kinh', res.kinh);
+        _hoanTatDongBoGia();
+      }
+    }catch(e){ console.log('Lỗi parse giá Ngói/Keo/Kính (gộp):', e.message); }
+    var s=document.getElementById('_gia_nkk_script');
+    if(s) s.remove();
+  };
+  var old=document.getElementById('_gia_nkk_script');
+  if(old) old.remove();
+  var s=document.createElement('script');
+  s.id='_gia_nkk_script';
+  var _tok=authTok();
+  s.src=APPS_URL+'?action=getGiaNgoiKeoKinh&k='+encodeURIComponent(APP_KEY)+'&t='+encodeURIComponent(_tok)+(_tok?'':'&g=1')+'&callback=_onGiaNgoiKeoKinh';
+  s.onerror=function(){
+    console.log('⚠️ Không tải được giá Ngói/Keo/Kính gộp — rơi về gọi riêng lẻ');
+    s.remove();
+    fetchGiaFromSheet(['ngoi','keo','kinh']);
+  };
+  document.head.appendChild(s);
+}
+
+// Đường gọi rời từng loại (dự phòng khi getGiaNgoiKeoKinh lỗi, và vẫn dùng
+// cho 'gach' trong nhánh fallback goiTuanTu khi getAll thất bại).
+function fetchGiaFromSheet(loaisOverride){
+  var APPS_URL='https://script.google.com/macros/s/AKfycbyrO8symCYOkWsGG0nRWPF7gpndC3mzEVUk15UvWrA0O81ZUumW-kX_gEOZhtCJ34bMVQ/exec';
+  var loais = loaisOverride || ['gach','ngoi','keo','kinh'];
+  var loaded = 0;
+
+  loais.forEach(function(loai, _idx){
+    window['_onGia_'+loai] = function(res){
+      try{
+        _apDungGiaLoai(loai, res);
         loaded++;
-        if(loaded===loais.length){
-          // Render lại sau khi cập nhật xong
-          // Cập nhật badge
-          var badge = document.getElementById('gia-source-badge');
-          if(badge){
-            badge.textContent = '✅';
-            badge.style.background = '#E8F5E9';
-            badge.style.color = '#1B5E20';
-          }
-          render();
-          renderSale();
-          tryOpenDeepLinkNgoiKeo();
-          console.log('🎉 Đã đồng bộ giá từ Sheet xong!');
-        }
+        if(loaded===loais.length) _hoanTatDongBoGia();
       }catch(e){ console.log('Lỗi parse giá '+loai+':', e.message); }
       var s=document.getElementById('_gia_script_'+loai);
       if(s) s.remove();
     };
-    
+
     var old=document.getElementById('_gia_script_'+loai);
     if(old) old.remove();
-    // Giãn cách khi loais có nhiều phần tử (vd ['ngoi','keo','kinh']) để
-    // không bắn nhiều request cùng lúc tới cùng 1 URL (xem goiTuanTu ở trên).
+    // Giãn cách khi loais có nhiều phần tử để không bắn nhiều request cùng
+    // lúc tới cùng 1 URL (xem goiTuanTu ở trên).
     setTimeout(function(){
       var s=document.createElement('script');
       s.id='_gia_script_'+loai;
