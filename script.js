@@ -3736,10 +3736,15 @@ function tinhSoVien(item){
   var kgPerVien = kgPerVienCuaMa(item.ma);
   if(qc && qc.m2 > 0){
     var soThung = qty / qc.m2;
-    var soVien = Math.round(soThung * qc.vien);
+    var soVienRaw = soThung * qc.vien;
+    var soVien = Math.round(soVienRaw);
+    // soVien chỉ THẬT SỰ chính xác khi số m² nhập vào đúng khớp bội số viên -
+    // nếu không, Math.round ở trên đã làm tròn (xấp xỉ), phải đánh dấu rõ để
+    // UI không hiện dấu "=" cho 1 con số thực ra đã bị làm tròn.
+    var soVienExact = Math.abs(soVienRaw-soVien)<1e-6;
     var kg = kgPerVien>0 ? Math.round(soVien*kgPerVien*10)/10
            : (qc.kg ? Math.round(soThung * qc.kg * 10)/10 : null);
-    return {soVien:soVien, vienPerThung:qc.vien, kg:kg, kgChinhXac:kgPerVien>0, m2PerThung:qc.m2};
+    return {soVien:soVien, soVienExact:soVienExact, vienPerThung:qc.vien, kg:kg, kgChinhXac:kgPerVien>0, m2PerThung:qc.m2};
   }
   var kc=item.kc||'';
   var m=kc.match(/(\d+)[xX](\d+)/);
@@ -3747,9 +3752,11 @@ function tinhSoVien(item){
   var w=parseInt(m[1])/1000, h=parseInt(m[2])/1000;
   if(!w||!h) return null;
   var vienPerM2=1/(w*h);
-  var soVien=Math.round(qty*vienPerM2);
+  var soVienRaw2=qty*vienPerM2;
+  var soVien=Math.round(soVienRaw2);
+  var soVienExact=Math.abs(soVienRaw2-soVien)<1e-6;
   var kgFallback = kgPerVien>0 ? Math.round(soVien*kgPerVien*10)/10 : null;
-  return {soVien:soVien, vienPerM2:Math.round(vienPerM2*10)/10, kg:kgFallback, kgChinhXac:kgPerVien>0};
+  return {soVien:soVien, soVienExact:soVienExact, vienPerM2:Math.round(vienPerM2*10)/10, kg:kgFallback, kgChinhXac:kgPerVien>0};
 }
 
 function laTronQtyTheoQuyDinh(item){
@@ -3837,15 +3844,22 @@ function calcDpQty(){
   var snapEl = document.getElementById('dp-qty-snap');
   if(!qc || !qc.m2){ convertEl.textContent=''; if(snapEl) snapEl.style.display='none'; return; }
 
+  // "=" khi con số là đúng phép nhân/chia (thùng, kg, m²) - "≈" CHỈ khi số
+  // viên bị làm tròn thật sự (input không khớp đúng bội số viên vật lý).
+  function isInt(n){ return Math.abs(n-Math.round(n))<1e-6; }
   if(dpUnit==='thung'){
-    var m2=Math.round(val*qc.m2*100)/100, vien=Math.round(val*qc.vien), kgV=qc.kg?Math.round(val*qc.kg*10)/10:0;
-    convertEl.innerHTML='≈ <b>'+m2+'</b> m²'+(vien?' · <b>'+vien+'</b> viên':'')+(kgV?' · <b>'+kgV+'</b> kg':'');
+    var m2=Math.round(val*qc.m2*100)/100;
+    var vienRaw=val*qc.vien, vienExact=isInt(vienRaw), vien=Math.round(vienRaw);
+    var kgV=qc.kg?Math.round(val*qc.kg*10)/10:0;
+    convertEl.innerHTML='= <b>'+m2+'</b> m²'+(vien?' · '+(vienExact?'=':'≈')+' <b>'+vien+'</b> viên':'')+(kgV?' · <b>'+kgV+'</b> kg':'');
     if(snapEl) snapEl.style.display='none';
   } else {
     var thung=Math.round((val/qc.m2)*100)/100, thungN=Math.ceil(val/qc.m2);
-    var vienT=qc.vien?Math.round(val/qc.m2*qc.vien):0, kgT=qc.kg?Math.round(val/qc.m2*qc.kg*10)/10:0;
-    convertEl.innerHTML='≈ <b>'+thung+'</b> thùng (làm tròn: <b>'+thungN+'</b> thùng)'
-      +(vienT?'<br>≈ <b>'+vienT+'</b> viên':'')+(kgT?' · <b>'+kgT+'</b> kg':'');
+    var vienRawT=qc.vien?val/qc.m2*qc.vien:0, vienExactT=isInt(vienRawT), vienT=Math.round(vienRawT);
+    var kgT=qc.kg?Math.round(val/qc.m2*qc.kg*10)/10:0;
+    var lamTron=thungN!==thung?' (làm tròn: <b>'+thungN+'</b> thùng)':'';
+    convertEl.innerHTML='= <b>'+thung+'</b> thùng'+lamTron
+      +(vienT?'<br>'+(vienExactT?'=':'≈')+' <b>'+vienT+'</b> viên':'')+(kgT?' · <b>'+kgT+'</b> kg':'');
     renderDpQtySnap(val, qc, snapEl);
   }
 }
@@ -4114,7 +4128,9 @@ function renderDon(){
         } else {
           var thungStr=Math.round(t.thung*100)/100;
           var thungDisp=thungStr%1===0?thungStr.toString():thungStr.toFixed(2);
-          out+='<span style="font-size:11px;color:#0D47A1;margin-left:8px">≈ '+thungDisp+' thùng ('+t.note+')</span>';
+          // Số thùng là phép chia đúng (m² ÷ m²/thùng) - không phải làm tròn
+          // vật lý như viên, nên luôn hiện dấu "=" chứ không phải "≈".
+          out+='<span style="font-size:11px;color:#0D47A1;margin-left:8px">= '+thungDisp+' thùng ('+t.note+')</span>';
         }
         return out;
       })()
@@ -4122,7 +4138,9 @@ function renderDon(){
         if(item.loai==='keo'||item.loai==='kinh'||item.loai==='ngoi') return '';
         var v=tinhSoVien(item);
         if(!v||!v.soVien) return '';
-        var s='<span style="font-size:11px;color:var(--t2);margin-left:8px">≈ '+v.soVien+' viên';
+        // Chỉ hiện "≈" khi số m² nhập KHÔNG khớp đúng bội số viên (viên thật
+        // sự bị làm tròn) - còn lại (khớp đúng viên) hiện "=" cho đúng bản chất.
+        var s='<span style="font-size:11px;color:var(--t2);margin-left:8px">'+(v.soVienExact?'=':'≈')+' '+v.soVien+' viên';
         if(v.kg) s+=' · '+v.kg+'kg';
         s+='</span>';
         return s;
