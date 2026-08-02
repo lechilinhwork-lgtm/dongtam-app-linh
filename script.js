@@ -3068,11 +3068,6 @@ function chiaSeAnhSanPham(ma, tenSP){
 function shareZaloNgoi(ma){
   var p=NGOI.find(function(x){return x.ma===ma;}); if(!p) return;
   var f=function(n){ return n>0?n.toLocaleString('vi-VN')+'đ/viên':'–'; };
-  // CT tháng 07: giảm thêm 10% giá nhận tại kho (chưa có cột riêng trong Sheet
-  // nên tính mặc định = 90% giá nhận kho; nếu cần số chính xác khác theo từng
-  // mã, thêm cột "CT150 Ngói" vào Sheet và đọc qua p.ns/p.ns2 sau).
-  var ct1=p.ns>0?p.ns:Math.round(p.nhan*0.9);
-  var ct2=Math.round(p.nhan2*0.9);
   // Tên hiển thị giống popup chi tiết (VD "Ngói lợp TITAN001 – Cam đất nung") thay vì mã SAP thô
   var info=p._new?ngoiParse(p):null;
   var col=info?NGOI_COLORS[info.code]:null;
@@ -3084,12 +3079,10 @@ function shareZaloNgoi(ma){
   if(p.le>0){ lines.push('1. Giá lẻ: '+f(p.le)); lines.push(''); }
   lines.push('2. Giá đại lý lấy hàng dưới 1.500 viên:');
   lines.push('   Nhận tại kho: '+f(p.nhan));
-  if(ct1>0) lines.push('   ---->>> Chương trình tháng 7 nhận kho giảm thêm 10% còn: '+f(ct1)+' 🔥');
   lines.push('   Đi giao: '+f(p.giao));
   lines.push('');
   lines.push('3. Giá đại lý lấy hàng từ 1.500 viên 🔥 trở lên:');
   lines.push('   Nhận tại kho: '+f(p.nhan2));
-  if(ct2>0) lines.push('   ---->>> Chương trình tháng 7 nhận kho giảm thêm 10% còn: '+f(ct2)+' 🔥');
   lines.push('   Đi giao: '+f(p.giao2));
   copyZaloMsg(lines.join('\n'));
 }
