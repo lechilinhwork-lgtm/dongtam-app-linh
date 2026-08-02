@@ -2918,11 +2918,11 @@ function layNoiDungBaoGia(ma){
     if(le>0)      lines.push('Giá lẻ: '+f(le));
     if(le>0)      lines.push('');
     if(saleNK>0)  lines.push('Giá ĐL Nhận kho: '+f(saleNK)+(pct(saleNK)>0?' (giảm '+pct(saleNK)+'% so với giá lẻ)':''));
-    if(saleGH>0)  lines.push('Giá ĐL Đi giao (HCM): '+f(saleGH)+(pct(saleGH)>0?' (giảm '+pct(saleGH)+'% so với giá lẻ)':''));
+    if(saleGH>0)  lines.push('Giá ĐL Đi giao: '+f(saleGH)+(pct(saleGH)>0?' (giảm '+pct(saleGH)+'% so với giá lẻ)':''));
     if(isCT2 && (vetNK>0 || vetGH>0)){
       lines.push('');
       if(vetNK>0) lines.push('VÉT KHO – Nhận kho: '+f(vetNK)+(pct(vetNK)>0?' (giảm '+pct(vetNK)+'% so với giá lẻ)':''));
-      if(vetGH>0) lines.push('VÉT KHO – Đi giao (HCM): '+f(vetGH)+(pct(vetGH)>0?' (giảm '+pct(vetGH)+'% so với giá lẻ)':''));
+      if(vetGH>0) lines.push('VÉT KHO – Đi giao: '+f(vetGH)+(pct(vetGH)>0?' (giảm '+pct(vetGH)+'% so với giá lẻ)':''));
     }
     lines.push('━━━━━━━━━━━━━━');
     lines.push(isCT2?'Xả kho – số lượng có hạn, hết là hết!':'Ưu đãi trong tháng – đặt hàng sớm để giữ giá tốt nhất!');
@@ -2933,7 +2933,7 @@ function layNoiDungBaoGia(ma){
       lines.push('2. Giá đại lý nhận kho: '+f(nk));
     }
     if(nk>0)      lines.push('');
-    if(gh>0)      lines.push('3. Giá đại lý đi giao tận nơi Hồ Chí Minh: '+f(gh));
+    if(gh>0)      lines.push('3. Giá đại lý đi giao: '+f(gh));
   }
 
   return lines.join('\n');
@@ -3000,11 +3000,11 @@ function shareZaloSale(p){
     lines.push('');
   }
   if(p.nk>0) lines.push('Giá ĐL Nhận kho: '+f(p.nk)+(pct(p.nk)>0?' (giảm '+pct(p.nk)+'% so với giá lẻ)':''));
-  if(p.gh>0) lines.push('Giá ĐL Đi giao (HCM): '+f(p.gh)+(pct(p.gh)>0?' (giảm '+pct(p.gh)+'% so với giá lẻ)':''));
+  if(p.gh>0) lines.push('Giá ĐL Đi giao: '+f(p.gh)+(pct(p.gh)>0?' (giảm '+pct(p.gh)+'% so với giá lẻ)':''));
   if(isCT2 && ((p.ct150nk||0)>0 || (p.ct150gh||0)>0)){
     lines.push('');
     if(p.ct150nk>0) lines.push('VÉT KHO – Nhận kho: '+f(p.ct150nk)+(pct(p.ct150nk)>0?' (giảm '+pct(p.ct150nk)+'% so với giá lẻ)':''));
-    if(p.ct150gh>0) lines.push('VÉT KHO – Đi giao (HCM): '+f(p.ct150gh)+(pct(p.ct150gh)>0?' (giảm '+pct(p.ct150gh)+'% so với giá lẻ)':''));
+    if(p.ct150gh>0) lines.push('VÉT KHO – Đi giao: '+f(p.ct150gh)+(pct(p.ct150gh)>0?' (giảm '+pct(p.ct150gh)+'% so với giá lẻ)':''));
   }
   lines.push('━━━━━━━━━━━━━━');
   lines.push(isCT2?'Xả kho – số lượng có hạn, hết là hết!':'Ưu đãi trong tháng – đặt hàng sớm để giữ giá tốt nhất!');
