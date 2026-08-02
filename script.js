@@ -3767,6 +3767,10 @@ function tinhSoVien(item){
 // vừa đúng khớp bội số thùng - không có phần lẻ).
 function tinhTachGiaSale(item){
   if(item.loai!=='gach' || item.unit!=='m²') return null;
+  // Phải dùng cờ CT1/CT2 thật - KHÔNG dùng ns/gs>0 vì gs có fallback = giao
+  // thường cho MỌI sản phẩm (kể cả không sale), sẽ nhận nhầm hàng thường
+  // thành hàng sale nếu chỉ check ns/gs>0.
+  if(item._fromCT!=='CT1' && item._fromCT!=='CT2') return null;
   if(!((item.ns>0)||(item.gs>0))) return null;
   var t=tinhThung(item);
   if(!t || !t.banVienDuoc || !t.m2perThung) return null;
@@ -3810,6 +3814,10 @@ function addToDon(ma, qty){
       giao:p.giao||0,   // giá đi giao
       ns:p.ns||0,       // giá nhận sale
       gs:p.gs||0,       // giá giao sale
+      // Cờ CT1/CT2 thật (khác ns/gs>0 vì gs có fallback = giao cho MỌI sản
+      // phẩm kể cả không sale - phải dùng cờ này mới biết đúng hàng nào thật
+      // sự đang sale, ví dụ để tách giá Sale/thường khi mua lẻ không đủ thùng).
+      _fromCT:p._fromCT||null,
       qty:qty
     });
   }
@@ -5142,8 +5150,8 @@ function xuatPDF(){
       +(function(){
         var v=tinhSoVien(item);
         var qtyStr=item.qty+' '+(item.unit||'m²');
-        if(v&&v.soVien) qtyStr+=' (≈'+v.soVien+' viên)';
-        if(v&&v.kg) qtyStr+='<br><span class="sub" style="color:#6A1B9A">⚖️ '+v.kg.toLocaleString('vi-VN')+' kg'+(v.kgChinhXac?'':' (ước tính)')+'</span>';
+        if(v&&v.soVien) qtyStr+=' (='+v.soVien+' viên)';
+        if(v&&v.kg) qtyStr+='<br><span class="sub" style="color:#6A1B9A">⚖️ '+v.kg.toLocaleString('vi-VN')+' kg</span>';
         return '<td class="tc">'+qtyStr+'</td>';
       })()
       +'<td class="tc" style="color:#0D47A1;font-weight:600">'+thungStr+'</td>'
@@ -5288,6 +5296,10 @@ function xuatPDF(){
     +'<div class="footer-right">☎ '+(nguoiSdt||'0819 548 908')+'</div>'
     +'</div>'
     +'</div>'
+    // Tự bật hộp thoại in ngay khi mở - trên Chrome mặc định có sẵn tùy chọn
+    // "Lưu dưới dạng PDF", bấm Lưu là tải file PDF về máy luôn, không cần
+    // cài thêm thư viện tạo PDF nào cả.
+    +'<script>window.onload=function(){ setTimeout(function(){ window.print(); }, 350); };</'+'script>'
     +'</body></html>';
 
   // Mở báo giá trong tab mới
@@ -5445,43 +5457,71 @@ function xuatExcel(){
     +'</table></td>'
     +'</tr></table>';
 
-  // Tiêu đề bảng
-  h+='<div style="color:#C0232A;font-weight:bold;font-size:10pt;margin:14px 0 6px;letter-spacing:1px">CHI TIẾT SẢN PHẨM</div>';
+  // Tiêu đề bảng - theo đúng mẫu "BÁO GIÁ NHẬN TẠI KHO/ĐI GIAO": STT | Mã hàng |
+  // Tên sản phẩm theo hóa đơn | ĐVT | Số lượng | Đơn giá | Thành tiền.
+  // Hàng CT1/CT2 mua có phần lẻ không đủ thùng → tách thành 2 dòng (Thùng giá
+  // Sale + Viên giá thường), giống hệt cách giỏ hàng đang tính (tinhTachGiaSale).
+  var giaHangLabel = curGiaoHang==='nhan'?'NHẬN TẠI KHO':'ĐI GIAO';
+  var tongCongTpl=0;
+  var rowsTpl=[];
+  donItems.forEach(function(item){
+    var giaTinh = curGiaoHang==='nhan' ? (item.nhan||0) : (item.giao||0);
+    var giaSale = curGiaoHang==='nhan' ? (item.ns||item.nhan||0) : (item.gs||item.giao||0);
+    var qc = getQuyCach(item.kc, item.cat);
+    var tenSp = (item.ten&&item.ten!==item.ma)?item.ten:item.ma;
+    var split = tinhTachGiaSale(item);
+    if(split && qc && qc.vien){
+      var m2PerVien = qc.m2/qc.vien;
+      var donGiaThung = Math.round(giaSale*split.m2PerThung);
+      var tienThung = donGiaThung*split.thungNguyen;
+      rowsTpl.push({ma:item.ma, ten:tenSp, dvt:'Thùng', sl:split.thungNguyen, donGia:donGiaThung, thanhTien:tienThung});
+      tongCongTpl+=tienThung;
+      var donGiaVien = Math.round(giaTinh*m2PerVien);
+      var tienVien = donGiaVien*split.vienLe;
+      rowsTpl.push({ma:item.ma, ten:tenSp, dvt:'Viên', sl:split.vienLe, donGia:donGiaVien, thanhTien:tienVien});
+      tongCongTpl+=tienVien;
+    } else {
+      var t=tinhThung(item);
+      var dvt='Thùng', sl, donGia, thanhTien;
+      if(t && qc && qc.m2>0){
+        sl = t.chiBanThung ? t.thungNguyen : Math.round((item.qty/qc.m2)*100)/100;
+        donGia = Math.round(giaTinh*qc.m2);
+        thanhTien = Math.round(donGia*sl);
+      } else if(item.loai==='keo'){
+        dvt='Bao'; sl=item.qty; donGia=Math.round(giaTinh); thanhTien=Math.round(donGia*sl);
+      } else if(item.loai==='ngoi'){
+        dvt='Viên'; sl=item.qty; donGia=Math.round(giaTinh); thanhTien=Math.round(donGia*sl);
+      } else {
+        dvt=item.unit||'Thùng'; sl=item.qty; donGia=Math.round(giaTinh); thanhTien=Math.round(donGia*sl);
+      }
+      rowsTpl.push({ma:item.ma, ten:tenSp, dvt:dvt, sl:sl, donGia:donGia, thanhTien:thanhTien});
+      tongCongTpl+=thanhTien;
+    }
+  });
 
-  // Bảng SP
+  h+='<div style="color:#C0232A;font-weight:bold;font-size:10pt;margin:14px 0 6px;letter-spacing:1px">BÁO GIÁ '+giaHangLabel+'</div>';
+
   h+='<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse">'
     +'<thead><tr>'
-    +'<th class="th" width="3%">#</th>'
-    +'<th class="th" width="5%">Loại</th>'
-    +'<th class="th" width="14%">Mã SP</th>'
-    +'<th class="th" width="16%">Tên sản phẩm (hóa đơn)</th>'
-    +'<th class="th" width="7%">Kích cỡ</th>'
-    +'<th class="th" width="8%">Số lượng</th>'
-    +'<th class="th" width="9%">Số thùng</th>'
-    +'<th class="th" width="7%">Số viên</th>'
-    +'<th class="th" width="6%">Kg</th>'
-    +'<th class="th" width="10%">Đơn giá lẻ</th>'
-    +'<th class="th" width="11%">T.Tiền lẻ</th>'
-    +'<th class="th" width="10%">Giá ĐL NK</th>'
-    +'<th class="th" width="10%">T.Tiền NK</th>'
+    +'<th class="th" width="5%">STT</th>'
+    +'<th class="th" width="16%">Mã hàng</th>'
+    +'<th class="th" width="34%">Tên sản phẩm theo hóa đơn</th>'
+    +'<th class="th" width="10%">ĐVT</th>'
+    +'<th class="th" width="10%">Số lượng</th>'
+    +'<th class="th" width="12%">Đơn giá</th>'
+    +'<th class="th" width="13%">Thành tiền</th>'
     +'</tr></thead><tbody>';
 
-  rowsData.forEach(function(r){
-    var ev=r.i%2===0?' class="ev"':'';
+  rowsTpl.forEach(function(r,i){
+    var ev=i%2===0?' class="ev"':'';
     h+='<tr>'
-      +'<td class="td tc"'+ev+'>'+r.i+'</td>'
-      +'<td class="td tc" style="background:'+r.loaiBg+';color:'+r.loaiColor+';font-weight:bold;font-size:9pt">'+r.loai+'</td>'
+      +'<td class="td tc"'+ev+'>'+(i+1)+'</td>'
       +'<td class="td bold"'+ev+'>'+r.ma+'</td>'
-      +'<td class="td"'+ev+' style="font-size:9pt">'+(r.ten||'–')+'</td>'
-      +'<td class="td tc"'+ev+'>'+r.kc+'</td>'
-      +'<td class="td tc"'+ev+'>'+r.qty+' '+r.unit+'</td>'
-      +'<td class="td blu"'+ev+'>'+r.thung+'</td>'
-      +'<td class="td tc" style="color:#555"'+ev+'>'+r.vien+'</td>'
-      +'<td class="td tc" style="color:#555"'+ev+'>'+r.kg+'</td>'
-      +'<td class="td tr"'+ev+'>'+(r.le>0?r.le.toLocaleString('vi-VN'):'Liên hệ')+'</td>'
-      +'<td class="td red"'+ev+'>'+(r.thLe>0?r.thLe.toLocaleString('vi-VN'):'–')+'</td>'
-      +'<td class="td nk"'+ev+'>'+(r.nhan>0?r.nhan.toLocaleString('vi-VN'):'–')+'</td>'
-      +'<td class="td nk" style="font-size:10pt"'+ev+'>'+(r.thNhan>0?r.thNhan.toLocaleString('vi-VN'):'–')+'</td>'
+      +'<td class="td"'+ev+' style="font-size:9pt">'+r.ten+'</td>'
+      +'<td class="td tc"'+ev+'>'+r.dvt+'</td>'
+      +'<td class="td tc"'+ev+'>'+r.sl+'</td>'
+      +'<td class="td tr"'+ev+'>'+(r.donGia>0?r.donGia.toLocaleString('vi-VN'):'–')+'</td>'
+      +'<td class="td red"'+ev+'>'+(r.thanhTien>0?r.thanhTien.toLocaleString('vi-VN'):'–')+'</td>'
       +'</tr>';
   });
   h+='</tbody></table>';
@@ -5489,10 +5529,8 @@ function xuatExcel(){
   // Tổng — file gửi khách: KHÔNG hiện lợi nhuận/margin nội bộ
   h+='<table width="100%" cellspacing="0" cellpadding="0" style="margin-top:10px">'
     +'<tr class="tot">'
-    +'<td colspan="10" style="padding:9px 14px;color:#C0232A;font-weight:bold">TỔNG GIÁ TRỊ BÁO GIÁ</td>'
-    +'<td class="red" style="padding:9px 14px;font-size:12pt">'+tLe.toLocaleString('vi-VN')+' đ</td>'
-    +'<td style="padding:9px 8px;color:#1B5E20;font-weight:bold;text-align:right">TỔNG NHẬN KHO</td>'
-    +'<td class="nk" style="padding:9px 14px;font-size:11pt">'+tNhan.toLocaleString('vi-VN')+' đ</td>'
+    +'<td colspan="6" style="padding:9px 14px;color:#C0232A;font-weight:bold">TỔNG CỘNG THANH TOÁN</td>'
+    +'<td class="red" style="padding:9px 14px;font-size:12pt">'+Math.round(tongCongTpl).toLocaleString('vi-VN')+' đ</td>'
     +'</tr></table>';
   h+='<div style="margin-top:6px;font-size:8.5pt;color:#999">* Gia tren da bao gom VAT.</div>';
 
