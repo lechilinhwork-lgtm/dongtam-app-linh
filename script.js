@@ -5137,7 +5137,7 @@ function xuatPDF(){
     return '<tr>'
       +'<td class="tc">'+(i+1)+'</td>'
       +'<td><span class="loai-tag loai-'+item.loai+'">'+loaiLabel+'</span></td>'
-      +'<td class="ma">'+item.ma+'<br><span class="sub">'+(item.ten&&item.ten!==item.ma?item.ten:'')+'</span></td>'
+      +'<td class="ma">'+(item.ten&&item.ten!==item.ma?item.ten:item.ma)+(item.ten&&item.ten!==item.ma?'<br><span class="sub">'+item.ma+'</span>':'')+'</td>'
       +'<td class="tc">'+(item.kc&&item.kc!=='–'?item.kc:'–')+'</td>'
       +(function(){
         var v=tinhSoVien(item);
