@@ -3805,18 +3805,25 @@ function setDpUnit(u){
   calcDpQty();
 }
 
-// Nút +/- trong popup chi tiết SP - bước nhảy = đúng 1 viên (đơn vị m²) hoặc
-// 1 thùng (đơn vị thùng), giống hệt cơ chế +/- trong giỏ hàng (renderDon),
-// để không bao giờ dừng ở số m² lẻ vô nghĩa.
+// Nút +/- trong popup chi tiết SP - LUÔN làm tròn về đúng mốc viên/thùng gần
+// nhất TRƯỚC rồi mới nhích 1 bước, chứ không cộng thẳng vào số đang gõ dở
+// (số đang gõ có thể lệch khỏi mốc viên) - đảm bảo bấm xong luôn là số m²
+// tròn viên tuyệt đối (m²) hoặc số thùng nguyên (thùng), không còn số lẻ.
 function stepDpQty(dir){
   var p = DATA.find(function(x){return x.ma===curP_ma;});
   var inp = document.getElementById('dp-qty-input');
   if(!p || !inp) return;
   var cur = Math.max(0, parseVN(inp.value)||0);
   var qc = getQuyCach(p.kc, p.cat);
-  var step = 1;
-  if(dpUnit==='m2' && qc && qc.m2 && qc.vien) step = qc.m2/qc.vien;
-  var next = Math.round(Math.max(0.01, cur+step*dir)*1000)/1000;
+  var next;
+  if(dpUnit==='m2' && qc && qc.m2 && qc.vien){
+    var step = qc.m2/qc.vien;
+    var vienCur = Math.round(cur/step);
+    next = Math.max(1, vienCur+dir)*step;
+  } else {
+    next = Math.max(1, Math.round(cur)+dir);
+  }
+  next = Math.round(next*1000)/1000;
   inp.value = next;
   calcDpQty();
 }
@@ -4149,14 +4156,21 @@ function renderDon(){
       var item=donItems.find(function(x){return x.ma===ma;});
       var inp=el.querySelector('input[data-inp="'+ma+'"]');
       var cur=inp?Math.max(0.01,parseVN(inp.value)||1):1;
-      // Gạch tính theo m²: bước nhảy = đúng 1 viên (không phải 1m² cố định),
-      // đảm bảo +/- luôn dừng ở số nguyên viên - không bao giờ ra m² lẻ vô nghĩa.
-      var step=1;
+      var d=parseInt(qb.dataset.d);
+      var next;
+      // Gạch tính theo m²: LUÔN làm tròn về đúng mốc viên gần nhất TRƯỚC rồi
+      // mới nhích 1 viên - không cộng thẳng vào số đang gõ dở (có thể đang
+      // lệch khỏi mốc viên) - đảm bảo bấm xong luôn là số m² tròn viên tuyệt đối.
       if(item && item.loai==='gach' && item.unit==='m²'){
         var qc=getQuyCach(item.kc,item.cat);
-        if(qc && qc.m2 && qc.vien) step=qc.m2/qc.vien;
+        if(qc && qc.m2 && qc.vien){
+          var step=qc.m2/qc.vien;
+          var vienCur=Math.round(cur/step);
+          next=Math.max(1,vienCur+d)*step;
+        }
       }
-      var next=Math.round(Math.max(0.01,cur+step*parseInt(qb.dataset.d))*1000)/1000;
+      if(next===undefined) next=Math.max(0.01,cur+d);
+      next=Math.round(next*1000)/1000;
       if(inp) inp.value=next;
       setDonQty(ma,next);   // cập nhật donItems.qty → calcAndShowTotals
       return;
