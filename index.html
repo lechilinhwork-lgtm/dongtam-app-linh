@@ -316,8 +316,6 @@
         style="flex:1;font-size:12px;padding:6px 0;background:#C0232A;color:#fff;border-color:#C0232A;text-align:center">🔥 CT1 · Sale tháng</button>
       <button class="fb" id="sf2-ct2" onclick="setSF2('ct2')"
         style="flex:1;font-size:12px;padding:6px 0;text-align:center">📦 CT2 · Xả kho</button>
-      <button class="fb" id="sf2-ct3" onclick="setSF2('ct3')"
-        style="flex:1;font-size:12px;padding:6px 0;text-align:center">🎯 CT3 · SKU linh hoạt</button>
     </div>
   </div>
   <div style="font-size:11px;color:var(--t2);padding:4px 12px;background:var(--bg2);border-bottom:1px solid var(--bd)" id="scount"></div>
@@ -741,42 +739,6 @@
 </div>
 </div><!-- end app-content -->
 
-<!-- ===== POPUP 7 ĐIỀU KIỆN CT3 ===== -->
-<div id="ct3-popup" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:16px">
-  <div style="background:var(--bg1);border-radius:14px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.3)">
-    <div style="background:#3949AB;color:#fff;padding:14px 16px;border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <div style="font-size:15px;font-weight:700">🎯 Chương trình SKU linh hoạt (CT3)</div>
-        <div style="font-size:11px;opacity:.8;margin-top:2px">Hiệu lực 03/07/2026 – 03/08/2026 · Đại lý C2</div>
-      </div>
-      <button onclick="ct3ClosePopup()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;line-height:1">✕</button>
-    </div>
-    <div style="padding:14px 16px">
-      <p style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:10px">Vui lòng đọc kỹ và đồng thuận 7 điều kiện vận hành trước khi đặt hàng:</p>
-      <ol style="padding-left:18px;font-size:13px;color:var(--t1);line-height:1.7">
-        <li style="margin-bottom:8px">Chỉ áp dụng cho SKU đang tồn kho tại DC/kho Nhà máy thuộc Miền theo danh sách đã duyệt.</li>
-        <li style="margin-bottom:8px">Nhận hàng tại kho DC thuộc Miền, <b>không điều chuyển hàng giữa các DC</b>.</li>
-        <li style="margin-bottom:8px">Nếu kho DC không đủ hàng, đơn cần chờ Khu vực phối hợp nhập hàng bổ sung, có phê duyệt của GĐ CTTM.</li>
-        <li style="margin-bottom:8px">Giá bán tính theo <b>giá nhận hàng tại Nhà máy/kho DC</b>.</li>
-        <li style="margin-bottom:8px"><b>Thanh toán trước khi nhận hàng</b> (khác điều khoản N+3 thông thường).</li>
-        <li style="margin-bottom:8px">Chiết khấu 01 lần, <b>không cộng thêm chính sách kinh doanh hiện hành</b>, không áp dụng chừa hàng; vẫn được áp dụng giao chành xe và đổi hàng.</li>
-        <li style="margin-bottom:8px">Phiếu đặt hàng chỉ được xử lý khi có <b>đầy đủ chữ ký phê duyệt của GĐKV</b>.</li>
-      </ol>
-      <label style="display:flex;align-items:flex-start;gap:10px;margin-top:12px;padding:10px 12px;background:var(--bg2);border-radius:8px;cursor:pointer">
-        <input type="checkbox" id="ct3-chk" onchange="document.getElementById('ct3-confirm-btn').disabled=!this.checked"
-          style="margin-top:2px;width:16px;height:16px;accent-color:#3949AB;flex-shrink:0"/>
-        <span style="font-size:12px;font-weight:600;color:var(--t1)">Tôi đã đọc và đồng thuận 7 điều kiện vận hành trên</span>
-      </label>
-    </div>
-    <div style="padding:0 16px 16px;display:flex;gap:8px">
-      <button onclick="ct3ClosePopup()" style="flex:1;padding:11px;border:1.5px solid var(--bd2);border-radius:10px;background:var(--bg1);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">Hủy</button>
-      <button id="ct3-confirm-btn" onclick="ct3ConfirmDieuKien()" disabled
-        style="flex:2;padding:11px;border:none;border-radius:10px;background:#3949AB;color:#fff;font-size:13px;font-weight:700;font-family:var(--f)"
-        onchange="">✓ Xác nhận & Thêm vào đơn</button>
-    </div>
-  </div>
-</div>
-
 <!-- ===== GIO HANG: panel nhanh ben phai (desktop) + popup A4 day du ===== -->
 
 <div id="don-modal-bg" onclick="closeDonModal()"></div>
@@ -805,6 +767,6 @@
 
 
 
-<script src="script.js?v=nav58" defer></script>
+<script src="script.js?v=nav59" defer></script>
 </body>
 </html>
