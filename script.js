@@ -5405,42 +5405,7 @@ function xuatExcel(){
   var nguoiSdt = sess?(sess.sdt||''):'';
   var nguoiKv  = sess?(sess.khoPhuTrach?'Đồng Tâm – '+sess.khoPhuTrach:'Đồng Tâm'):'Đồng Tâm';
 
-  var tLeTruocVAT=0,tNhanTruocVAT=0;
-  var rowsData=donItems.map(function(item,i){
-    var le=item.le||0;
-    var nhan=item.ns>0?item.ns:(item.nhan||0);
-    var thLe=Math.round(le*item.qty);
-    var thNhan=Math.round(nhan*item.qty);
-    // Tổng đơn tính theo đúng cách hóa đơn VAT (tách trước-VAT từng dòng,
-    // cộng VAT 1 lần trên tổng) — không cộng thẳng thLe/thNhan từng dòng.
-    tLeTruocVAT+=tienHangTruocVAT(le,item.qty); tNhanTruocVAT+=tienHangTruocVAT(nhan,item.qty);
-    var t=tinhThung(item), thungStr='';
-    if(t){ var tn=Math.round(t.thung*100)/100; thungStr=(t.chiBanThung?t.thungNguyen:(tn%1===0?tn:tn.toFixed(2)))+' thùng'; }
-    var v=tinhSoVien(item);
-    var vienStr=v&&v.soVien?v.soVien+' viên':'';
-    var kgStr=v&&v.kg?v.kg+' kg':'';
-    var loaiLabel=item.loai==='ngoi'?'Ngói':item.loai==='keo'?'Keo':item.loai==='kinh'?'Kính':'Gạch';
-    var loaiColor=item.loai==='ngoi'?'#2E7D32':item.loai==='keo'?'#6A1B9A':item.loai==='kinh'?'#0D47A1':'#E65100';
-    var loaiBg=item.loai==='ngoi'?'#E8F5E9':item.loai==='keo'?'#F3E5F5':item.loai==='kinh'?'#E3F2FD':'#FFF3E0';
-    return {i:i+1,loai:loaiLabel,loaiColor:loaiColor,loaiBg:loaiBg,
-      ma:item.ma,ten:(item.ten&&item.ten!==item.ma)?item.ten:'',kc:item.kc||'–',unit:item.unit||'m²',qty:item.qty,
-      thung:thungStr,vien:vienStr,kg:kgStr,
-      le:le,thLe:thLe,nhan:nhan,thNhan:thNhan};
-  });
-
-  var tLe=tinhVATvaTongThanhToan(tLeTruocVAT).tong;
-  var tNhan=tinhVATvaTongThanhToan(tNhanTruocVAT).tong;
-  var lnNhan=tLe-tNhan;
-  var pN=tLe>0?Math.round(lnNhan/tLe*100)+'%':'–';
-
   var css=cssExcelChung();
-
-  var isLinh = sess && sess.user === 'linh';
-  var sheet2Xml = isLinh
-    ? '<x:ExcelWorksheet><x:Name>Đại lý Tiến Phát</x:Name>'
-      +'<x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>'
-      +'</x:ExcelWorksheet>'
-    : '';
 
   var h='<html xmlns:o="urn:schemas-microsoft-com:office:office" '
     +'xmlns:x="urn:schemas-microsoft-com:office:excel" '
@@ -5449,31 +5414,36 @@ function xuatExcel(){
     +'<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>'
     +'<x:ExcelWorksheet><x:Name>Báo giá</x:Name>'
     +'<x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>'
-    +'</x:ExcelWorksheet>'+sheet2Xml+'</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->'
+    +'</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->'
     +'</head><body>';
 
-  // Header
-  h+='<table width="100%" cellspacing="0" cellpadding="0">'
-    +'<tr><td colspan="2" class="h1">🏪 ĐỒNG TÂM GROUP – BÁO GIÁ</td>'
-    +'<td class="hd">Ngày: <b>'+ngay+'</b></td></tr>'
-    +'<tr><td colspan="3" class="h2">Gạch – Ngói – Keo xây dựng · Khu vực 23</td></tr>'
+  // Cố định độ rộng cột (Excel không hiểu tốt width % trong bảng HTML, phải
+  // khai báo <col> theo pixel để cột "Tên sản phẩm" đủ rộng, không bị vỡ dòng).
+  var colsMain='<colgroup><col width="42"/><col width="150"/><col width="360"/>'
+    +'<col width="80"/><col width="90"/><col width="110"/><col width="130"/></colgroup>';
+
+  // Header - tiêu đề + ngày lập nằm chung 1 dải, viền đỏ kéo dài hết bảng
+  h+='<table width="100%" cellspacing="0" cellpadding="0" style="border-bottom:2px solid #C0232A;padding-bottom:6px;margin-bottom:4px">'
+    +'<tr><td class="h1" style="border-bottom:none">🏪 ĐỒNG TÂM GROUP – BÁO GIÁ</td>'
+    +'<td class="hd" style="border-bottom:none">Ngày lập: <b>'+ngay+'</b></td></tr>'
+    +'<tr><td colspan="2" class="h2">Gạch – Ngói – Keo xây dựng · Khu vực 23</td></tr>'
     +'</table>';
 
   // Info khách + người báo giá
-  h+='<table width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eee;margin-top:10px">'
+  h+='<table width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eee;margin-top:12px;margin-bottom:12px">'
     +'<tr>'
-    +'<td width="50%" style="padding:10px 14px;border-right:1px solid #eee;vertical-align:top">'
-    +'<div class="sec">KÍNH GỬI</div>'
-    +'<table cellspacing="0" cellpadding="2">'
+    +'<td width="50%" style="padding:12px 16px;border-right:1px solid #eee;vertical-align:top">'
+    +'<div class="sec">Kính gửi</div>'
+    +'<table cellspacing="0" cellpadding="3">'
     +'<tr><td class="lbl">Khách</td><td class="val">'+ten+'</td></tr>'
     +(cty?'<tr><td class="lbl">Công ty</td><td class="val">'+cty+'</td></tr>':'')
     +(sdt?'<tr><td class="lbl">SĐT</td><td class="val">'+sdt+'</td></tr>':'')
     +(dc?'<tr><td class="lbl">Địa chỉ</td><td class="val">'+dc+'</td></tr>':'')
     +'<tr><td class="lbl">Hình thức</td><td class="val">'+gh+'</td></tr>'
     +'</table></td>'
-    +'<td width="50%" style="padding:10px 14px;vertical-align:top">'
-    +'<div class="sec">NGƯỜI BÁO GIÁ</div>'
-    +'<table cellspacing="0" cellpadding="2">'
+    +'<td width="50%" style="padding:12px 16px;vertical-align:top">'
+    +'<div class="sec">Người báo giá</div>'
+    +'<table cellspacing="0" cellpadding="3">'
     +'<tr><td class="lbl">Họ tên</td><td class="val">'+nguoi+'</td></tr>'
     +'<tr><td class="lbl">Khu vực</td><td class="val">'+nguoiKv+'</td></tr>'
     +(nguoiSdt?'<tr><td class="lbl">SĐT</td><td class="val">'+nguoiSdt+'</td></tr>':'')
@@ -5531,6 +5501,7 @@ function xuatExcel(){
   h+='<div style="color:#C0232A;font-weight:bold;font-size:10pt;margin:14px 0 6px;letter-spacing:1px">BÁO GIÁ '+giaHangLabel+'</div>';
 
   h+='<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse">'
+    +colsMain
     +'<thead><tr>'
     +'<th class="th" width="5%">STT</th>'
     +'<th class="th" width="16%">Mã hàng</th>'
@@ -5571,81 +5542,6 @@ function xuatExcel(){
     +'<tr><td style="padding:10px 14px;color:#aaa;font-size:9pt">Cảm ơn quý khách đã quan tâm sản phẩm Đồng Tâm<br>Mọi thắc mắc xin liên hệ nhân viên tư vấn</td>'
     +'<td style="text-align:right;padding:10px 14px;color:#C0232A;font-weight:bold">☎ '+(nguoiSdt||'0819 548 908')+'</td></tr>'
     +'</table>';
-
-  // Sheet 2: Đại lý Tiến Phát — chỉ hiện khi tài khoản linh
-  if(isLinh){
-    h+='<br clear="all" style="mso-special-character:line-break;page-break-before:always">';
-    h+='<table width="100%" cellspacing="0" cellpadding="0">'
-      +'<tr><td colspan="2" class="h1">🏪 ĐỒNG TÂM GROUP – BÁO GIÁ ĐẠI LÝ TIẾN PHÁT</td>'
-      +'<td class="hd">Ngày: <b>'+ngay+'</b></td></tr>'
-      +'<tr><td colspan="3" class="h2">Gạch – Ngói – Keo xây dựng · Khu vực 23</td></tr>'
-      +'</table>';
-
-    h+='<table width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eee;margin-top:10px">'
-      +'<tr>'
-      +'<td width="50%" style="padding:10px 14px;border-right:1px solid #eee;vertical-align:top">'
-      +'<div class="sec">KÍNH GỬI</div>'
-      +'<table cellspacing="0" cellpadding="2">'
-      +'<tr><td class="lbl">Đại lý</td><td class="val">Đại lý Tiến Phát</td></tr>'
-      +(sdt?'<tr><td class="lbl">SĐT</td><td class="val">'+sdt+'</td></tr>':'')
-      +(dc?'<tr><td class="lbl">Địa chỉ</td><td class="val">'+dc+'</td></tr>':'')
-      +'<tr><td class="lbl">Hình thức</td><td class="val">'+gh+'</td></tr>'
-      +'</table></td>'
-      +'<td width="50%" style="padding:10px 14px;vertical-align:top">'
-      +'<div class="sec">NGƯỜI BÁO GIÁ</div>'
-      +'<table cellspacing="0" cellpadding="2">'
-      +'<tr><td class="lbl">Họ tên</td><td class="val">'+nguoi+'</td></tr>'
-      +'<tr><td class="lbl">Khu vực</td><td class="val">'+nguoiKv+'</td></tr>'
-      +(nguoiSdt?'<tr><td class="lbl">SĐT</td><td class="val">'+nguoiSdt+'</td></tr>':'')
-      +'</table></td>'
-      +'</tr></table>';
-
-    h+='<div style="color:#C0232A;font-weight:bold;font-size:10pt;margin:14px 0 6px;letter-spacing:1px">CHI TIẾT SẢN PHẨM – GIÁ ĐẠI LÝ</div>';
-
-    h+='<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse">'
-      +'<thead><tr>'
-      +'<th class="th" width="4%">#</th>'
-      +'<th class="th" width="5%">Loại</th>'
-      +'<th class="th" width="16%">Mã SP</th>'
-      +'<th class="th" width="14%">Tên sản phẩm (hóa đơn)</th>'
-      +'<th class="th" width="7%">Kích cỡ</th>'
-      +'<th class="th" width="9%">Số lượng</th>'
-      +'<th class="th" width="10%">Số thùng</th>'
-      +'<th class="th" width="7%">Số viên</th>'
-      +'<th class="th" width="6%">Kg</th>'
-      +'<th class="th" width="12%">Đơn giá ĐL (NK)</th>'
-      +'<th class="th" width="13%">Thành tiền ĐL</th>'
-      +'</tr></thead><tbody>';
-
-    rowsData.forEach(function(r){
-      var ev=r.i%2===0?' class="ev"':'';
-      h+='<tr>'
-        +'<td class="td tc"'+ev+'>'+r.i+'</td>'
-        +'<td class="td tc" style="background:'+r.loaiBg+';color:'+r.loaiColor+';font-weight:bold;font-size:9pt">'+r.loai+'</td>'
-        +'<td class="td bold"'+ev+'>'+r.ma+'</td>'
-        +'<td class="td"'+ev+' style="font-size:9pt">'+(r.ten||'–')+'</td>'
-        +'<td class="td tc"'+ev+'>'+r.kc+'</td>'
-        +'<td class="td tc"'+ev+'>'+r.qty+' '+r.unit+'</td>'
-        +'<td class="td blu"'+ev+'>'+r.thung+'</td>'
-        +'<td class="td tc" style="color:#555"'+ev+'>'+r.vien+'</td>'
-        +'<td class="td tc" style="color:#555"'+ev+'>'+r.kg+'</td>'
-        +'<td class="td nk"'+ev+'>'+(r.nhan>0?r.nhan.toLocaleString('vi-VN'):'Liên hệ')+'</td>'
-        +'<td class="td nk" style="font-size:10pt"'+ev+'>'+(r.thNhan>0?r.thNhan.toLocaleString('vi-VN'):'–')+'</td>'
-        +'</tr>';
-    });
-
-    h+='</tbody></table>';
-    h+='<table width="100%" cellspacing="0" cellpadding="0" style="margin-top:10px">'
-      +'<tr class="tot">'
-      +'<td colspan="9" style="padding:9px 14px;color:#1B5E20;font-weight:bold">TỔNG TIỀN ĐẠI LÝ TIẾN PHÁT</td>'
-      +'<td style="padding:9px 8px;color:#1B5E20;font-weight:bold;text-align:right;font-size:9pt">Tổng NK:</td>'
-      +'<td class="nk" style="padding:9px 14px;font-size:12pt">'+tNhan.toLocaleString('vi-VN')+' đ</td>'
-      +'</tr></table>';
-    h+='<div style="margin-top:6px;font-size:8.5pt;color:#999">* Gia tren da bao gom VAT.</div>';
-    if(note){
-      h+='<div style="margin-top:8px;background:#FFFDE7;padding:9px 14px;border-left:3px solid #FFC107;font-size:9.5pt">📝 <b>Ghi chú:</b> '+note+'</div>';
-    }
-  }
 
   h+='</body></html>';
 
