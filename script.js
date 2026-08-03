@@ -256,11 +256,31 @@ function fetchAllFromSheet(){
     try{ applyGiaGach(res.gach); _syncFlags.gach=true; }catch(e){ console.log('Lỗi áp giá gạch (getAll):', e); }
     tryOpenDeepLink();
     try{ applyImagesData(res.images); }catch(e){ console.log('Lỗi áp ảnh (getAll):', e); }
-    try{ if(res.extra){ applySpExtraData(res.extra, res.maToSap); } else { fetchSpExtra(); } }catch(e){ fetchSpExtra(); }
+    try{
+      if(res.extra){ applySpExtraData(res.extra, res.maToSap, res.spImages, res.spImagesMulti); }
+      else { fetchSpExtra(); }
+    }catch(e){ fetchSpExtra(); }
     try{ applyThuocTinhData(res.thuocTinh); }catch(e){ console.log('Lỗi áp thuộc tính SP (getAll):', e); }
     try{ applyCTResult('ct1', res.ct1); }catch(e){ console.log('Lỗi áp CT1 (getAll):', e); }
     try{ applyCTResult('ct2', res.ct2); }catch(e){ console.log('Lỗi áp CT2 (getAll):', e); }
     try{ applyCTMuaTangXaKho(res.ctMuaTang, res.ctXaKho); }catch(e){ console.log('Lỗi áp CT Mua Tặng/Xả Kho (getAll):', e); }
+    // Ngói/Keo/Kính + Trọng lượng giờ đi kèm getAll (trước đây 2 request rời,
+    // mỗi request tốn ~4-7s phí khởi động Apps Script) - chỉ gọi rời khi
+    // getAll không kèm theo (lỗi/cache cũ) để không mất tính năng.
+    try{
+      if(res.ngoiKeoKinh && res.ngoiKeoKinh.status==='ok'){
+        _apDungGiaLoai('ngoi', res.ngoiKeoKinh.ngoi);
+        _apDungGiaLoai('keo',  res.ngoiKeoKinh.keo);
+        _apDungGiaLoai('kinh', res.ngoiKeoKinh.kinh);
+        _hoanTatDongBoGia();
+      } else {
+        fetchNgoiKeoKinhCombined();
+      }
+    }catch(e){ fetchNgoiKeoKinhCombined(); }
+    try{
+      if(res.trongLuong && res.trongLuong.status==='ok' && res.trongLuong.data){ trongLuongMap=res.trongLuong.data; }
+      else { fetchTrongLuong(); }
+    }catch(e){ fetchTrongLuong(); }
   };
   var s=document.createElement('script');
   s.id='_all_script';
@@ -279,11 +299,8 @@ function fetchAllFromSheet(){
     ]);
   };
   document.head.appendChild(s);
-  // Ngói/Keo/Kính gộp thành 1 request duy nhất (getGiaNgoiKeoKinh) thay vì
-  // 3 request rời - mỗi request tốn thời gian khởi động riêng của Apps
-  // Script, gộp lại giúp F5/đăng nhập lại hiển thị đủ giá nhanh hơn hẳn.
-  // Giãn cách với getAll ở trên để không bắn đồng thời.
-  setTimeout(function(){ fetchNgoiKeoKinhCombined(); }, 280);
+  // Ngói/Keo/Kính giờ đi kèm trong response getAll (res.ngoiKeoKinh) — xem
+  // xử lý trong _onGetAll ở trên; chỉ gọi rời khi getAll không trả kèm.
 }
 
 // Áp dữ liệu giá của 1 nhóm (gach/ngoi/keo/kinh) vào biến toàn cục tương ứng.
@@ -3433,8 +3450,9 @@ function showApp(name){
   // làm GAS xử lý chậm chồng chéo (ảnh hưởng tới tốc độ hiển thị giá).
   setTimeout(function(){ fetchKhachHangFromSheet(); }, 600);
   setTimeout(function(){ fetchTonKhoChiTiet(); }, 900);
-  setTimeout(function(){ fetchTrongLuong(); }, 1200);
-  setTimeout(function(){ gasWarmUp(); }, 1500);
+  // Trọng lượng giờ đi kèm trong response getAll (res.trongLuong) — chỉ
+  // gọi rời khi getAll không trả kèm (xem xử lý trong _onGetAll).
+  setTimeout(function(){ gasWarmUp(); }, 1200);
   // Áp dụng phân quyền hiển thị lợi nhuận (chỉ Admin thấy)
   apDungPhanQuyenLoi();
 }
