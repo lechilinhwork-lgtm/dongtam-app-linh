@@ -5846,6 +5846,13 @@ function isDangSaleCT123(ma){
   return false;
 }
 
+// Ẩn/hiện profit block theo role
+function apDungPhanQuyenLoi(){
+  var box=document.getElementById('don-margin-box');
+  if(!box) return;
+  box.style.display=laAdmin()?'block':'none';
+}
+
 ;/* ===== next script block ===== */
 
 
