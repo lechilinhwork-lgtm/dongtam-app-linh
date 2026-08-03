@@ -2909,7 +2909,7 @@ function layNoiDungBaoGia(ma){
   // % giảm luôn tính so với Giá lẻ (không phải so với giá ĐL gốc)
   var pct = function(sale){ return (le>0 && sale>0) ? Math.round((le-sale)/le*100) : 0; };
 
-  var lines = ['GẠCH ĐỒNG TÂM KV23'+(isSale?(isCT2?' – XẢ KHO CT2':' – SALE THÁNG 07'):'')];
+  var lines = ['GẠCH ĐỒNG TÂM KV23'+(isSale?(isCT2?' – XẢ KHO CT2':' – SALE THÁNG 08 VÀ THÁNG 9'):'')];
   lines.push('📌 Mã: '+p.ma);
   lines.push('📐 Kích cỡ: '+p.kc);
   lines.push('━━━━━━━━━━━━━━');
@@ -2991,7 +2991,7 @@ function shareZaloSale(p){
   var f=function(n){ return n>0?n.toLocaleString('vi-VN')+'đ/m²':'–'; };
   // % giảm luôn tính so với Giá lẻ (không phải so với giá ĐL gốc)
   var pct=function(sale){ return (p.le>0 && sale>0) ? Math.round((p.le-sale)/p.le*100) : 0; };
-  var lines=['GẠCH ĐỒNG TÂM KV23'+(isCT2?' – XẢ KHO CT2':' – SALE THÁNG 07')];
+  var lines=['GẠCH ĐỒNG TÂM KV23'+(isCT2?' – XẢ KHO CT2':' – SALE THÁNG 08 VÀ THÁNG 9')];
   lines.push('📌 Mã: '+p.ma);
   lines.push('📐 Kích cỡ: '+(p.kc||''));
   lines.push('━━━━━━━━━━━━━━');
