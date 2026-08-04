@@ -1371,6 +1371,19 @@ function mergeCTintoDATA(){
   // xem ở tab Gạch (badge "GIÁ SALE" và nội dung Zalo hiện sai giá thường).
   var idx={};
   DATA.forEach(function(p,i){ idx[p.ma]=i; });
+  // Xóa cờ Sale cũ (kể cả cờ "đóng gói sẵn" từ bản build trước, baked vào
+  // D1 lúc script.js được tạo) cho mã KHÔNG còn nằm trong CT1/CT2 vừa tải -
+  // nếu không, mã đã bị gỡ khỏi chương trình Sale vẫn hiện nhầm badge/giá
+  // Sale ở tab Gạch mãi mãi, trong khi tab Sale (đọc thẳng CT1_DATA/CT2_DATA)
+  // đã đúng không còn mã đó -> lệch dữ liệu giữa 2 nơi.
+  var maDangSale={};
+  CT1_DATA.forEach(function(c){ maDangSale[c.ma]=true; });
+  CT2_DATA.forEach(function(c){ maDangSale[c.ma]=true; });
+  DATA.forEach(function(p){
+    if(p._fromCT && !maDangSale[p.ma]){
+      p._fromCT=null; p.ns=0; p.gs=0; p.ct150nk=0; p.ct150gh=0;
+    }
+  });
   function apCT(c, label){
     var i = idx[c.ma];
     if(i!==undefined){
