@@ -846,24 +846,45 @@ function danhSachSPCoVideo(){
   });
   return list;
 }
+// Danh sách phẳng theo TỪNG VIDEO (không theo sản phẩm) - sản phẩm có cả
+// TikTok lẫn YouTube sẽ tách thành 2 mục liên tiếp, dùng cho feed cuộn dọc
+// để không bỏ sót video nào khi 1 sản phẩm có 2 video.
+function danhSachVideoTung(){
+  var out=[];
+  danhSachSPCoVideo().forEach(function(v){
+    var sap=maToSap[v.ma];
+    var ex=sap?spExtra[sap]:null;
+    if(!ex) return;
+    if(ex.tiktok)  out.push({ma:v.ma, kc:v.kc, le:v.le, type:'tiktok',  url:ex.tiktok});
+    if(ex.youtube) out.push({ma:v.ma, kc:v.kc, le:v.le, type:'youtube', url:ex.youtube});
+  });
+  return out;
+}
 function renderVideoGrid(){
   var el=document.getElementById('video-grid');
   var emptyEl=document.getElementById('video-empty');
+  var emptyTextEl=document.getElementById('video-empty-text');
   if(!el) return;
+  var q=(document.getElementById('video-search')?document.getElementById('video-search').value:'').trim().toUpperCase();
   var list=danhSachSPCoVideo();
+  if(q) list=list.filter(function(v){ return v.ma.toUpperCase().indexOf(q)>=0; });
   if(!list.length){
     el.innerHTML='';
     if(emptyEl) emptyEl.style.display='block';
+    if(emptyTextEl) emptyTextEl.textContent=q?('Không tìm thấy video cho mã "'+q+'"'):'Chưa có sản phẩm nào có video';
     return;
   }
   if(emptyEl) emptyEl.style.display='none';
   el.innerHTML=list.map(function(v){
     var imgUrl=timAnh(v.ma)||'';
     var giaHtml=v.le>0?'<div class="video-card-le">'+v.le.toLocaleString('vi-VN')+'đ/m²</div>':'';
+    var soVideo=(v.hasTiktok?1:0)+(v.hasYoutube?1:0);
+    var badge2=soVideo>1?'<div class="video-card-badge2">🎬 2 video</div>':'';
     return '<div class="video-card" onclick="moVideoTuLuoi(\''+v.ma+'\')">'
       +'<div class="video-card-thumb">'
       +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">':'')
       +'<div class="video-card-play"><span>▶</span></div>'
+      +badge2
       +'</div>'
       +'<div class="video-card-body">'
       +'<div class="video-card-ma">'+v.ma+'</div>'
@@ -873,8 +894,9 @@ function renderVideoGrid(){
   }).join('');
 }
 // Bấm vào 1 video trong lưới: Mobile mở feed cuộn dọc kiểu TikTok (đắm
-// chìm hơn), Desktop vẫn mở popup chi tiết + nhảy tab Video như cũ (đã có
-// sẵn khung 2 cột giá/video hiển thị song song, không cần feed riêng).
+// chìm hơn), Desktop vẫn mở popup chi tiết + nhảy tab Video như cũ (popup
+// đã có sẵn tab con TikTok/YouTube khi sản phẩm có 2 video - xem
+// renderExtraGeneric, không cần sửa thêm).
 function moVideoTuLuoi(ma){
   if(window.innerWidth<768){ openVideoFeed(ma); return; }
   showDP(ma);
@@ -882,26 +904,26 @@ function moVideoTuLuoi(ma){
 }
 
 // ===== VIDEO FEED (Mobile): cuộn dọc kiểu TikTok giữa các video sản phẩm =====
+// Mỗi VIDEO là 1 slide riêng (không phải mỗi sản phẩm) - sản phẩm có 2
+// video (TikTok + YouTube) sẽ có 2 slide liên tiếp, vuốt lên là thấy video
+// thứ 2 của đúng sản phẩm đó ngay, không bỏ sót.
 var _vfObserver=null;
-function openVideoFeed(startMa){
-  var list=danhSachSPCoVideo();
+function openVideoFeed(startMa, startType){
+  var list=danhSachVideoTung();
   if(!list.length) return;
   var scrollEl=document.getElementById('vf-scroll');
   scrollEl.innerHTML=list.map(function(v){
-    var sap=maToSap[v.ma];
-    var ex=sap?spExtra[sap]:null;
-    var type=ex&&ex.tiktok?'tiktok':'youtube';
-    var url=ex?(ex.tiktok||ex.youtube):'';
     var imgUrl=timAnh(v.ma)||'';
     var giaHtml=v.le>0?'<div class="vf-info-le">'+v.le.toLocaleString('vi-VN')+'đ/m²</div>':'';
-    return '<div class="vf-slide" data-ma="'+v.ma+'" data-vtype="'+type+'" data-vurl="'+escHtml(url)+'">'
+    var platformTag='<span class="vf-platform-tag">'+(v.type==='tiktok'?'TikTok':'YouTube')+'</span>';
+    return '<div class="vf-slide" data-ma="'+v.ma+'" data-vtype="'+v.type+'" data-vurl="'+escHtml(v.url)+'">'
       +(imgUrl?'<div class="vf-slide-poster" style="background-image:url(\''+imgUrl+'\')"></div>':'')
       +'<div class="vf-slide-thumb">'
       +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async">':'')
       +'<div class="vf-play-btn">▶</div>'
       +'</div>'
       +'<div class="vf-info">'
-      +'<div class="vf-info-ma">'+v.ma+'</div>'
+      +'<div class="vf-info-ma">'+v.ma+' '+platformTag+'</div>'
       +(v.kc?'<div class="vf-info-kc">'+v.kc+'</div>':'')
       +giaHtml
       +'<button class="vf-info-btn" onclick="event.stopPropagation();xemChiTietTuVideoFeed(\''+v.ma+'\')">📋 Xem chi tiết sản phẩm</button>'
@@ -937,7 +959,8 @@ function openVideoFeed(startMa){
 
   document.getElementById('video-feed').classList.add('on');
   document.body.style.overflow='hidden';
-  var startSlide=scrollEl.querySelector('.vf-slide[data-ma="'+startMa+'"]');
+  var sel='.vf-slide[data-ma="'+startMa+'"]'+(startType?'[data-vtype="'+startType+'"]':'');
+  var startSlide=scrollEl.querySelector(sel)||scrollEl.querySelector('.vf-slide[data-ma="'+startMa+'"]');
   if(startSlide) startSlide.scrollIntoView({block:'start'});
 }
 function closeVideoFeed(){

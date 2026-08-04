@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="DT Sales"/>
 <meta name="theme-color" content="#C0232A"/>
 <title>Đồng Tâm – Sales Tool</title>
-<link rel="stylesheet" href="style.css?v=nav30">
+<link rel="stylesheet" href="style.css?v=nav31">
 </head>
 <body>
 
@@ -145,11 +145,16 @@
     <span style="font-size:18px">🎬</span>
     <span style="font-size:16px;font-weight:800">Video sản phẩm</span>
   </div>
-  <p style="font-size:12px;color:var(--t2);margin:0 0 14px">Bấm vào 1 sản phẩm để xem video và thông tin chi tiết</p>
+  <p style="font-size:12px;color:var(--t2);margin:0 0 10px">Bấm vào 1 sản phẩm để xem video và thông tin chi tiết</p>
+  <div style="position:relative;margin-bottom:14px">
+    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--t3)">🔍</span>
+    <input type="text" id="video-search" placeholder="Tìm video theo mã sản phẩm..." oninput="renderVideoGrid()"
+      style="width:100%;padding:9px 12px 9px 34px;border:1.5px solid var(--bd);border-radius:20px;font-size:13px;background:var(--bg2);outline:none"/>
+  </div>
   <div id="video-grid" class="video-grid"></div>
   <div id="video-empty" style="display:none;text-align:center;padding:60px 20px;color:var(--t2)">
     <div style="font-size:36px;margin-bottom:8px">🎬</div>
-    <div style="font-size:13px">Chưa có sản phẩm nào có video</div>
+    <div id="video-empty-text" style="font-size:13px">Chưa có sản phẩm nào có video</div>
   </div>
 </div>
 
@@ -795,6 +800,6 @@
 
 
 
-<script src="script.js?v=nav69" defer></script>
+<script src="script.js?v=nav70" defer></script>
 </body>
 </html>
