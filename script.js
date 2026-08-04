@@ -636,6 +636,7 @@ function renderExtraGeneric(ma, prefix){
   if(!ex){
     if(wrapEl) wrapEl.style.display='none';
     var vb=document.getElementById(prefix+'-tbtn-video'); if(vb) vb.style.display='none';
+    var ivb=document.getElementById(prefix+'-img-video-badge'); if(ivb) ivb.style.display='none';
     return;
   }
   if(wrapEl) wrapEl.style.display='block';
@@ -664,6 +665,10 @@ function renderExtraGeneric(ma, prefix){
   var hasVid=ex.tiktok||ex.youtube;
   var vidTabBtn=document.getElementById(prefix+'-tbtn-video');
   if(vidTabBtn) vidTabBtn.style.display=hasVid?'':'none';
+  // Nhãn "Xem video" nổi trên ảnh sản phẩm (hiện tại chỉ popup Gạch có, id
+  // dp-img-video-badge) - báo ngay có video mà không cần dò tab riêng.
+  var imgVidBadge=document.getElementById(prefix+'-img-video-badge');
+  if(imgVidBadge) imgVidBadge.style.display=hasVid?'flex':'none';
   if(vidSec){
     if(hasVid){
       vidSec.style.display='block';
