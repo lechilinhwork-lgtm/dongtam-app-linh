@@ -372,7 +372,7 @@
 <!-- TAB 3: Ngói -->
 <div id="tab-ngoi" class="tc">
   <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Ngói tráng men Đồng Tâm · Giá <b>đồng/viên</b> · Hiệu lực đến 31/03/2027</p>
-  <div id="nk-backdrop" onclick="closeNgoiDetail();closeKeoDetail()"></div>
+  <div id="nk-backdrop" onclick="closeNgoiDetail();closeKeoDetail();closeTBVSDetail()"></div>
   <div id="ngoi-detail" class="nk-detail nk-red">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       <button onclick="ngoiNav(-1)" title="Sản phẩm trước" style="flex-shrink:0;width:32px;height:32px;border:1.5px solid var(--bd2);border-radius:50%;background:var(--bg1);font-size:16px;cursor:pointer;color:var(--t1)">‹</button>
@@ -595,6 +595,78 @@
   </div><!-- /sub-kinh-content -->
 </div>
 
+<!-- TAB THIẾT BỊ VỆ SINH -->
+<div id="tab-tbvs" class="tc">
+  <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Thiết bị vệ sinh Đồng Tâm Pearl · Giá <b>đồng/bộ, đồng/cái</b></p>
+  <div id="tbvs-detail" class="nk-detail" style="border-top:4px solid #0068FF">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <button onclick="tbvsNav(-1)" title="Sản phẩm trước" style="flex-shrink:0;width:32px;height:32px;border:1.5px solid var(--bd2);border-radius:50%;background:var(--bg1);font-size:16px;cursor:pointer;color:var(--t1)">‹</button>
+      <span style="flex:1;text-align:center;font-size:11px;color:var(--t2);font-weight:600">Chuyển sản phẩm</span>
+      <button onclick="tbvsNav(1)" title="Sản phẩm tiếp theo" style="flex-shrink:0;width:32px;height:32px;border:1.5px solid var(--bd2);border-radius:50%;background:var(--bg1);font-size:16px;cursor:pointer;color:var(--t1)">›</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
+      <div>
+        <p id="td-ten" style="font-size:15px;font-weight:700;margin-bottom:2px"></p>
+        <p id="td-kc" style="font-size:11px;color:var(--t2)"></p>
+      </div>
+      <button onclick="closeTBVSDetail()" style="font-size:13px;padding:4px 10px">✕</button>
+    </div>
+    <div id="td-tab-bar">
+      <button id="td-tbtn-gia" class="dp-tbtn dp-tbtn-active" onclick="setTabGeneric('td','gia')">💰 Giá</button>
+      <button id="td-tbtn-mota" class="dp-tbtn" onclick="setTabGeneric('td','mota')">📋 Mô tả</button>
+      <button id="td-tbtn-video" class="dp-tbtn" onclick="setTabGeneric('td','video')" style="display:none">▶ Video</button>
+    </div>
+    <div id="td-panel-gia" style="margin-top:10px">
+    <div id="td-img-wrap" style="display:none;margin-bottom:10px;border-radius:var(--r8);overflow:hidden;aspect-ratio:1;background:var(--bg2);position:relative">
+      <img id="td-img" style="width:100%;height:100%;object-fit:contain;display:block"/>
+    </div>
+    <div class="pr-grid" style="margin-bottom:10px">
+      <div class="pr-box"><p>Giá lẻ</p><p id="td-le"></p></div>
+      <div class="pr-box pr-box-primary"><p>Nhận kho</p><p id="td-nhan"></p></div>
+      <div class="pr-box full"><p>Giao hàng</p><p id="td-giao"></p></div>
+    </div>
+    </div><!-- end td-panel-gia -->
+    <div id="td-panel-mota" style="display:none;margin-top:10px">
+      <div id="td-mota-section" style="display:none">
+        <p class="dp-sec-label">MÔ TẢ SẢN PHẨM</p>
+        <div id="td-mota" class="dp-mota-body"></div>
+        <div id="td-highlights" class="dp-highlights-body"></div>
+      </div>
+    </div><!-- end td-panel-mota -->
+    <div id="td-panel-video" style="display:none;margin-top:10px">
+      <div id="td-video-section">
+        <div id="td-video-tabs" style="display:none;gap:8px;margin-bottom:8px"></div>
+        <div id="td-video-embed" style="border-radius:10px;overflow:hidden;background:#000;width:100%"></div>
+      </div>
+    </div><!-- end td-panel-video -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span style="font-size:13px;color:var(--t2)">Số lượng:</span>
+      <button onclick="chinhSLTBVS(-1)" style="width:32px;height:32px;border:1px solid var(--bd2);border-radius:6px;background:var(--bg2);font-size:14px;cursor:pointer">−</button>
+      <input type="number" id="td-soluong" value="1" min="1" oninput="tinhTienTBVS()"
+        style="width:70px;text-align:center;font-size:14px;font-weight:700;padding:6px;border:1px solid var(--bd2);border-radius:6px"/>
+      <button onclick="chinhSLTBVS(1)" style="width:32px;height:32px;border:1px solid var(--bd2);border-radius:6px;background:var(--bg2);font-size:14px;cursor:pointer">+</button>
+      <span id="td-dvt" style="font-size:12px;color:var(--t2)">Cái</span>
+    </div>
+    <div style="background:var(--bg2);border-radius:var(--r8);padding:10px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:12px;color:var(--t2)">Nhận kho:</span>
+        <span id="td-tien-nhan" style="font-size:13px;font-weight:700;color:#0068FF"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="font-size:12px;color:var(--t2)">Giao hàng:</span>
+        <span id="td-tien-giao" style="font-size:13px;font-weight:700;color:#0068FF"></span>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:6px">
+      <button onclick="themTBVSVaoDon()" style="flex:1;padding:11px;border:none;border-radius:var(--r8);background:#0068FF;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">🛒 Thêm vào đơn</button>
+      <button onclick="chiaSeAnhSanPham(curTBVSMa, document.getElementById('td-ten').textContent)" style="padding:11px 12px;border:none;border-radius:var(--r8);background:#388E3C;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)" title="Chia sẻ ảnh">📤 Ảnh</button>
+      <button onclick="shareZaloTBVS(curTBVSMa)" style="padding:11px 14px;border:none;border-radius:var(--r8);background:#0068FF;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">Zalo ↗</button>
+    </div>
+    <button onclick="copyLinkSanPham(curTBVSMa)" style="width:100%;margin-top:6px;font-size:12px;padding:8px;border-radius:var(--r8);border:1.5px solid #0068FF;background:none;color:#0068FF;font-weight:700;font-family:var(--f);cursor:pointer">🔗 Copy link sản phẩm</button>
+  </div>
+  <div id="tbvs-list"></div>
+</div>
+
 
 
 <!-- TAB ĐƠN HÀNG -->
@@ -800,6 +872,6 @@
 
 
 
-<script src="script.js?v=nav72" defer></script>
+<script src="script.js?v=nav73" defer></script>
 </body>
 </html>

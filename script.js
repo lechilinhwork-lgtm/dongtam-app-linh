@@ -281,6 +281,10 @@ function fetchAllFromSheet(){
       if(res.trongLuong && res.trongLuong.status==='ok' && res.trongLuong.data){ trongLuongMap=res.trongLuong.data; }
       else { fetchTrongLuong(); }
     }catch(e){ fetchTrongLuong(); }
+    try{
+      if(res.tbvs && res.tbvs.status==='ok'){ applyTBVSData(res.tbvs); }
+      else { fetchGiaTBVS(); }
+    }catch(e){ fetchGiaTBVS(); }
   };
   var s=document.createElement('script');
   s.id='_all_script';
@@ -829,6 +833,7 @@ function swTab(t){
   if(t==='kinh')  renderKinh();
   if(t==='don')   renderDon();
   if(t==='video') renderVideoGrid();
+  if(t==='tbvs')  renderTBVS();
 }
 
 // ===== TAB VIDEO: lưới sản phẩm đang có video TikTok/YouTube =====
@@ -1074,7 +1079,7 @@ function renderDanhMucGrid(){
     {icon:'💎', ten:'Gạch kính',         count:txtKinh, tab:'kinh', grad:'linear-gradient(160deg,#E3F2FD,#BBDEFB)'},
     {icon:'🔥', ten:'Đang Sale',         count:null,         tab:'sale', grad:'linear-gradient(160deg,#FFEBEE,#FFCDD2)', sale:true},
     {icon:'🎬', ten:'Video sản phẩm',    count:(typeof danhSachSPCoVideo==='function'?danhSachSPCoVideo().length+' video':null), tab:'video', grad:'linear-gradient(160deg,#EDE7F6,#D1C4E9)'},
-    {icon:'🚽', ten:'Thiết bị vệ sinh',  count:null,         tab:'tbvs', grad:'var(--bg2)', soon:true},
+    {icon:'🚽', ten:'Thiết bị vệ sinh',  count:(typeof TBVS!=='undefined'&&TBVS.length?TBVS.length+' mã':'…'), tab:'tbvs', grad:'linear-gradient(160deg,#E3F2FD,#BBDEFB)'},
     {icon:'🪣', ten:'Sơn nước',          count:null,         tab:'son',  grad:'var(--bg2)', soon:true}
   ];
   items.forEach(function(it){
@@ -2807,6 +2812,137 @@ function closeKeoDetail(){
   document.getElementById('keo-detail').style.display='none';
   var nd=document.getElementById('ngoi-detail');
   if(!nd||nd.style.display!=='block') document.getElementById('nk-backdrop').classList.remove('on');
+}
+
+// ===== THIẾT BỊ VỆ SINH (TBVS) =====
+var TBVS=[];
+var curTBVSMa=null;
+function renderTBVS(){
+  var el=document.getElementById('tbvs-list'); if(!el) return;
+  el.innerHTML='';
+  if(!TBVS.length){
+    el.innerHTML='<div style="padding:40px 10px;text-align:center;color:var(--t2);font-size:13px">Đang tải dữ liệu Thiết bị vệ sinh...</div>';
+    return;
+  }
+  var groups={}, order=[];
+  TBVS.forEach(function(p){
+    var g=p.nhom||'Khác';
+    if(!groups[g]){ groups[g]=[]; order.push(g); }
+    groups[g].push(p);
+  });
+  order.forEach(function(g){
+    var h=document.createElement('div');
+    h.style.cssText='font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin:14px 2px 8px';
+    h.textContent=g;
+    el.appendChild(h);
+    groups[g].forEach(function(p){
+      var div=document.createElement('div'); div.className='mk';
+      div.style.cursor='pointer';
+      div.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex:1">'
+        +getImgHtml(p.ma,48,'🚽')
+        +'<div style="flex:1;min-width:0">'
+        +'<p style="font-size:13px;font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.ten||p.tenHD)+'</p>'
+        +'<p style="font-size:11px;color:var(--t2)">'+(p.tenHD?p.tenHD+' · ':'')+'Nhận kho <b style="color:#0068FF">'+(p.nhan>0?p.nhan.toLocaleString('vi-VN')+'đ':'–')+'</b></p>'
+        +'</div></div>'
+        +'<div style="font-size:11px;color:var(--t2);margin-left:6px;flex-shrink:0">›</div>';
+      div.addEventListener('click', function(){ showTBVS(p.ma); });
+      el.appendChild(div);
+    });
+  });
+}
+function showTBVS(ma){
+  curTBVSMa=ma;
+  var p=TBVS.find(function(x){return x.ma===ma;}); if(!p) return;
+  var imgWrap=document.getElementById('td-img-wrap');
+  var imgUrl=timAnh(ma);
+  if(imgUrl){ imgWrap.style.display='block'; document.getElementById('td-img').src=imgUrl; }
+  else { imgWrap.style.display='none'; }
+  document.getElementById('td-ten').textContent=p.ten||p.tenHD;
+  document.getElementById('td-kc').textContent=(p.tenHD?p.tenHD+' · ':'')+'ĐVT: '+(p.dvt||'Cái');
+  document.getElementById('td-le').textContent=p.le>0?p.le.toLocaleString('vi-VN')+'đ':'–';
+  document.getElementById('td-nhan').textContent=p.nhan>0?p.nhan.toLocaleString('vi-VN')+'đ':'–';
+  document.getElementById('td-giao').textContent=p.giao>0?p.giao.toLocaleString('vi-VN')+'đ':'–';
+  document.getElementById('td-dvt').textContent=p.dvt||'Cái';
+  document.getElementById('td-soluong').value=1;
+  document.getElementById('tbvs-detail').style.display='block';
+  document.getElementById('nk-backdrop').classList.add('on');
+  tinhTienTBVS();
+  setTabGeneric('td','gia');
+  renderExtraGeneric(ma, 'td');
+}
+function closeTBVSDetail(){
+  document.getElementById('tbvs-detail').style.display='none';
+  var nd=document.getElementById('ngoi-detail'), kd=document.getElementById('keo-detail');
+  if((!nd||nd.style.display!=='block') && (!kd||kd.style.display!=='block')) document.getElementById('nk-backdrop').classList.remove('on');
+}
+function tbvsNav(delta){
+  if(!TBVS.length) return;
+  var idx=TBVS.findIndex(function(p){return p.ma===curTBVSMa;});
+  if(idx<0) idx=0;
+  var next=TBVS[(idx+delta+TBVS.length)%TBVS.length];
+  if(next) showTBVS(next.ma);
+}
+function chinhSLTBVS(d){
+  var inp=document.getElementById('td-soluong');
+  inp.value=Math.max(1,(parseInt(inp.value)||0)+d);
+  tinhTienTBVS();
+}
+function tinhTienTBVS(){
+  var p=TBVS.find(function(x){return x.ma===curTBVSMa;}); if(!p) return;
+  var sl=parseInt(document.getElementById('td-soluong').value)||0;
+  document.getElementById('td-tien-nhan').textContent=(p.nhan*sl).toLocaleString('vi-VN')+'đ';
+  document.getElementById('td-tien-giao').textContent=(p.giao*sl).toLocaleString('vi-VN')+'đ';
+}
+function themTBVSVaoDon(){
+  var p=TBVS.find(function(x){return x.ma===curTBVSMa;}); if(!p) return;
+  var sl=parseInt(document.getElementById('td-soluong').value)||0;
+  if(sl<=0){alert('Vui lòng nhập số lượng!');return;}
+  var exist=donItems.find(function(x){return x.ma===p.ma;});
+  if(exist){exist.qty+=sl;}
+  else{
+    donItems.push({
+      ma:p.ma, ten:p.tenHD||p.ten, kc:p.dvt||'Cái', unit:p.dvt||'Cái',
+      le:p.le||0, nhan:p.nhan||0, giao:p.giao||0,
+      ns:0, gs:0, qty:sl, loai:'tbvs'
+    });
+  }
+  updateDonBadge();
+  showToast('✓ Đã thêm '+sl+' '+(p.dvt||'Cái')+' '+(p.ten||p.tenHD)+' vào đơn!');
+  closeTBVSDetail();
+}
+function shareZaloTBVS(ma){
+  var p=TBVS.find(function(x){return x.ma===ma;}); if(!p) return;
+  var lines=['ĐỒNG TÂM KV23 – THIẾT BỊ VỆ SINH'];
+  lines.push('📌 '+(p.ten||p.tenHD));
+  lines.push('━━━━━━━━━━━━━━');
+  if(p.le>0) lines.push('Giá lẻ: '+p.le.toLocaleString('vi-VN')+'đ/'+(p.dvt||'Cái'));
+  if(p.nhan>0) lines.push('Giá ĐL Nhận kho: '+p.nhan.toLocaleString('vi-VN')+'đ/'+(p.dvt||'Cái'));
+  if(p.giao>0) lines.push('Giá ĐL Đi giao: '+p.giao.toLocaleString('vi-VN')+'đ/'+(p.dvt||'Cái'));
+  var msg=lines.join('\n');
+  navigator.clipboard&&navigator.clipboard.writeText
+    ?navigator.clipboard.writeText(msg).then(function(){showToast('✅ Đã copy! Paste vào Zalo');}).catch(function(){fallbackCopy(msg);})
+    :fallbackCopy(msg);
+}
+// Áp dữ liệu TBVS (từ res.tbvs của getAll, hoặc gọi rời khi getAll thiếu)
+function applyTBVSData(res){
+  if(res && res.status==='ok' && res.data){
+    TBVS=res.data;
+    renderTBVS();
+  }
+}
+function fetchGiaTBVS(){
+  var APPS_URL='https://script.google.com/macros/s/AKfycbyrO8symCYOkWsGG0nRWPF7gpndC3mzEVUk15UvWrA0O81ZUumW-kX_gEOZhtCJ34bMVQ/exec';
+  window._onGiaTBVS=function(res){
+    applyTBVSData(res);
+    var s=document.getElementById('_tbvs_script'); if(s) s.remove();
+  };
+  var old=document.getElementById('_tbvs_script'); if(old) old.remove();
+  var s=document.createElement('script');
+  s.id='_tbvs_script';
+  var _tok=authTok();
+  s.src=APPS_URL+'?action=getGiaTBVS&k='+encodeURIComponent(APP_KEY)+'&t='+encodeURIComponent(_tok)+(_tok?'':'&g=1')+'&callback=_onGiaTBVS';
+  s.onerror=function(){ s.remove(); };
+  document.head.appendChild(s);
 }
 
 
