@@ -475,6 +475,28 @@ input::placeholder{color:var(--t3)}
    (cố định, có nút tròn nổi lên -14px) che mất */
 .tc{display:none;padding-bottom:110px;box-sizing:border-box}.tc.on{display:block}
 .tab-wrap{padding:16px 18px}
+
+/* ===== TAB VIDEO ===== */
+.video-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:600px){.video-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:900px){.video-grid{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:1200px){.video-grid{grid-template-columns:repeat(5,1fr)}}
+.video-card{cursor:pointer;border-radius:var(--r8);overflow:hidden;background:var(--bg2);border:1px solid var(--bd);transition:transform .15s,box-shadow .15s}
+.video-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.12)}
+.video-card-thumb{position:relative;width:100%;aspect-ratio:1/1;background:#F0EEEC;overflow:hidden}
+.video-card-thumb img{width:100%;height:100%;object-fit:cover}
+.video-card-play{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.18);
+}
+.video-card-play span{
+  width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.55);
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;
+  backdrop-filter:blur(2px);
+}
+.video-card-body{padding:8px 10px}
+.video-card-ma{font-size:12px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.video-card-le{font-size:11px;color:var(--t2);margin-top:2px}
 #ngoi-cat-bar{position:sticky;top:60px;z-index:20;background:var(--bg1);padding:8px 18px 6px;margin-bottom:0;border-bottom:1px solid var(--bd)}
 .ngoi-cat-link{display:block;text-align:center;padding:9px 12px;border:1.5px solid #C0232A;border-radius:8px;color:#C0232A;font-size:12px;font-weight:700;text-decoration:none}
 

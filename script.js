@@ -810,13 +810,13 @@ function swTab(t){
     });
     return;
   }
-  ['tra','sale','ngoi','keo','kinh','don','danhmuc','tbvs','son','timkiem'].forEach(function(x){
+  ['tra','sale','ngoi','keo','kinh','don','danhmuc','tbvs','son','timkiem','video'].forEach(function(x){
     var el=document.getElementById('tab-'+x); if(el) el.classList.toggle('on',x===t);
   });
   BOTTOM_NAV_TABS.forEach(function(x){
     var b=document.getElementById('bn-'+x); if(b) b.classList.toggle('on',x===t);
   });
-  ['timkiem','danhmuc','don','sale'].forEach(function(x){
+  ['timkiem','danhmuc','don','sale','video'].forEach(function(x){
     var b=document.getElementById('sn-'+x); if(b) b.classList.toggle('on',x===t);
   });
   document.querySelectorAll('.tb').forEach(function(b,i){
@@ -828,6 +828,56 @@ function swTab(t){
   if(t==='keo')   renderKeo();
   if(t==='kinh')  renderKinh();
   if(t==='don')   renderDon();
+  if(t==='video') renderVideoGrid();
+}
+
+// ===== TAB VIDEO: lưới sản phẩm đang có video TikTok/YouTube =====
+// Quét spExtra (keyed theo Mã SAP) tìm SP có tiktok/youtube, tra maToSap
+// ngược lại ra "ma" (mã hiển thị trên App) để lấy ảnh/giá từ DATA.
+function danhSachSPCoVideo(){
+  var sapToMa={};
+  Object.keys(maToSap).forEach(function(ma){ sapToMa[maToSap[ma]]=ma; });
+  var list=[];
+  Object.keys(spExtra).forEach(function(sap){
+    var ex=spExtra[sap];
+    if(!ex || (!ex.tiktok && !ex.youtube)) return;
+    var ma=sapToMa[sap]||sap;
+    var p=(typeof DATA!=='undefined'?DATA:[]).find(function(x){return x.ma===ma;});
+    list.push({ma:ma, kc:p?p.kc:(ex.kc||''), le:p?p.le:0, hasTiktok:!!ex.tiktok, hasYoutube:!!ex.youtube});
+  });
+  return list;
+}
+function renderVideoGrid(){
+  var el=document.getElementById('video-grid');
+  var emptyEl=document.getElementById('video-empty');
+  if(!el) return;
+  var list=danhSachSPCoVideo();
+  if(!list.length){
+    el.innerHTML='';
+    if(emptyEl) emptyEl.style.display='block';
+    return;
+  }
+  if(emptyEl) emptyEl.style.display='none';
+  el.innerHTML=list.map(function(v){
+    var imgUrl=timAnh(v.ma)||'';
+    var giaHtml=v.le>0?'<div class="video-card-le">'+v.le.toLocaleString('vi-VN')+'đ/m²</div>':'';
+    return '<div class="video-card" onclick="moVideoTuLuoi(\''+v.ma+'\')">'
+      +'<div class="video-card-thumb">'
+      +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">':'')
+      +'<div class="video-card-play"><span>▶</span></div>'
+      +'</div>'
+      +'<div class="video-card-body">'
+      +'<div class="video-card-ma">'+v.ma+'</div>'
+      +giaHtml
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+// Mở popup chi tiết sản phẩm, tự nhảy sang tab Video luôn (khách xem video
+// xong bấm 1 phát là thấy đủ thông tin giá/mô tả của đúng sản phẩm đó).
+function moVideoTuLuoi(ma){
+  showDP(ma);
+  setTimeout(function(){ dpSetTab('video'); },50);
 }
 
 // ===== BANNER TRANG CHỦ (Danh mục) — sửa mảng này để đổi nội dung banner =====

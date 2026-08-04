@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="DT Sales"/>
 <meta name="theme-color" content="#C0232A"/>
 <title>Đồng Tâm – Sales Tool</title>
-<link rel="stylesheet" href="style.css?v=nav28">
+<link rel="stylesheet" href="style.css?v=nav29">
 </head>
 <body>
 
@@ -96,7 +96,7 @@
   <button type="button" class="sn-item" id="sn-don" onclick="swTab('don')"><span class="sn-icon" style="position:relative">🛒<span id="sn-don-badge" class="sn-badge"></span></span><span>Đơn hàng</span></button>
   <button type="button" class="sn-item" onclick="openZaloNhanh()"><span class="sn-icon">💬</span><span>Zalo nhanh</span></button>
   <button type="button" class="sn-item" id="sn-sale" onclick="swTab('sale')"><span class="sn-icon">🔥</span><span>Sale</span></button>
-  <button type="button" class="sn-item sn-soon" onclick="showToast('🔜 Video — sắp ra mắt')"><span class="sn-icon">🎬</span><span>Video</span></button>
+  <button type="button" class="sn-item" id="sn-video" onclick="swTab('video')"><span class="sn-icon">🎬</span><span>Video</span></button>
   <button type="button" class="sn-item sn-soon" onclick="showToast('🔜 Tồn kho — sắp ra mắt')"><span class="sn-icon">📦</span><span>Tồn kho</span></button>
   <button type="button" class="sn-item sn-soon" onclick="showToast('🔜 AI tư vấn — sắp ra mắt')"><span class="sn-icon">🤖</span><span>AI tư vấn</span></button>
   <button type="button" class="sn-item sn-acct-btn" id="sn-taikhoan-btn" onclick="snTaiKhoanClick()">
@@ -137,6 +137,20 @@
   <div id="dm-banners"></div>
   <div class="nmuc-title">Danh mục ngành hàng</div>
   <div id="danhmuc-grid"></div>
+</div>
+
+<!-- TAB VIDEO: lưới sản phẩm đang có video TikTok/YouTube -->
+<div id="tab-video" class="tc" style="padding:16px 14px 110px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+    <span style="font-size:18px">🎬</span>
+    <span style="font-size:16px;font-weight:800">Video sản phẩm</span>
+  </div>
+  <p style="font-size:12px;color:var(--t2);margin:0 0 14px">Bấm vào 1 sản phẩm để xem video và thông tin chi tiết</p>
+  <div id="video-grid" class="video-grid"></div>
+  <div id="video-empty" style="display:none;text-align:center;padding:60px 20px;color:var(--t2)">
+    <div style="font-size:36px;margin-bottom:8px">🎬</div>
+    <div style="font-size:13px">Chưa có sản phẩm nào có video</div>
+  </div>
 </div>
 
 <!-- TAB 1: Tra mã -->
@@ -770,6 +784,6 @@
 
 
 
-<script src="script.js?v=nav63" defer></script>
+<script src="script.js?v=nav64" defer></script>
 </body>
 </html>
