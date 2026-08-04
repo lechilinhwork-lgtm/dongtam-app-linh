@@ -872,9 +872,82 @@ function renderVideoGrid(){
       +'</div>';
   }).join('');
 }
-// Mở popup chi tiết sản phẩm, tự nhảy sang tab Video luôn (khách xem video
-// xong bấm 1 phát là thấy đủ thông tin giá/mô tả của đúng sản phẩm đó).
+// Bấm vào 1 video trong lưới: Mobile mở feed cuộn dọc kiểu TikTok (đắm
+// chìm hơn), Desktop vẫn mở popup chi tiết + nhảy tab Video như cũ (đã có
+// sẵn khung 2 cột giá/video hiển thị song song, không cần feed riêng).
 function moVideoTuLuoi(ma){
+  if(window.innerWidth<768){ openVideoFeed(ma); return; }
+  showDP(ma);
+  setTimeout(function(){ dpSetTab('video'); },50);
+}
+
+// ===== VIDEO FEED (Mobile): cuộn dọc kiểu TikTok giữa các video sản phẩm =====
+var _vfObserver=null;
+function openVideoFeed(startMa){
+  var list=danhSachSPCoVideo();
+  if(!list.length) return;
+  var scrollEl=document.getElementById('vf-scroll');
+  scrollEl.innerHTML=list.map(function(v){
+    var sap=maToSap[v.ma];
+    var ex=sap?spExtra[sap]:null;
+    var type=ex&&ex.tiktok?'tiktok':'youtube';
+    var url=ex?(ex.tiktok||ex.youtube):'';
+    var imgUrl=timAnh(v.ma)||'';
+    var giaHtml=v.le>0?'<div class="vf-info-le">'+v.le.toLocaleString('vi-VN')+'đ/m²</div>':'';
+    return '<div class="vf-slide" data-ma="'+v.ma+'" data-vtype="'+type+'" data-vurl="'+escHtml(url)+'">'
+      +(imgUrl?'<div class="vf-slide-poster" style="background-image:url(\''+imgUrl+'\')"></div>':'')
+      +'<div class="vf-slide-thumb">'
+      +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async">':'')
+      +'<div class="vf-play-btn">▶</div>'
+      +'</div>'
+      +'<div class="vf-info">'
+      +'<div class="vf-info-ma">'+v.ma+'</div>'
+      +(v.kc?'<div class="vf-info-kc">'+v.kc+'</div>':'')
+      +giaHtml
+      +'<button class="vf-info-btn" onclick="event.stopPropagation();xemChiTietTuVideoFeed(\''+v.ma+'\')">📋 Xem chi tiết sản phẩm</button>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+
+  // Chỉ tạo iframe (autoplay) cho slide đang hiện rõ nhất trên màn hình -
+  // vừa đỡ hao pin/băng thông khi có hàng chục video, vừa "pause" tự nhiên
+  // video cũ khi cuộn qua (bỏ iframe = dừng phát).
+  if(_vfObserver) _vfObserver.disconnect();
+  _vfObserver=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      var slide=en.target;
+      if(en.isIntersecting && en.intersectionRatio>0.6){
+        if(slide.querySelector('iframe')) return;
+        var type=slide.dataset.vtype, url=slide.dataset.vurl;
+        if(!url) return;
+        var thumb=slide.querySelector('.vf-slide-thumb');
+        if(thumb) thumb.outerHTML=buildVideoIframeHtml(type,url);
+      } else {
+        var ifr=slide.querySelector('iframe');
+        if(ifr){
+          var imgUrl=timAnh(slide.dataset.ma)||'';
+          ifr.outerHTML='<div class="vf-slide-thumb">'
+            +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async">':'')
+            +'<div class="vf-play-btn">▶</div></div>';
+        }
+      }
+    });
+  },{root:scrollEl, threshold:[0,0.6]});
+  scrollEl.querySelectorAll('.vf-slide').forEach(function(s){ _vfObserver.observe(s); });
+
+  document.getElementById('video-feed').classList.add('on');
+  document.body.style.overflow='hidden';
+  var startSlide=scrollEl.querySelector('.vf-slide[data-ma="'+startMa+'"]');
+  if(startSlide) startSlide.scrollIntoView({block:'start'});
+}
+function closeVideoFeed(){
+  document.getElementById('video-feed').classList.remove('on');
+  document.body.style.overflow='';
+  if(_vfObserver){ _vfObserver.disconnect(); _vfObserver=null; }
+  document.getElementById('vf-scroll').innerHTML=''; // dừng hết video đang phát
+}
+function xemChiTietTuVideoFeed(ma){
+  closeVideoFeed();
   showDP(ma);
   setTimeout(function(){ dpSetTab('video'); },50);
 }
@@ -977,6 +1050,7 @@ function renderDanhMucGrid(){
     {icon:'🧱', ten:'Keo & bột chà ron', count:txtKeo,  tab:'keo',  grad:'linear-gradient(160deg,#E1F0E4,#BFE0C6)'},
     {icon:'💎', ten:'Gạch kính',         count:txtKinh, tab:'kinh', grad:'linear-gradient(160deg,#E3F2FD,#BBDEFB)'},
     {icon:'🔥', ten:'Đang Sale',         count:null,         tab:'sale', grad:'linear-gradient(160deg,#FFEBEE,#FFCDD2)', sale:true},
+    {icon:'🎬', ten:'Video sản phẩm',    count:(typeof danhSachSPCoVideo==='function'?danhSachSPCoVideo().length+' video':null), tab:'video', grad:'linear-gradient(160deg,#EDE7F6,#D1C4E9)'},
     {icon:'🚽', ten:'Thiết bị vệ sinh',  count:null,         tab:'tbvs', grad:'var(--bg2)', soon:true},
     {icon:'🪣', ten:'Sơn nước',          count:null,         tab:'son',  grad:'var(--bg2)', soon:true}
   ];
