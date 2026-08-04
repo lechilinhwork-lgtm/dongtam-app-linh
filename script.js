@@ -832,18 +832,17 @@ function swTab(t){
 }
 
 // ===== TAB VIDEO: lưới sản phẩm đang có video TikTok/YouTube =====
-// Quét spExtra (keyed theo Mã SAP) tìm SP có tiktok/youtube, tra maToSap
-// ngược lại ra "ma" (mã hiển thị trên App) để lấy ảnh/giá từ DATA.
+// Duyệt thẳng từ DATA (đã có "ma" - mã hiển thị/tên báo giá App đúng chuẩn)
+// rồi tra spExtra qua maToSap[p.ma] - KHÔNG suy ngược từ maToSap vì object
+// này có cả entry tự ánh xạ (maToSap[sap]=sap) chèn lẫn với entry thật
+// (maToSap[ma]=sap), đảo ngược dễ bị entry tự ánh xạ ghi đè sai mã.
 function danhSachSPCoVideo(){
-  var sapToMa={};
-  Object.keys(maToSap).forEach(function(ma){ sapToMa[maToSap[ma]]=ma; });
   var list=[];
-  Object.keys(spExtra).forEach(function(sap){
-    var ex=spExtra[sap];
+  (typeof DATA!=='undefined'?DATA:[]).forEach(function(p){
+    var sap=maToSap[p.ma];
+    var ex=sap?spExtra[sap]:null;
     if(!ex || (!ex.tiktok && !ex.youtube)) return;
-    var ma=sapToMa[sap]||sap;
-    var p=(typeof DATA!=='undefined'?DATA:[]).find(function(x){return x.ma===ma;});
-    list.push({ma:ma, kc:p?p.kc:(ex.kc||''), le:p?p.le:0, hasTiktok:!!ex.tiktok, hasYoutube:!!ex.youtube});
+    list.push({ma:p.ma, kc:p.kc, le:p.le, hasTiktok:!!ex.tiktok, hasYoutube:!!ex.youtube});
   });
   return list;
 }
