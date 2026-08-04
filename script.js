@@ -1187,9 +1187,13 @@ function renderTimKiemResults(){
 
     var mid = document.createElement('div');
     mid.style.cssText = 'flex:1;min-width:0';
+    // Gạch: p.ma là mã báo giá thật (đúng luôn). Ngói/Keo/Kính: p.ma ở tầng
+    // dữ liệu là Mã SAP nội bộ (không phải mã khách nhìn thấy) - tên/mã báo
+    // giá thật nằm ở p.ten, phải ưu tiên hiển thị p.ten cho 3 ngành này.
+    var tenHienThi = r.nganh==='gach' ? (p.ma||'') : (p.ten||p.ma||'');
     var ten = document.createElement('div');
     ten.style.cssText = 'font-size:13.5px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-    ten.textContent = p.ma||'';
+    ten.textContent = tenHienThi;
     var sub = document.createElement('div');
     sub.style.cssText = 'font-size:11.5px;color:var(--t2);margin-top:2px';
     sub.textContent = r.ten + (p.kc?(' · '+p.kc):'');
