@@ -1935,6 +1935,13 @@ var CT2_DATA=[{"ma": "100DONGVAN007-FP-H+", "kc": "1000x1000", "cat": "porcelain
 var ct1Loaded=true, ct2Loaded=true;
 
 function renderSale(){
+  // Tab Sale đang ẩn (chưa mở) -> không build DOM/tải ảnh ngay, để dành lúc
+  // người dùng thực sự bấm vào tab Sale (swTab đã tự gọi lại renderSale()
+  // sau khi thêm class "on"). Tránh tải ngầm hàng trăm ảnh sản phẩm mỗi khi
+  // đồng bộ giá xong trong lúc người dùng đang xem tab khác - đây là
+  // nguyên nhân chính khiến trang "load" rất chậm dù dữ liệu giá đã xong.
+  var _tabSaleEl=document.getElementById('tab-sale');
+  if(_tabSaleEl && !_tabSaleEl.classList.contains('on')) return;
   var q=(document.getElementById('ssq').value||'').trim().toUpperCase();
   var sf2 = window._sf2||'ct1';  // Mặc định hiện CT1
 
