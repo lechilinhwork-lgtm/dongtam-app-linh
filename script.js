@@ -1922,8 +1922,12 @@ function renderSale(){
   }
   if(hasLocNangCao()) list=list.filter(function(p){return khopLocNangCao(p.ma);});
   if(q) list=list.filter(function(p){ return p.ma.toUpperCase().includes(q)||(p.kc||'').includes(q); });
+  capNhatMuaTangFilterBar();
+  if(sf2==='ct1' && curMuaTangFilter>0 && !laKhachHang()){
+    list=list.filter(function(p){ var mt=timMuaTang(p.ma); return mt && mt.tangThung===curMuaTangFilter; });
+  }
 
-  document.getElementById('scount').textContent=list.length+' mã đang sale';
+  document.getElementById('scount').textContent=list.length+' mã đang sale'+(curMuaTangFilter>0?' · Mua 10 tặng '+curMuaTangFilter:'');
   var el=document.getElementById('slist'); el.innerHTML='';
 
   var isDesktop = (window.innerWidth||document.documentElement.clientWidth||0)>=768;
@@ -2082,11 +2086,15 @@ function renderSale(){
           +'🏷️ NV: giảm thêm '+xk.minPct+'–'+xk.maxPct+'%</div>';
       }
     }
+    var tkM=timTonKhoTheoQuyen(p.ma);
+    var tkMDot=tkM?(tkM.tier&&tkM.tier.nhanh>0?'🟢':tkM.tier&&tkM.tier.mai>0?'🟡':'🔴'):'';
+    var tkMColor=tkM?(tkM.tier&&tkM.tier.nhanh>0?'#2E7D32':tkM.tier&&tkM.tier.mai>0?'#E65100':'#C62828'):'#999';
+    var tkMHtml=tkM?'<p style="font-size:10.5px;font-weight:600;color:'+tkMColor+';margin-top:3px">'+tkMDot+' Còn '+fmtTkCard(tkM.tong,tkM.dvt)+'</p>':'';
     info.innerHTML='<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px">'
       +'<div><p style="font-size:12px;font-weight:700;margin-bottom:1px">'+p.ma+'</p>'
       +'<p style="font-size:10px;color:var(--t2)">'+p.kc+badgeCT+'</p></div>'
       +(save>0?'<span class="sale-badge">-'+save+'%</span>':'')+'</div>'
-      +priceHtml+ctKichCauHtml;
+      +priceHtml+tkMHtml+ctKichCauHtml;
     card.appendChild(info);
 
     var btnRow=document.createElement('div');
@@ -2143,7 +2151,26 @@ function setSF2(v){
     btn.className='fb'+(on?' on':'');
     btn.style.cssText='flex:1;font-size:12px;padding:6px 0;text-align:center'+(on?';background:#C0232A;color:#fff;border-color:#C0232A':'');
   });
+  if(v!=='ct1') setMuaTangFilter(0); // CT2 (xả kho) không có chương trình mua tặng
   renderSale();
+}
+
+// ===== LỌC "MUA 10 TẶNG 1/2" (CT1_MuaTang) - chỉ áp dụng khi đang xem CT1,
+// chỉ NVKD/Admin thấy bộ lọc (khách hàng không thấy thông tin chiết khấu nội bộ này). =====
+var curMuaTangFilter=0; // 0=Tất cả, 1/2=số thùng tặng
+function setMuaTangFilter(v){
+  curMuaTangFilter=v;
+  [0,1,2].forEach(function(k){
+    var b=document.getElementById('smt-'+k);
+    if(b) b.classList.toggle('on', k===v);
+  });
+  renderSale();
+}
+function capNhatMuaTangFilterBar(){
+  var bar=document.getElementById('sale-muatang-filter');
+  if(!bar) return;
+  var show=(window._sf2||'ct1')==='ct1' && !laKhachHang();
+  bar.style.display=show?'flex':'none';
 }
 
 // Fetch data CT1 / CT2 từ Apps Script
