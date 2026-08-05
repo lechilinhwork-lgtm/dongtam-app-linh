@@ -2817,11 +2817,21 @@ function closeKeoDetail(){
 // ===== THIẾT BỊ VỆ SINH (TBVS) =====
 var TBVS=[];
 var curTBVSMa=null;
+// Icon riêng theo từng nhóm thay vì dùng chung 1 icon 🚽 cho mọi thứ -
+// giúp lướt mắt phân biệt nhanh Cầu/Bồn tiểu/Lavabo/Combo/Phụ kiện.
+var TBVS_GROUP_ICON={
+  'Cầu 1 khối Pearl':'🚽',
+  'Bồn tiểu Pearl':'🚹',
+  'Lavabo Pearl':'🚰',
+  'Combo cầu + Lavabo Pearl':'📦',
+  'Phụ kiện':'🔧'
+};
+function tbvsIconCuaNhom(nhom){ return TBVS_GROUP_ICON[nhom]||'🚽'; }
 function renderTBVS(){
   var el=document.getElementById('tbvs-list'); if(!el) return;
   el.innerHTML='';
   if(!TBVS.length){
-    el.innerHTML='<div style="padding:40px 10px;text-align:center;color:var(--t2);font-size:13px">Đang tải dữ liệu Thiết bị vệ sinh...</div>';
+    el.innerHTML='<div style="grid-column:1/-1;padding:40px 10px;text-align:center;color:var(--t2);font-size:13px">Đang tải dữ liệu Thiết bị vệ sinh...</div>';
     return;
   }
   var groups={}, order=[];
@@ -2830,33 +2840,34 @@ function renderTBVS(){
     if(!groups[g]){ groups[g]=[]; order.push(g); }
     groups[g].push(p);
   });
+  var html='';
   order.forEach(function(g){
-    var h=document.createElement('div');
-    h.style.cssText='font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin:14px 2px 8px';
-    h.textContent=g;
-    el.appendChild(h);
+    html+='<div class="tbvs-group-title">'+tbvsIconCuaNhom(g)+' '+g+' <span style="font-weight:600;color:var(--t3)">('+groups[g].length+')</span></div>';
     groups[g].forEach(function(p){
-      var div=document.createElement('div'); div.className='mk';
-      div.style.cursor='pointer';
-      div.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex:1">'
-        +getImgHtml(p.ma,48,'🚽')
-        +'<div style="flex:1;min-width:0">'
-        +'<p style="font-size:13px;font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.ten||p.tenHD)+'</p>'
-        +'<p style="font-size:11px;color:var(--t2)">'+(p.tenHD?p.tenHD+' · ':'')+'Nhận kho <b style="color:#0068FF">'+(p.nhan>0?p.nhan.toLocaleString('vi-VN')+'đ':'–')+'</b></p>'
-        +'</div></div>'
-        +'<div style="font-size:11px;color:var(--t2);margin-left:6px;flex-shrink:0">›</div>';
-      div.addEventListener('click', function(){ showTBVS(p.ma); });
-      el.appendChild(div);
+      var imgUrl=timAnh(p.ma)||'';
+      var icon=tbvsIconCuaNhom(g);
+      html+='<div class="tbvs-card" onclick="showTBVS(\''+p.ma+'\')">'
+        +'<div class="tbvs-card-thumb">'
+        +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">':icon)
+        +'</div>'
+        +'<div class="tbvs-card-body">'
+        +'<div class="tbvs-card-ma">'+(p.ten||p.tenHD)+'</div>'
+        +'<div class="tbvs-card-sub">'+(p.tenHD||'')+'</div>'
+        +'<div class="tbvs-card-gia">'+(p.nhan>0?p.nhan.toLocaleString('vi-VN')+'đ':'–')+' <small>nhận kho</small></div>'
+        +'</div>'
+        +'</div>';
     });
   });
+  el.innerHTML=html;
 }
 function showTBVS(ma){
   curTBVSMa=ma;
   var p=TBVS.find(function(x){return x.ma===ma;}); if(!p) return;
-  var imgWrap=document.getElementById('td-img-wrap');
   var imgUrl=timAnh(ma);
-  if(imgUrl){ imgWrap.style.display='block'; document.getElementById('td-img').src=imgUrl; }
-  else { imgWrap.style.display='none'; }
+  var imgEl=document.getElementById('td-img');
+  var fallbackEl=document.getElementById('td-img-fallback');
+  if(imgUrl){ imgEl.src=imgUrl; imgEl.style.display='block'; fallbackEl.style.display='none'; }
+  else { imgEl.removeAttribute('src'); imgEl.style.display='none'; fallbackEl.style.display='flex'; fallbackEl.textContent=tbvsIconCuaNhom(p.nhom); }
   document.getElementById('td-ten').textContent=p.ten||p.tenHD;
   document.getElementById('td-kc').textContent=(p.tenHD?p.tenHD+' · ':'')+'ĐVT: '+(p.dvt||'Cái');
   document.getElementById('td-le').textContent=p.le>0?p.le.toLocaleString('vi-VN')+'đ':'–';

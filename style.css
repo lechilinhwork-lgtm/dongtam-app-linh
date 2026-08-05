@@ -718,7 +718,76 @@ input::placeholder{color:var(--t3)}
   }
   .nk-price-col{flex:1;min-width:0}
   .nk-price-col .pr-grid:first-child{margin-top:2px}
+  /* TBVS: ảnh + tên/giá nằm ngang trên desktop, giống Ngói/Keo */
+  .td-hero{flex-direction:row !important;align-items:flex-start !important;gap:20px}
+  .td-hero .td-img-wrap{width:200px;flex-shrink:0;margin-bottom:0 !important;box-shadow:0 6px 18px rgba(0,0,0,.14)}
+  .td-hero-info{flex:1;min-width:0}
 }
+
+/* ===== THIẾT BỊ VỆ SINH (TBVS) ===== */
+/* Ảnh SP lên đầu popup (trước bảng giá) - thấy ngay sản phẩm trông ra sao,
+   giống chuẩn TMĐT, thay vì phải cuộn qua cụm giá mới thấy ảnh như trước. */
+.td-hero{display:flex;flex-direction:column;gap:14px;margin-bottom:4px}
+.td-img-wrap{
+  position:relative;width:100%;aspect-ratio:1;border-radius:var(--r8);
+  overflow:hidden;background:linear-gradient(160deg,#E3F2FD,#F5F9FF);
+}
+.td-img-wrap img{position:relative;z-index:1}
+.td-img-wrap img[src=""],.td-img-wrap img:not([src]){display:none}
+.td-img-fallback{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:64px;color:#90A4AE;
+}
+.td-hero-info{width:100%}
+/* Nút hành động chính to, tách hẳn khỏi nhóm nút phụ - không còn ngang
+   hàng cùng cỡ với "Chia sẻ ảnh"/Zalo như thiết kế cũ gây khó phân biệt. */
+.td-btn-main{
+  width:100%;padding:14px;border:none;border-radius:var(--r8);
+  background:#0068FF;color:#fff;font-size:15px;font-weight:800;
+  cursor:pointer;font-family:var(--f);margin-bottom:8px;
+  box-shadow:0 4px 14px rgba(0,104,255,.3);
+  transition:transform .12s;
+}
+.td-btn-main:active{transform:scale(.98)}
+.td-btn-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.td-btn-sub{
+  padding:9px 4px;border:1.5px solid var(--bd2);border-radius:8px;
+  background:var(--bg1);color:var(--t1);font-size:11px;font-weight:700;
+  cursor:pointer;font-family:var(--f);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.td-btn-sub:hover{background:var(--bg2)}
+
+/* Lưới thẻ sản phẩm (thay danh sách dòng dài) - ảnh lớn, dễ nhận diện,
+   responsive theo màn hình: 2 cột Mobile -> tối đa 6 cột Desktop rộng. */
+.tbvs-group-title{
+  grid-column:1/-1;font-size:12px;font-weight:800;color:var(--t2);
+  text-transform:uppercase;letter-spacing:.4px;margin:16px 2px 2px;
+  display:flex;align-items:center;gap:6px;
+}
+.tbvs-group-title:first-child{margin-top:6px}
+.tbvs-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:600px){.tbvs-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:900px){.tbvs-grid{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:1200px){.tbvs-grid{grid-template-columns:repeat(5,1fr)}}
+@media(min-width:1500px){.tbvs-grid{grid-template-columns:repeat(6,1fr)}}
+.tbvs-card{
+  cursor:pointer;border-radius:var(--r8);overflow:hidden;background:var(--bg1);
+  border:1px solid var(--bd);transition:transform .15s,box-shadow .15s;
+  display:flex;flex-direction:column;
+}
+.tbvs-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.1)}
+.tbvs-card-thumb{
+  position:relative;width:100%;aspect-ratio:1;
+  background:linear-gradient(160deg,#E3F2FD,#F5F9FF);
+  display:flex;align-items:center;justify-content:center;font-size:40px;color:#90A4AE;
+  overflow:hidden;
+}
+.tbvs-card-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
+.tbvs-card-body{padding:9px 10px 10px}
+.tbvs-card-ma{font-size:12.5px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:1px}
+.tbvs-card-sub{font-size:10.5px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:5px}
+.tbvs-card-gia{font-size:13px;font-weight:800;color:#0068FF}
+.tbvs-card-gia small{font-size:10px;font-weight:600;color:var(--t2)}
 
 /* ===== DETAIL POPUP ===== */
 #dp-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:199;touch-action:none}
