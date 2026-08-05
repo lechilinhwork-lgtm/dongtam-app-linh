@@ -2846,6 +2846,11 @@ function renderTBVS(){
     groups[g].forEach(function(p){
       var imgUrl=timAnh(p.ma)||'';
       var icon=tbvsIconCuaNhom(g);
+      var tk=(typeof timTonKhoTheoQuyen==='function')?timTonKhoTheoQuyen(p.ma):null;
+      var tkDot=tk?(tk.tier&&tk.tier.nhanh>0?'🟢':tk.tier&&tk.tier.mai>0?'🟡':'🔴'):'';
+      // Ưu tiên ĐVT sạch từ bảng giá (Bộ/Cái) thay vì mã nội bộ trong dữ liệu
+      // tồn kho (PAC/EA) - chỉ dùng tk.dvt khi bảng giá không có ĐVT.
+      var tkHtml=tk?'<div class="tbvs-card-tk">'+tkDot+' Còn '+(typeof fmtTkCard==='function'?fmtTkCard(tk.tong,p.dvt||tk.dvt):Math.floor(tk.tong)+' '+(p.dvt||''))+'</div>':'';
       html+='<div class="tbvs-card" onclick="showTBVS(\''+p.ma+'\')">'
         +'<div class="tbvs-card-thumb">'
         +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">':icon)
@@ -2853,7 +2858,10 @@ function renderTBVS(){
         +'<div class="tbvs-card-body">'
         +'<div class="tbvs-card-ma">'+(p.ten||p.tenHD)+'</div>'
         +'<div class="tbvs-card-sub">'+(p.tenHD||'')+'</div>'
+        +(p.le>0?'<div class="tbvs-card-le">Giá lẻ <b>'+p.le.toLocaleString('vi-VN')+'đ</b></div>':'')
         +'<div class="tbvs-card-gia">'+(p.nhan>0?p.nhan.toLocaleString('vi-VN')+'đ':'–')+' <small>nhận kho</small></div>'
+        +(p.giao>0?'<div class="tbvs-card-giao">→ '+p.giao.toLocaleString('vi-VN')+'đ <small>giao hàng</small></div>':'')
+        +tkHtml
         +'</div>'
         +'</div>';
     });
