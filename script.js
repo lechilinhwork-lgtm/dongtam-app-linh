@@ -2845,6 +2845,22 @@ function renderTBVS(){
     el.innerHTML='<div style="grid-column:1/-1;padding:40px 10px;text-align:center;color:var(--t2);font-size:13px">Đang tải dữ liệu Thiết bị vệ sinh...</div>';
     return;
   }
+  // Combo (Cầu + Lavabo) không có tồn kho riêng trong kho vật lý - lấy tồn kho
+  // của TỪNG cấu kiện (cầu, lavabo - parse mã từ tenHD "Cầu <mã> + Lavabo <mã>")
+  // rồi dùng số NHỎ HƠN, vì lắp được bao nhiêu bộ phụ thuộc vào cấu kiện ít hơn.
+  function tkComboCauLavabo(p){
+    var m=/Cầu\s+(\S+)\s*\+\s*Lavabo\s+(\S+)/i.exec(p.tenHD||'');
+    if(!m) return null;
+    var c1=TBVS.find(function(x){return x.ten===m[1];});
+    var c2=TBVS.find(function(x){return x.ten===m[2];});
+    var tk1=c1&&typeof timTonKhoTheoQuyen==='function'?timTonKhoTheoQuyen(c1.ma):null;
+    var tk2=c2&&typeof timTonKhoTheoQuyen==='function'?timTonKhoTheoQuyen(c2.ma):null;
+    if(!tk1&&!tk2) return null;
+    var tong=Math.min(tk1?tk1.tong:Infinity, tk2?tk2.tong:Infinity);
+    if(tong===Infinity) return null;
+    var base=tk1||tk2;
+    return {tong:tong, dvt:base.dvt, tier:base.tier};
+  }
   var groups={}, order=[];
   TBVS.forEach(function(p){
     var g=p.nhom||'Khác';
@@ -2853,11 +2869,20 @@ function renderTBVS(){
   });
   var html='';
   order.forEach(function(g){
-    html+='<div class="tbvs-group-title">'+tbvsIconCuaNhom(g)+' '+g+' <span style="font-weight:600;color:var(--t3)">('+groups[g].length+')</span></div>';
-    groups[g].forEach(function(p){
+    var isCombo=(g==='Combo cầu + Lavabo Pearl');
+    var visible=groups[g].filter(function(p){
+      var tk=isCombo?tkComboCauLavabo(p):((typeof timTonKhoTheoQuyen==='function')?timTonKhoTheoQuyen(p.ma):null);
+      p._tkCache=tk;
+      // Chỉ ẩn khi CÓ dữ liệu tồn kho thật và = 0 (hết hàng) - không ẩn sản
+      // phẩm chưa được theo dõi tồn kho (tk===null).
+      return !(tk && tk.tong<=0);
+    });
+    if(!visible.length) return;
+    html+='<div class="tbvs-group-title">'+tbvsIconCuaNhom(g)+' '+g+' <span style="font-weight:600;color:var(--t3)">('+visible.length+')</span></div>';
+    visible.forEach(function(p){
       var imgUrl=timAnh(p.ma)||'';
       var icon=tbvsIconCuaNhom(g);
-      var tk=(typeof timTonKhoTheoQuyen==='function')?timTonKhoTheoQuyen(p.ma):null;
+      var tk=p._tkCache;
       var tkDot=tk?(tk.tier&&tk.tier.nhanh>0?'🟢':tk.tier&&tk.tier.mai>0?'🟡':'🔴'):'';
       // Ưu tiên ĐVT sạch từ bảng giá (Bộ/Cái) thay vì mã nội bộ trong dữ liệu
       // tồn kho (PAC/EA) - chỉ dùng tk.dvt khi bảng giá không có ĐVT.
