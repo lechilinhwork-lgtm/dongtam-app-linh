@@ -2905,9 +2905,8 @@ function renderTBVS(){
     var visible=groups[g].filter(function(p){
       var tk=isCombo?tkComboCauLavabo(p):((typeof timTonKhoTheoQuyen==='function')?timTonKhoTheoQuyen(p.ma):null);
       p._tkCache=tk;
-      // Chỉ ẩn khi CÓ dữ liệu tồn kho thật và = 0 (hết hàng) - không ẩn sản
-      // phẩm chưa được theo dõi tồn kho (tk===null).
-      return !(tk && tk.tong<=0);
+      // Ẩn khi KHÔNG tra được tồn kho (chưa có dữ liệu) hoặc tồn = 0 (hết hàng).
+      return !!(tk && tk.tong>0);
     });
     if(!visible.length) return;
     html+='<div class="tbvs-group-title">'+tbvsIconCuaNhom(g)+' '+g+' <span style="font-weight:600;color:var(--t3)">('+visible.length+')</span></div>';
