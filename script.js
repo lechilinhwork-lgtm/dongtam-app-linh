@@ -149,6 +149,17 @@ function registerAutoCycle(thumbEl, ma){
 function applyGiaGach(res){
   if(!res||!res.data||!res.data.length) return;
   var rows = res.data;
+  // Dọn mã cũ: nếu 1 mã gạch (không phải mã đến từ CT1/CT2 - đã có logic
+  // reset riêng ở mergeCTintoDATA) từng được thêm vào DATA ở lần tải trước
+  // nhưng lần tải mới nhất từ Sheet không còn nữa (đã xóa/sửa mã trên Sheet),
+  // thì phải xóa khỏi DATA - nếu không mã cũ tồn tại mãi trong bộ nhớ trình
+  // duyệt cho tới khi đóng hẳn tab, gây hiện tượng "mã ma" khi tìm kiếm.
+  var liveMa = {};
+  rows.forEach(function(row){ var m=String(row.ma||'').trim(); if(m) liveMa[m]=true; });
+  for(var i=DATA.length-1;i>=0;i--){
+    var d=DATA[i];
+    if(!d._fromCT && d.ma && !liveMa[d.ma]) DATA.splice(i,1);
+  }
   rows.forEach(function(row){
     var ma = String(row.ma||'').trim();
     if(!ma) return;
