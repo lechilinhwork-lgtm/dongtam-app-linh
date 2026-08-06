@@ -2408,7 +2408,7 @@ function ngoiTonKhoText(p){
   var vpt=ngoiVienPerThung(p);
   var thung=vpt>0?Math.floor(tk.tong/vpt):0;
   var dot=tk.tier&&tk.tier.nhanh>0?'🟢':tk.tier&&tk.tier.mai>0?'🟡':'🔴';
-  return dot+' Còn '+tk.tong.toLocaleString('vi-VN')+' '+(tk.dvt||'viên')+(thung>0?' (≈'+thung+' thùng)':'');
+  return dot+' Còn '+Math.floor(tk.tong).toLocaleString('vi-VN')+' viên'+(thung>0?' (≈'+thung+' thùng)':'');
 }
 
 // Card 1 nhóm ngói (VD "Ngói lợp" của dòng đang chọn) + dải chọn màu
