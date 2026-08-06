@@ -595,6 +595,10 @@
 <!-- TAB THIẾT BỊ VỆ SINH -->
 <div id="tab-tbvs" class="tc">
   <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Thiết bị vệ sinh Đồng Tâm Pearl · Giá <b>đồng/bộ, đồng/cái</b></p>
+  <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--t2);margin-bottom:12px;cursor:pointer;user-select:none">
+    <input type="checkbox" id="tbvs-chi-con-hang" checked onchange="toggleTBVSChiConHang()" style="width:16px;height:16px;accent-color:#0068FF;cursor:pointer">
+    Chỉ hiện sản phẩm còn hàng <span id="tbvs-an-count" style="color:var(--t3)"></span>
+  </label>
   <div id="tbvs-detail" class="nk-detail td-detail" style="border-top:4px solid #0068FF">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
       <button onclick="tbvsNav(-1)" title="Sản phẩm trước" style="flex-shrink:0;width:32px;height:32px;border:1.5px solid var(--bd2);border-radius:50%;background:var(--bg1);font-size:16px;cursor:pointer;color:var(--t1)">‹</button>
@@ -871,6 +875,6 @@
 
 
 
-<script src="script.js?v=nav83" defer></script>
+<script src="script.js?v=nav84" defer></script>
 </body>
 </html>

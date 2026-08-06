@@ -2886,6 +2886,12 @@ function tenDepTBVS(p){
   }
   return p.tenHD||p.ten;
 }
+var tbvsChiConHang=true;
+function toggleTBVSChiConHang(){
+  var cb=document.getElementById('tbvs-chi-con-hang');
+  tbvsChiConHang=cb?cb.checked:true;
+  renderTBVS();
+}
 function renderTBVS(){
   var el=document.getElementById('tbvs-list'); if(!el) return;
   el.innerHTML='';
@@ -2899,15 +2905,20 @@ function renderTBVS(){
     if(!groups[g]){ groups[g]=[]; order.push(g); }
     groups[g].push(p);
   });
-  var html='';
+  var html='', totalCount=0, hiddenCount=0;
   order.forEach(function(g){
     var isCombo=(g==='Combo cầu + Lavabo Pearl');
+    totalCount+=groups[g].length;
     var visible=groups[g].filter(function(p){
       var tk=isCombo?tkComboCauLavabo(p):((typeof timTonKhoTheoQuyen==='function')?timTonKhoTheoQuyen(p.ma):null);
       p._tkCache=tk;
-      // Ẩn khi KHÔNG tra được tồn kho (chưa có dữ liệu) hoặc tồn = 0 (hết hàng).
-      return !!(tk && tk.tong>0);
+      // "Chỉ còn hàng": ẩn khi KHÔNG tra được tồn kho hoặc tồn = 0 (hết hàng).
+      // Bỏ chọn -> hiện tất cả, không lọc theo tồn kho.
+      var conHang=!!(tk && tk.tong>0);
+      if(!tbvsChiConHang) return true;
+      return conHang;
     });
+    hiddenCount+=groups[g].length-visible.length;
     if(!visible.length) return;
     html+='<div class="tbvs-group-title">'+tbvsIconCuaNhom(g)+' '+g+' <span style="font-weight:600;color:var(--t3)">('+visible.length+')</span></div>';
     visible.forEach(function(p){
@@ -2933,7 +2944,9 @@ function renderTBVS(){
         +'</div>';
     });
   });
-  el.innerHTML=html;
+  el.innerHTML=html || '<div style="grid-column:1/-1;padding:30px 10px;text-align:center;color:var(--t2);font-size:13px">Không có sản phẩm nào còn hàng - bỏ chọn "Chỉ hiện còn hàng" để xem tất cả.</div>';
+  var countEl=document.getElementById('tbvs-an-count');
+  if(countEl) countEl.textContent = (tbvsChiConHang && hiddenCount>0) ? '(đang ẩn '+hiddenCount+'/'+totalCount+' mã)' : '';
 }
 function showTBVS(ma){
   curTBVSMa=ma;
