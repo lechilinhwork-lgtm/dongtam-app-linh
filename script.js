@@ -2838,28 +2838,44 @@ var TBVS_GROUP_ICON={
   'Phụ kiện':'🔧'
 };
 function tbvsIconCuaNhom(nhom){ return TBVS_GROUP_ICON[nhom]||'🚽'; }
+// Combo (Cầu + Lavabo) không có tồn kho riêng trong kho vật lý - lấy tồn kho
+// của TỪNG cấu kiện (cầu, lavabo - parse mã từ tenHD "Cầu <mã> + Lavabo <mã>")
+// rồi dùng số NHỎ HƠN, vì lắp được bao nhiêu bộ phụ thuộc vào cấu kiện ít hơn.
+function comboParts(p){
+  var m=/Cầu\s+(\S+)\s*\+\s*Lavabo\s+(\S+)/i.exec(p.tenHD||'');
+  if(!m) return null;
+  var c1=TBVS.find(function(x){return x.ten===m[1];});
+  var c2=TBVS.find(function(x){return x.ten===m[2];});
+  return {c1:c1, c2:c2};
+}
+function tkComboCauLavabo(p){
+  var parts=comboParts(p); if(!parts) return null;
+  var c1=parts.c1, c2=parts.c2;
+  var tk1=c1&&typeof timTonKhoTheoQuyen==='function'?timTonKhoTheoQuyen(c1.ma):null;
+  var tk2=c2&&typeof timTonKhoTheoQuyen==='function'?timTonKhoTheoQuyen(c2.ma):null;
+  if(!tk1&&!tk2) return null;
+  var tong=Math.min(tk1?tk1.tong:Infinity, tk2?tk2.tong:Infinity);
+  if(tong===Infinity) return null;
+  var base=tk1||tk2;
+  return {tong:tong, dvt:base.dvt, tier:base.tier};
+}
+// Tên combo thân thiện: "Cầu <mã> + Lavabo <mã>" thô -> ghép tên mô tả của
+// 2 cấu kiện thật ("Cầu Pearl 1 (...) + Lavabo dương bàn (tre)").
+function tenDepTBVS(p){
+  var parts=comboParts(p);
+  if(parts && (parts.c1||parts.c2)){
+    var t1=parts.c1?(parts.c1.tenHD||parts.c1.ten):null;
+    var t2=parts.c2?('Lavabo '+((parts.c2.tenHD||parts.c2.ten).replace(/^Lavabo\s*/i,''))):null;
+    return [t1,t2].filter(Boolean).join(' + ');
+  }
+  return p.tenHD||p.ten;
+}
 function renderTBVS(){
   var el=document.getElementById('tbvs-list'); if(!el) return;
   el.innerHTML='';
   if(!TBVS.length){
     el.innerHTML='<div style="grid-column:1/-1;padding:40px 10px;text-align:center;color:var(--t2);font-size:13px">Đang tải dữ liệu Thiết bị vệ sinh...</div>';
     return;
-  }
-  // Combo (Cầu + Lavabo) không có tồn kho riêng trong kho vật lý - lấy tồn kho
-  // của TỪNG cấu kiện (cầu, lavabo - parse mã từ tenHD "Cầu <mã> + Lavabo <mã>")
-  // rồi dùng số NHỎ HƠN, vì lắp được bao nhiêu bộ phụ thuộc vào cấu kiện ít hơn.
-  function tkComboCauLavabo(p){
-    var m=/Cầu\s+(\S+)\s*\+\s*Lavabo\s+(\S+)/i.exec(p.tenHD||'');
-    if(!m) return null;
-    var c1=TBVS.find(function(x){return x.ten===m[1];});
-    var c2=TBVS.find(function(x){return x.ten===m[2];});
-    var tk1=c1&&typeof timTonKhoTheoQuyen==='function'?timTonKhoTheoQuyen(c1.ma):null;
-    var tk2=c2&&typeof timTonKhoTheoQuyen==='function'?timTonKhoTheoQuyen(c2.ma):null;
-    if(!tk1&&!tk2) return null;
-    var tong=Math.min(tk1?tk1.tong:Infinity, tk2?tk2.tong:Infinity);
-    if(tong===Infinity) return null;
-    var base=tk1||tk2;
-    return {tong:tong, dvt:base.dvt, tier:base.tier};
   }
   var groups={}, order=[];
   TBVS.forEach(function(p){
@@ -2892,7 +2908,7 @@ function renderTBVS(){
         +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">':icon)
         +'</div>'
         +'<div class="tbvs-card-body">'
-        +'<div class="tbvs-card-ma">'+(p.tenHD||p.ten)+'</div>'
+        +'<div class="tbvs-card-ma">'+tenDepTBVS(p)+'</div>'
         +(p.ten?'<div class="tbvs-card-sub">Mã: '+p.ten+'</div>':'')
         +(p.le>0?'<div class="tbvs-card-le">Giá lẻ <b>'+p.le.toLocaleString('vi-VN')+'đ</b></div>':'')
         +'<div class="tbvs-card-gia">'+(p.nhan>0?p.nhan.toLocaleString('vi-VN')+'đ':'–')+' <small>nhận kho</small></div>'
@@ -2912,7 +2928,7 @@ function showTBVS(ma){
   var fallbackEl=document.getElementById('td-img-fallback');
   if(imgUrl){ imgEl.src=imgUrl; imgEl.style.display='block'; fallbackEl.style.display='none'; }
   else { imgEl.removeAttribute('src'); imgEl.style.display='none'; fallbackEl.style.display='flex'; fallbackEl.textContent=tbvsIconCuaNhom(p.nhom); }
-  document.getElementById('td-ten').textContent=p.tenHD||p.ten;
+  document.getElementById('td-ten').textContent=tenDepTBVS(p);
   document.getElementById('td-kc').textContent=(p.ten?'Mã: '+p.ten+' · ':'')+'ĐVT: '+(p.dvt||'Cái');
   document.getElementById('td-le').textContent=p.le>0?p.le.toLocaleString('vi-VN')+'đ':'–';
   document.getElementById('td-nhan').textContent=p.nhan>0?p.nhan.toLocaleString('vi-VN')+'đ':'–';
@@ -2968,7 +2984,7 @@ function themTBVSVaoDon(){
 function shareZaloTBVS(ma){
   var p=TBVS.find(function(x){return x.ma===ma;}); if(!p) return;
   var lines=['ĐỒNG TÂM KV23 – THIẾT BỊ VỆ SINH'];
-  lines.push('📌 '+(p.tenHD||p.ten));
+  lines.push('📌 '+tenDepTBVS(p));
   if(p.ten) lines.push('Mã: '+p.ten);
   lines.push('━━━━━━━━━━━━━━');
   if(p.le>0) lines.push('Giá lẻ: '+p.le.toLocaleString('vi-VN')+'đ/'+(p.dvt||'Cái'));
