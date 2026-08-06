@@ -2319,6 +2319,7 @@ var NGOI_COLORS={
 };
 // Thư mục Drive chứa Catalogue + hướng dẫn thi công (công khai, khách lẻ xem được)
 var NGOI_CATALOG_URL='https://drive.google.com/drive/folders/1disIAjjAOhnVgPs4F1eKLxJZgDl7wnqZ?usp=sharing';
+var TBVS_CATALOG_URL='https://drive.google.com/drive/folders/1bPoyFAvyUJlSOnp67h5V6mXjYlbX6vhh?hl=vi';
 var curNgoiDong='TITAN';
 var curNgoiMau={TITAN:'TITAN001',ALPHA:'ALPHA002'}; // ALPHA001 phải đặt hàng trước nên mặc định 002
 
@@ -2893,8 +2894,17 @@ function toggleTBVSChiConHang(){
   tbvsChiConHang=cb?cb.checked:true;
   renderTBVS();
 }
+function renderTBVSCatBar(){
+  var catBar=document.getElementById('tbvs-cat-bar'); if(!catBar||catBar.childElementCount) return;
+  var doc=document.createElement('a');
+  doc.href=TBVS_CATALOG_URL; doc.target='_blank'; doc.rel='noopener';
+  doc.className='ngoi-cat-link';
+  doc.textContent='📥 Catalogue & Hướng dẫn thi công (Google Drive)';
+  catBar.appendChild(doc);
+}
 function renderTBVS(){
   var el=document.getElementById('tbvs-list'); if(!el) return;
+  renderTBVSCatBar();
   el.innerHTML='';
   if(!TBVS.length){
     el.innerHTML='<div style="grid-column:1/-1;padding:40px 10px;text-align:center;color:var(--t2);font-size:13px">Đang tải dữ liệu Thiết bị vệ sinh...</div>';
