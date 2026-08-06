@@ -2737,15 +2737,16 @@ function addToDonKinh(ma){
 function renderKeo(){
   var el=document.getElementById('keo-list'); el.innerHTML='';
   KEO.forEach(function(p){
-    var div=document.createElement('div'); div.className='mk';
-    div.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex:1">'
-      +getImgHtml(p.ma,48,'🧱')
-      +'<div style="flex:1">'
-      +'<p style="font-size:13px;font-weight:700;margin-bottom:2px">'+p.ten+'</p>'
-      +'<p style="font-size:11px;color:var(--t2)">NK &lt;50 bao: <b style="color:#7B1FA2">'+p.nhan.toLocaleString('vi-VN')+'đ</b>'
-      +' · ≥50: <b style="color:#388E3C">'+p.nhan2.toLocaleString('vi-VN')+'đ</b></p>'
-      +'</div></div>'
-      +'<div style="font-size:11px;color:var(--t2);margin-left:6px;flex-shrink:0">đ/bao ›</div>';
+    var imgUrl=timAnh(p.ma)||'';
+    var div=document.createElement('div'); div.className='keo-card';
+    div.innerHTML='<div class="keo-card-thumb">'
+      +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">':'🧱')
+      +'</div>'
+      +'<div class="keo-card-body">'
+      +'<div class="keo-card-ten">'+p.ten+'</div>'
+      +'<div class="keo-card-gia"><b style="color:#7B1FA2">'+p.nhan.toLocaleString('vi-VN')+'đ</b> &lt;50</div>'
+      +'<div class="keo-card-gia"><b style="color:#388E3C">'+p.nhan2.toLocaleString('vi-VN')+'đ</b> ≥50</div>'
+      +'</div>';
     div.addEventListener('click', function(){ showKeo(p.ma); });
     el.appendChild(div);
   });

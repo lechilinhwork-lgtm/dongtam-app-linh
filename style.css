@@ -794,6 +794,31 @@ input::placeholder{color:var(--t3)}
 .tbvs-card-giao small{font-size:9.5px;font-weight:600;color:var(--t2)}
 .tbvs-card-tk{font-size:10.5px;font-weight:600;color:#2E7D32;margin-top:4px}
 
+/* Keo & Bột chà ron - thẻ nhỏ hơn TBVS, nhiều cột hơn để xem được nhiều
+   sản phẩm cùng lúc, ít phải lướt (danh mục ít mã, ưu tiên gọn). */
+.keo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(min-width:600px){.keo-grid{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:900px){.keo-grid{grid-template-columns:repeat(6,1fr)}}
+@media(min-width:1200px){.keo-grid{grid-template-columns:repeat(7,1fr)}}
+@media(min-width:1500px){.keo-grid{grid-template-columns:repeat(8,1fr)}}
+.keo-card{
+  cursor:pointer;border-radius:var(--r8);overflow:hidden;background:var(--bg1);
+  border:1px solid var(--bd);transition:transform .15s,box-shadow .15s;
+  display:flex;flex-direction:column;
+}
+.keo-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.1)}
+.keo-card-thumb{
+  position:relative;width:100%;aspect-ratio:1.15;
+  background:linear-gradient(160deg,#FDECEA,#FFF6F5);
+  display:flex;align-items:center;justify-content:center;font-size:26px;color:#90A4AE;
+  overflow:hidden;
+}
+.keo-card-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
+.keo-card-body{padding:6px 7px 7px}
+.keo-card-ten{font-size:11px;font-weight:700;color:var(--t1);line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;margin-bottom:3px;min-height:27px}
+.keo-card-gia{font-size:10px;color:var(--t2)}
+.keo-card-gia b{font-size:11px;font-weight:800}
+
 /* ===== DETAIL POPUP ===== */
 #dp-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:199;touch-action:none}
 #dp-backdrop.on{display:block}
