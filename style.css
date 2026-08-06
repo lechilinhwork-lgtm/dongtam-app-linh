@@ -38,6 +38,14 @@ body{font-family:var(--f);font-size:14px;color:var(--t1);background:var(--bg);pa
    vị trí (tính theo .tc thay vì viewport) trong lúc chạy animation. */
 @keyframes tcFadeIn{from{opacity:0}to{opacity:1}}
 .tc.on{animation:tcFadeIn .22s ease}
+/* Box thông tin màu Ngói đang chọn - nảy nhẹ + sáng lên mỗi khi đổi màu,
+   để mắt tự nhận ra thông tin vừa cập nhật thay vì đổi số liệu cứng ngắc. */
+@keyframes ngoiInfPop{
+  0%{opacity:0;transform:translateY(-4px) scale(.97)}
+  60%{opacity:1;transform:translateY(0) scale(1.015)}
+  100%{transform:scale(1)}
+}
+.ngoi-inf-pop{animation:ngoiInfPop .32s cubic-bezier(.34,1.56,.64,1)}
 button,.fb,.bn,.sn-item,.sz-item,.nmuc-card,.zn-row,.export-btn{
   transition:background .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease,transform .12s ease;
 }

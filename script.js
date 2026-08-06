@@ -2466,6 +2466,7 @@ function ngoiGroupCard(list, isMain){
 
   // Dòng thông tin màu đang chọn + tồn kho
   var inf=document.createElement('div');
+  inf.className='ngoi-inf-pop';
   inf.style.cssText='margin-top:8px;background:var(--bg2);border-radius:8px;padding:7px 10px;font-size:11.5px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap';
   var tkText=ngoiTonKhoText(sel);
   inf.innerHTML='<span><b>'+sel._info.code+'</b> – '+col.ten+(col.datHang?' <span style="color:#E65100">(đặt hàng trước)</span>':'')+'</span>'
