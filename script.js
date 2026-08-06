@@ -2892,8 +2892,8 @@ function renderTBVS(){
         +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">':icon)
         +'</div>'
         +'<div class="tbvs-card-body">'
-        +'<div class="tbvs-card-ma">'+(p.ten||p.tenHD)+'</div>'
-        +'<div class="tbvs-card-sub">'+(p.tenHD||'')+'</div>'
+        +'<div class="tbvs-card-ma">'+(p.tenHD||p.ten)+'</div>'
+        +(p.ten?'<div class="tbvs-card-sub">Mã: '+p.ten+'</div>':'')
         +(p.le>0?'<div class="tbvs-card-le">Giá lẻ <b>'+p.le.toLocaleString('vi-VN')+'đ</b></div>':'')
         +'<div class="tbvs-card-gia">'+(p.nhan>0?p.nhan.toLocaleString('vi-VN')+'đ':'–')+' <small>nhận kho</small></div>'
         +(p.giao>0?'<div class="tbvs-card-giao">→ '+p.giao.toLocaleString('vi-VN')+'đ <small>giao hàng</small></div>':'')
@@ -2912,8 +2912,8 @@ function showTBVS(ma){
   var fallbackEl=document.getElementById('td-img-fallback');
   if(imgUrl){ imgEl.src=imgUrl; imgEl.style.display='block'; fallbackEl.style.display='none'; }
   else { imgEl.removeAttribute('src'); imgEl.style.display='none'; fallbackEl.style.display='flex'; fallbackEl.textContent=tbvsIconCuaNhom(p.nhom); }
-  document.getElementById('td-ten').textContent=p.ten||p.tenHD;
-  document.getElementById('td-kc').textContent=(p.tenHD?p.tenHD+' · ':'')+'ĐVT: '+(p.dvt||'Cái');
+  document.getElementById('td-ten').textContent=p.tenHD||p.ten;
+  document.getElementById('td-kc').textContent=(p.ten?'Mã: '+p.ten+' · ':'')+'ĐVT: '+(p.dvt||'Cái');
   document.getElementById('td-le').textContent=p.le>0?p.le.toLocaleString('vi-VN')+'đ':'–';
   document.getElementById('td-nhan').textContent=p.nhan>0?p.nhan.toLocaleString('vi-VN')+'đ':'–';
   document.getElementById('td-giao').textContent=p.giao>0?p.giao.toLocaleString('vi-VN')+'đ':'–';
@@ -2968,7 +2968,8 @@ function themTBVSVaoDon(){
 function shareZaloTBVS(ma){
   var p=TBVS.find(function(x){return x.ma===ma;}); if(!p) return;
   var lines=['ĐỒNG TÂM KV23 – THIẾT BỊ VỆ SINH'];
-  lines.push('📌 '+(p.ten||p.tenHD));
+  lines.push('📌 '+(p.tenHD||p.ten));
+  if(p.ten) lines.push('Mã: '+p.ten);
   lines.push('━━━━━━━━━━━━━━');
   if(p.le>0) lines.push('Giá lẻ: '+p.le.toLocaleString('vi-VN')+'đ/'+(p.dvt||'Cái'));
   if(p.nhan>0) lines.push('Giá ĐL Nhận kho: '+p.nhan.toLocaleString('vi-VN')+'đ/'+(p.dvt||'Cái'));
