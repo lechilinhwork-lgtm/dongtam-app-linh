@@ -2738,14 +2738,19 @@ function renderKeo(){
   var el=document.getElementById('keo-list'); el.innerHTML='';
   KEO.forEach(function(p){
     var imgUrl=timAnh(p.ma)||'';
+    var tk=(typeof timTonKhoTheoQuyen==='function')?timTonKhoTheoQuyen(p.ma):null;
+    var tkDot=tk?(tk.tier&&tk.tier.nhanh>0?'🟢':tk.tier&&tk.tier.mai>0?'🟡':'🔴'):'';
+    var tkHtml=tk?'<div class="tbvs-card-tk">'+tkDot+' Còn '+(typeof fmtTkCard==='function'?fmtTkCard(tk.tong,p.dv||tk.dvt):Math.floor(tk.tong)+' '+(p.dv||''))+'</div>':'';
     var div=document.createElement('div'); div.className='keo-card';
     div.innerHTML='<div class="keo-card-thumb">'
       +(imgUrl?'<img src="'+imgUrl+'" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">':'🧱')
       +'</div>'
       +'<div class="keo-card-body">'
       +'<div class="keo-card-ten">'+p.ten+'</div>'
+      +(p.le>0?'<div class="keo-card-le">Giá lẻ <b>'+p.le.toLocaleString('vi-VN')+'đ</b></div>':'')
       +'<div class="keo-card-gia"><b style="color:#7B1FA2">'+p.nhan.toLocaleString('vi-VN')+'đ</b> &lt;50</div>'
       +'<div class="keo-card-gia"><b style="color:#388E3C">'+p.nhan2.toLocaleString('vi-VN')+'đ</b> ≥50</div>'
+      +tkHtml
       +'</div>';
     div.addEventListener('click', function(){ showKeo(p.ma); });
     el.appendChild(div);
@@ -2757,6 +2762,16 @@ function showKeo(ma){
   var p=KEO.find(function(x){return x.ma===ma;}); if(!p) return;
   loadKdImg(p.ma);
   document.getElementById('kd-ten').textContent=p.ten;
+  var kdLeEl=document.getElementById('kd-le');
+  if(p.le>0){ kdLeEl.style.display='block'; kdLeEl.querySelector('b').textContent=p.le.toLocaleString('vi-VN')+'đ'; }
+  else{ kdLeEl.style.display='none'; }
+  var kdTkEl=document.getElementById('kd-tk');
+  var tk=(typeof timTonKhoTheoQuyen==='function')?timTonKhoTheoQuyen(p.ma):null;
+  if(tk){
+    var tkDot=tk.tier&&tk.tier.nhanh>0?'🟢':tk.tier&&tk.tier.mai>0?'🟡':'🔴';
+    kdTkEl.style.display='block';
+    kdTkEl.textContent=tkDot+' Còn '+(typeof fmtTkCard==='function'?fmtTkCard(tk.tong,p.dv||tk.dvt):Math.floor(tk.tong)+' '+(p.dv||''));
+  } else { kdTkEl.style.display='none'; }
   document.getElementById('kd-nhan1').textContent=p.nhan.toLocaleString('vi-VN')+'đ';
   document.getElementById('kd-giao1').textContent=p.giao.toLocaleString('vi-VN')+'đ';
   document.getElementById('kd-nhan2').textContent=p.nhan2.toLocaleString('vi-VN')+'đ';
