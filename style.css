@@ -575,6 +575,8 @@ input::placeholder{color:var(--t3)}
 #ngoi-cat-bar{position:sticky;top:60px;z-index:20;background:var(--bg1);padding:8px 18px 6px;margin-bottom:0;border-bottom:1px solid var(--bd)}
 #tbvs-cat-bar{position:sticky;top:60px;z-index:20;background:var(--bg1);padding:8px 18px 6px;margin-bottom:0;border-bottom:1px solid var(--bd)}
 #tbvs-cat-bar:empty{display:none}
+#keo-cat-bar{position:sticky;top:60px;z-index:20;background:var(--bg1);padding:8px 18px 6px;margin-bottom:0;border-bottom:1px solid var(--bd)}
+#keo-cat-bar:empty{display:none}
 .ngoi-cat-link{display:block;text-align:center;padding:9px 12px;border:1.5px solid #C0232A;border-radius:8px;color:#C0232A;font-size:12px;font-weight:700;text-decoration:none}
 
 /* ===== SEARCH BAR (Tab Tra mã) ===== */

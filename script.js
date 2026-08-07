@@ -2320,6 +2320,7 @@ var NGOI_COLORS={
 // Thư mục Drive chứa Catalogue + hướng dẫn thi công (công khai, khách lẻ xem được)
 var NGOI_CATALOG_URL='https://drive.google.com/drive/folders/1disIAjjAOhnVgPs4F1eKLxJZgDl7wnqZ?usp=sharing';
 var TBVS_CATALOG_URL='https://drive.google.com/drive/folders/1bPoyFAvyUJlSOnp67h5V6mXjYlbX6vhh?hl=vi';
+var KEO_CATALOG_URL='https://drive.google.com/drive/folders/1cexqFmkQ2wax59uG2ZCeLSTxEjPSMUH4?usp=sharing';
 var curNgoiDong='TITAN';
 var curNgoiMau={TITAN:'TITAN001',ALPHA:'ALPHA002'}; // ALPHA001 phải đặt hàng trước nên mặc định 002
 
@@ -2736,7 +2737,16 @@ function addToDonKinh(ma){
   showToast('✓ Đã thêm gạch kính vào đơn!');
 }
 
+function renderKeoCatBar(){
+  var catBar=document.getElementById('keo-cat-bar'); if(!catBar||catBar.childElementCount) return;
+  var doc=document.createElement('a');
+  doc.href=KEO_CATALOG_URL; doc.target='_blank'; doc.rel='noopener';
+  doc.className='ngoi-cat-link';
+  doc.textContent='📥 Catalogue & Hướng dẫn thi công (Google Drive)';
+  catBar.appendChild(doc);
+}
 function renderKeo(){
+  renderKeoCatBar();
   var el=document.getElementById('keo-list'); el.innerHTML='';
   KEO.forEach(function(p){
     var imgUrl=timAnh(p.ma)||'';
