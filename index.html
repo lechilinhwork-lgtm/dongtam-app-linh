@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="DT Sales"/>
 <meta name="theme-color" content="#C0232A"/>
 <title>Đồng Tâm – Sales Tool</title>
-<link rel="stylesheet" href="style.css?v=nav42">
+<link rel="stylesheet" href="style.css?v=nav43">
 </head>
 <body>
 
@@ -781,6 +781,11 @@
 
 
 <!-- ===== AI CHAT WIDGET HTML ===== -->
+<div id="new-feature-banner" onclick="bannerOpenAIChat()">
+  <span class="nfb-icon">🎉</span>
+  <span class="nfb-text"><b>Tính năng mới:</b> Trợ lý AI — hỏi giá, tồn kho, quy đổi viên/thùng/m² ngay trong chat!</span>
+  <button type="button" class="nfb-x" onclick="event.stopPropagation();hideNewFeatureBanner()">✕</button>
+</div>
 <button id="ai-fab" title="AI Tư vấn — kéo để di chuyển, bấm đúp để ẩn">🤖</button>
 <div id="ai-panel">
   <div id="ai-hdr">
@@ -877,6 +882,6 @@
 
 
 
-<script src="script.js?v=nav90" defer></script>
+<script src="script.js?v=nav91" defer></script>
 </body>
 </html>

@@ -3914,6 +3914,7 @@ function showApp(name){
   setTimeout(function(){ gasWarmUp(); }, 1200);
   // Áp dụng phân quyền hiển thị lợi nhuận (chỉ Admin thấy)
   apDungPhanQuyenLoi();
+  if(typeof maybeShowNewFeatureBanner==='function') setTimeout(maybeShowNewFeatureBanner, 500);
 }
 function gasWarmUp(){
   var old=document.getElementById('_warmup_script');
@@ -3999,6 +4000,7 @@ function showGuestApp(){
   // Render catalog với giá lẻ + tải giá lẻ mới nhất từ Sheet (server tự giấu giá ĐL khi không có token)
   render();
   fetchAllFromSheet();
+  if(typeof maybeShowNewFeatureBanner==='function') setTimeout(maybeShowNewFeatureBanner, 500);
 }
 
 function showLoginScreen(){
@@ -6201,6 +6203,51 @@ function chatFindProduct(text){
   return found || null;
 }
 
+// Độ dài chuỗi con chung dài nhất giữa 2 chuỗi (đo độ giống nhau, để gợi ý
+// mã gần đúng khi khách gõ sai/thiếu 1 phần mã).
+function chatLcsLen(a, b){
+  var m = a.length, n = b.length, best = 0;
+  var prev = new Array(n+1).fill(0);
+  for(var i=1;i<=m;i++){
+    var cur = new Array(n+1).fill(0);
+    for(var j=1;j<=n;j++){
+      if(a[i-1]===b[j-1]){ cur[j] = prev[j-1]+1; if(cur[j]>best) best = cur[j]; }
+    }
+    prev = cur;
+  }
+  return best;
+}
+// Khách gõ mã gần đúng/thiếu 1 phần (VD "6060truongson002" thiếu tiền tố
+// "DTD" hoặc hậu tố "-FP") -> gợi ý các mã giống nhất thay vì im lặng.
+function chatFindSimilar(text, limit){
+  if(typeof DATA === 'undefined' || !DATA.length) return [];
+  var normInput = chatNorm(text).replace(/\s+/g,'');
+  if(normInput.length < 5) return [];
+  var scored = [];
+  DATA.forEach(function(p){
+    var normMa = chatNorm(p.ma).replace(/\s+/g,'');
+    var lcs = chatLcsLen(normInput, normMa);
+    if(lcs >= 5) scored.push({p:p, score:lcs});
+  });
+  scored.sort(function(a,b){ return b.score - a.score; });
+  var seen = {}, out = [];
+  for(var i=0;i<scored.length && out.length<(limit||4);i++){
+    var ma = scored[i].p.ma;
+    if(seen[ma]) continue;
+    seen[ma] = true;
+    out.push(scored[i].p);
+  }
+  return out;
+}
+function chatBuildSimilarAnswer(list){
+  var lines = ['🔍 Không thấy đúng mã này, có phải bạn đang tìm 1 trong các mã sau không?'];
+  list.forEach(function(p){
+    lines.push('• ' + p.ma + (p.kc?(' · '+p.kc):'') + (p.le>0?(' · giá lẻ '+p.le.toLocaleString('vi-VN')+'đ'):''));
+  });
+  lines.push('Gõ đúng mã trong danh sách trên để mình báo đầy đủ giá + tồn kho nhé.');
+  return lines.join('\n');
+}
+
 function chatBuildProductAnswer(p){
   var lines = ['📦 ' + p.ma + (p.kc?(' · '+p.kc):'')];
   if(p.le>0) lines.push('Giá lẻ: ' + p.le.toLocaleString('vi-VN') + 'đ/m²');
@@ -6220,8 +6267,85 @@ function chatBuildProductAnswer(p){
       lines.push('Tồn kho: liên hệ NVKD để kiểm tra chính xác.');
     }
   }catch(e){}
+  try{
+    var qc = (typeof getQuyCach==='function') ? getQuyCach(p.kc, p.cat) : null;
+    if(qc) lines.push('Quy cách: 1 thùng = ' + qc.vien + ' viên = ' + qc.m2 + 'm²' + (qc.kg?(' = ' + qc.kg + 'kg') : ''));
+  }catch(e){}
   lines.push('Xem chi tiết đầy đủ (ảnh, quy cách...) tại tab 🔲 Gạch, gõ mã ' + p.ma + '.');
   return lines.join('\n');
+}
+
+// Quy đổi viên/thùng/m²/kg khi khách hỏi kèm số lượng cụ thể, VD:
+// "DTD6060... cần 25m2 thì mấy thùng", "1 thùng bao nhiêu kg", "50 viên là mấy m2"
+// Ưu tiên sản phẩm đã match theo mã; nếu không có mã, thử đoán theo kích cỡ
+// (VD "60x60", "600x600") gõ thẳng trong câu hỏi.
+function chatParseConvert(text, p){
+  var norm = chatNorm(text);
+  var qc = null, kcLabel = '';
+  if(p){
+    qc = (typeof getQuyCach==='function') ? getQuyCach(p.kc, p.cat) : null;
+    kcLabel = p.kc || '';
+  } else {
+    var mKc = norm.match(/(\d{2,4})\s*x\s*(\d{2,4})/);
+    if(mKc){
+      kcLabel = mKc[1] + 'x' + mKc[2];
+      qc = (typeof getQuyCach==='function') ? (getQuyCach(kcLabel,'porcelain') || getQuyCach(kcLabel,'ceramic')) : null;
+    }
+  }
+  if(!qc) return null;
+
+  var mM2 = norm.match(/(\d+[.,]?\d*)\s*(m2|m²)/);
+  var mThung = norm.match(/(\d+[.,]?\d*)\s*thung/);
+  var mVien = norm.match(/(\d+[.,]?\d*)\s*vien/);
+  var mKg = norm.match(/(\d+[.,]?\d*)\s*kg/);
+  var hasQuestionWord = /may|bao nhieu|quy doi|quy cach|1 thung|moi thung/.test(norm);
+  var n2 = function(s){ return parseFloat(String(s||'0').replace(',', '.')) || 0; };
+
+  var lines = ['📐 Quy cách ' + (kcLabel?kcLabel+': ':'') + qc.vien + ' viên/thùng · ' + qc.m2 + 'm²/thùng' + (qc.kg?(' · ' + qc.kg + 'kg/thùng'):'')];
+
+  if(mM2 && n2(mM2[1])>0){
+    var m2n = n2(mM2[1]);
+    var thungN = Math.ceil(m2n / qc.m2);
+    lines.push('→ ' + m2n.toLocaleString('vi-VN') + 'm² cần mua ' + thungN + ' thùng (≈ ' + (thungN*qc.m2).toLocaleString('vi-VN') + 'm²' + (qc.kg?(', ' + Math.round(thungN*qc.kg).toLocaleString('vi-VN') + 'kg'):'') + ')');
+  } else if(mThung && n2(mThung[1])>0){
+    var thungIn = n2(mThung[1]);
+    lines.push('→ ' + thungIn.toLocaleString('vi-VN') + ' thùng = ' + Math.round(thungIn*qc.vien).toLocaleString('vi-VN') + ' viên = ' + (thungIn*qc.m2).toLocaleString('vi-VN') + 'm²' + (qc.kg?(' = ' + Math.round(thungIn*qc.kg).toLocaleString('vi-VN') + 'kg'):''));
+  } else if(mVien && n2(mVien[1])>0){
+    var vienIn = n2(mVien[1]);
+    var thungV = Math.ceil(vienIn / qc.vien);
+    lines.push('→ ' + vienIn.toLocaleString('vi-VN') + ' viên ≈ ' + thungV + ' thùng (' + (thungV*qc.m2).toLocaleString('vi-VN') + 'm²)');
+  } else if(mKg && qc.kg>0 && n2(mKg[1])>0){
+    var kgIn = n2(mKg[1]);
+    var thungK = Math.ceil(kgIn / qc.kg);
+    lines.push('→ ' + kgIn.toLocaleString('vi-VN') + 'kg ≈ ' + thungK + ' thùng (' + (thungK*qc.m2).toLocaleString('vi-VN') + 'm²)');
+  } else if(!hasQuestionWord){
+    return null; // không có số lượng lẫn từ khóa hỏi quy cách -> để câu hỏi đi hướng khác
+  }
+  return lines.join('\n');
+}
+
+// Banner ra mắt tính năng mới - chỉ hiện 1 lần/thiết bị (đổi NFB_VERSION khi
+// có tính năng mới muốn thông báo lại), tự ẩn sau 3.5s hoặc bấm X/bấm vào banner.
+var NFB_VERSION = 'ai_chat_v1';
+var _nfbTimer = null;
+function maybeShowNewFeatureBanner(){
+  try{
+    if(localStorage.getItem('nfb_seen') === NFB_VERSION) return;
+  }catch(e){ return; }
+  var el = document.getElementById('new-feature-banner');
+  if(!el) return;
+  el.classList.add('show');
+  _nfbTimer = setTimeout(hideNewFeatureBanner, 3500);
+}
+function hideNewFeatureBanner(){
+  if(_nfbTimer){ clearTimeout(_nfbTimer); _nfbTimer = null; }
+  var el = document.getElementById('new-feature-banner');
+  if(el) el.classList.remove('show');
+  try{ localStorage.setItem('nfb_seen', NFB_VERSION); }catch(e){}
+}
+function bannerOpenAIChat(){
+  hideNewFeatureBanner();
+  if(!aiPanelOpen) toggleAIChat();
 }
 
 function toggleAIChat(){
@@ -6284,10 +6408,24 @@ function aiSendQuickReply(intentId){
 function aiSend(text){
   if(!text.trim()) return;
   aiAppendBubble('user', text);
-  // Thứ tự ưu tiên: (1) khớp SKU sản phẩm -> (2) khớp intent -> (3) mặc định
+  // Thứ tự ưu tiên: (1) khớp đúng SKU -> quy đổi viên/thùng/m²/kg nếu có hỏi
+  // số lượng, không thì trả thông tin giá/tồn -> (2) hỏi quy đổi theo kích cỡ
+  // (không kèm mã) -> (3) gõ gần đúng mã -> gợi ý mã giống -> (4) khớp intent
+  // -> (5) mặc định.
   var product = chatFindProduct(text);
   if(product){
-    aiAppendBubble('bot', chatBuildProductAnswer(product));
+    var convAns = chatParseConvert(text, product);
+    aiAppendBubble('bot', convAns || chatBuildProductAnswer(product));
+    return;
+  }
+  var convAnsGeneric = chatParseConvert(text, null);
+  if(convAnsGeneric){
+    aiAppendBubble('bot', convAnsGeneric);
+    return;
+  }
+  var similar = chatFindSimilar(text);
+  if(similar.length){
+    aiAppendBubble('bot', chatBuildSimilarAnswer(similar));
     return;
   }
   var intent = chatMatchIntent(text);
