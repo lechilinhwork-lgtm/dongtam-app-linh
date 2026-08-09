@@ -6229,6 +6229,11 @@ function toggleAIChat(){
   var panel = document.getElementById('ai-panel');
   if(aiPanelOpen){
     panel.classList.add('open');
+    var fab = document.getElementById('ai-fab');
+    if(fab && fab.style.display === 'none'){
+      fab.style.display = 'flex';
+      try{ localStorage.removeItem('ai_fab_hidden'); }catch(e){}
+    }
     if(!chatbotData.length) chatLoadData();
     if(!document.getElementById('ai-msgs').children.length) aiShowWelcome();
     setTimeout(function(){ var i=document.getElementById('ai-inp'); if(i) i.focus(); }, 200);
@@ -6303,9 +6308,77 @@ function aiBuildChips(){
 }
 
 // Init widget hỗ trợ khách hàng
+// FAB kéo-thả tự do (chuột lẫn cảm ứng) + bấm đúp để ẩn - tránh đè lên nút
+// #back-top/#rp-fab khác trên màn hình, vị trí + trạng thái ẩn lưu localStorage
+// để giữ nguyên qua lần mở app sau.
 (function(){
   chatLoadData();
-  document.getElementById('ai-fab').addEventListener('click', toggleAIChat);
+  var fab = document.getElementById('ai-fab');
+
+  function clampFabPos(x, y){
+    var w = fab.offsetWidth || 50, h = fab.offsetHeight || 50;
+    x = Math.max(6, Math.min(x, window.innerWidth - w - 6));
+    y = Math.max(6, Math.min(y, window.innerHeight - h - 6));
+    return {x:x, y:y};
+  }
+  function applyFabPos(x, y){
+    fab.style.left = x + 'px';
+    fab.style.top = y + 'px';
+    fab.style.right = 'auto';
+    fab.style.bottom = 'auto';
+  }
+  try{
+    var savedPos = JSON.parse(localStorage.getItem('ai_fab_pos') || 'null');
+    if(savedPos && typeof savedPos.x === 'number'){
+      var p = clampFabPos(savedPos.x, savedPos.y);
+      applyFabPos(p.x, p.y);
+    }
+    if(localStorage.getItem('ai_fab_hidden') === '1') fab.style.display = 'none';
+    else fab.style.display = 'flex';
+  }catch(e){ fab.style.display = 'flex'; }
+
+  var dragging = false, moved = false, startX, startY, origX, origY;
+  function onDown(e){
+    var pt = e.touches ? e.touches[0] : e;
+    dragging = true; moved = false;
+    startX = pt.clientX; startY = pt.clientY;
+    var r = fab.getBoundingClientRect();
+    origX = r.left; origY = r.top;
+    fab.style.transition = 'none';
+  }
+  function onMove(e){
+    if(!dragging) return;
+    var pt = e.touches ? e.touches[0] : e;
+    var dx = pt.clientX - startX, dy = pt.clientY - startY;
+    if(Math.abs(dx) > 6 || Math.abs(dy) > 6) moved = true;
+    if(!moved) return;
+    if(e.cancelable) e.preventDefault();
+    var p = clampFabPos(origX + dx, origY + dy);
+    applyFabPos(p.x, p.y);
+  }
+  function onUp(){
+    if(!dragging) return;
+    dragging = false;
+    fab.style.transition = '';
+    if(moved){
+      var r = fab.getBoundingClientRect();
+      try{ localStorage.setItem('ai_fab_pos', JSON.stringify({x:r.left, y:r.top})); }catch(e){}
+    } else {
+      toggleAIChat();
+    }
+  }
+  fab.addEventListener('mousedown', onDown);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+  fab.addEventListener('touchstart', onDown, {passive:true});
+  document.addEventListener('touchmove', onMove, {passive:false});
+  document.addEventListener('touchend', onUp);
+  fab.addEventListener('dblclick', function(){
+    fab.style.display = 'none';
+    try{ localStorage.setItem('ai_fab_hidden', '1'); }catch(e){}
+    showToast('🤖 Đã ẩn nút AI tư vấn - mở lại qua menu bên (AI tư vấn)');
+  });
+
   document.getElementById('ai-x').addEventListener('click', toggleAIChat);
   document.getElementById('ai-btn-send').addEventListener('click', aiSendMessage);
   document.getElementById('ai-inp').addEventListener('keydown', function(e){
