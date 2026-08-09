@@ -6146,10 +6146,10 @@ function xuatZalo(){
 // ===== HO TRO KHACH HANG (client-side, khong goi API tra phi) =====
 var chatbotData = [];
 var AI_QUICK_REPLIES = [
-  {label:'💰 Chính sách thanh toán', intent:'thanh_toan'},
-  {label:'🔄 Đổi/trả hàng',          intent:'doi_tra'},
+  {label:'💰 Hỏi giá sản phẩm',      intent:'hoi_gia'},
   {label:'📦 Tồn kho',               intent:'ton_kho'},
   {label:'🎯 Chương trình đang áp dụng', intent:'chuong_trinh_km'},
+  {label:'🔄 Đổi/trả hàng',          intent:'doi_tra'},
   {label:'📞 Gặp NVKD',              intent:'lien_he_nvkd'}
 ];
 var AI_DEFAULT_ANSWER = 'Mình chưa tìm được câu trả lời phù hợp, bạn có thể chọn 1 trong các mục bên dưới hoặc liên hệ trực tiếp NVKD.';
@@ -6240,10 +6240,10 @@ function toggleAIChat(){
 function aiShowWelcome(){
   aiAppendBubble('bot',
     'Xin chào! Mình là trợ lý hỗ trợ Đồng Tâm KV23. 👋\n'
-    + 'Mình có thể giúp:\n'
-    + '• Tra thông tin sản phẩm theo mã SKU\n'
-    + '• Chính sách thanh toán, đổi/trả hàng\n'
-    + '• Chương trình đang áp dụng, tồn kho\n\n'
+    + 'Gõ đúng mã sản phẩm (VD: DTD6060...), mình báo ngay giá + tồn kho.\n\n'
+    + 'Ngoài ra mình còn giúp:\n'
+    + '• Chương trình đang áp dụng (Sale/Xả kho)\n'
+    + '• Đổi/trả hàng, liên hệ NVKD\n\n'
     + 'Bạn cần hỏi gì, hoặc chọn nhanh bên dưới 👇'
   );
 }
