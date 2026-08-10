@@ -6236,10 +6236,18 @@ function chatFindSimilar(text, limit){
   DATA.forEach(function(p){
     var hay = chatNorm(p.ma + ' ' + (p.kc||'')).replace(/\s+/g,' ');
     var hayTight = hay.replace(/\s+/g,'');
-    var tokenHits = 0;
-    qTokens.forEach(function(t){ if(hay.indexOf(t) >= 0) tokenHits++; });
+    // Token toàn số (VD "001") phân biệt biến thể mã rõ hơn nhiều so với chữ
+    // (VD "truong"/"son" lặp lại ở cả họ mã) -> cho điểm nặng hơn hẳn, để
+    // hỏi đúng "001" không bị lẫn với "004"/"005" cùng dòng.
+    var tokenScore = 0, tokenHits = 0;
+    qTokens.forEach(function(t){
+      if(hay.indexOf(t) >= 0){
+        tokenHits++;
+        tokenScore += /^\d+$/.test(t) ? 8 : 2;
+      }
+    });
     var lcs = chatLcsLen(normInput, hayTight);
-    var score = tokenHits * 3 + lcs;
+    var score = tokenScore + lcs;
     if(lcs >= 4 || tokenHits >= 2) scored.push({p:p, score:score});
   });
   scored.sort(function(a,b){ return b.score - a.score; });
@@ -6260,8 +6268,14 @@ function chatBuildSimilarAnswer(list){
   lines.push('Gõ đúng mã trong danh sách trên để mình báo đầy đủ giá + tồn kho nhé.');
   return lines.join('\n');
 }
+// Khi số mã gần giống ít (cùng 1 "họ" mã, VD các biến thể "TRUONGSON001") ->
+// báo giá + tồn kho đầy đủ luôn cho từng mã, khỏi bắt khách gõ lại lần 2.
+function chatBuildMultiProductAnswer(list){
+  var blocks = list.map(function(p){ return chatBuildProductAnswer(p, true); });
+  return '🔍 Tìm thấy ' + list.length + ' mã gần giống, báo giá luôn:\n\n' + blocks.join('\n\n');
+}
 
-function chatBuildProductAnswer(p){
+function chatBuildProductAnswer(p, compact){
   var lines = ['📦 ' + p.ma + (p.kc?(' · '+p.kc):'')];
   if(p.le>0) lines.push('Giá lẻ: ' + p.le.toLocaleString('vi-VN') + 'đ/m²');
   if(typeof laKhachHang !== 'function' || !laKhachHang()){
@@ -6280,11 +6294,13 @@ function chatBuildProductAnswer(p){
       lines.push('Tồn kho: liên hệ NVKD để kiểm tra chính xác.');
     }
   }catch(e){}
-  try{
-    var qc = (typeof getQuyCach==='function') ? getQuyCach(p.kc, p.cat) : null;
-    if(qc) lines.push('Quy cách: 1 thùng = ' + qc.vien + ' viên = ' + qc.m2 + 'm²' + (qc.kg?(' = ' + qc.kg + 'kg') : ''));
-  }catch(e){}
-  lines.push('Xem chi tiết đầy đủ (ảnh, quy cách...) tại tab 🔲 Gạch, gõ mã ' + p.ma + '.');
+  if(!compact){
+    try{
+      var qc = (typeof getQuyCach==='function') ? getQuyCach(p.kc, p.cat) : null;
+      if(qc) lines.push('Quy cách: 1 thùng = ' + qc.vien + ' viên = ' + qc.m2 + 'm²' + (qc.kg?(' = ' + qc.kg + 'kg') : ''));
+    }catch(e){}
+    lines.push('Xem chi tiết đầy đủ (ảnh, quy cách...) tại tab 🔲 Gạch, gõ mã ' + p.ma + '.');
+  }
   return lines.join('\n');
 }
 
@@ -6438,7 +6454,10 @@ function aiSend(text){
   }
   var similar = chatFindSimilar(text);
   if(similar.length){
-    aiAppendBubble('bot', chatBuildSimilarAnswer(similar));
+    // Ít mã (cùng 1 "họ", VD các biến thể TRUONGSON001) -> báo giá đầy đủ
+    // luôn từng mã. Nhiều mã (không rõ khách muốn mã nào) -> chỉ liệt kê
+    // tên + giá lẻ, để khách tự chọn rồi gõ lại cho gọn.
+    aiAppendBubble('bot', similar.length <= 5 ? chatBuildMultiProductAnswer(similar) : chatBuildSimilarAnswer(similar));
     return;
   }
   var intent = chatMatchIntent(text);
