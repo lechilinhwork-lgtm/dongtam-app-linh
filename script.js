@@ -6217,21 +6217,34 @@ function chatLcsLen(a, b){
   }
   return best;
 }
-// Khách gõ mã gần đúng/thiếu 1 phần (VD "6060truongson002" thiếu tiền tố
-// "DTD" hoặc hậu tố "-FP") -> gợi ý các mã giống nhất thay vì im lặng.
+// Khách gõ mã/tên gần đúng, viết tắt, thiếu dấu, thứ tự lộn xộn, hoặc lẫn
+// trong cả câu (VD "cho hỏi gạch trường sơn 002 60x60 còn không ạ") -> gợi ý
+// các mã giống nhất thay vì im lặng hoặc bắt buộc gõ chính xác 100%.
+// Chấm điểm 2 lớp: (1) số từ (>=2 ký tự) trong câu khách gõ xuất hiện trong
+// mã/kích cỡ sản phẩm - bắt được trường hợp từ bị tách rời/đảo thứ tự;
+// (2) đoạn chuỗi con liên tục dài nhất - bắt được trường hợp gõ dính liền
+// nhưng thiếu/thừa vài ký tự đầu-cuối (thiếu "DTD", thiếu "-FP"...).
+function chatTokens(s){
+  return chatNorm(s).split(/[^a-z0-9]+/).filter(function(t){ return t.length >= 2; });
+}
 function chatFindSimilar(text, limit){
   if(typeof DATA === 'undefined' || !DATA.length) return [];
+  var qTokens = chatTokens(text);
   var normInput = chatNorm(text).replace(/\s+/g,'');
-  if(normInput.length < 5) return [];
+  if(normInput.length < 4) return [];
   var scored = [];
   DATA.forEach(function(p){
-    var normMa = chatNorm(p.ma).replace(/\s+/g,'');
-    var lcs = chatLcsLen(normInput, normMa);
-    if(lcs >= 5) scored.push({p:p, score:lcs});
+    var hay = chatNorm(p.ma + ' ' + (p.kc||'')).replace(/\s+/g,' ');
+    var hayTight = hay.replace(/\s+/g,'');
+    var tokenHits = 0;
+    qTokens.forEach(function(t){ if(hay.indexOf(t) >= 0) tokenHits++; });
+    var lcs = chatLcsLen(normInput, hayTight);
+    var score = tokenHits * 3 + lcs;
+    if(lcs >= 4 || tokenHits >= 2) scored.push({p:p, score:score});
   });
   scored.sort(function(a,b){ return b.score - a.score; });
   var seen = {}, out = [];
-  for(var i=0;i<scored.length && out.length<(limit||4);i++){
+  for(var i=0;i<scored.length && out.length<(limit||5);i++){
     var ma = scored[i].p.ma;
     if(seen[ma]) continue;
     seen[ma] = true;
@@ -6326,7 +6339,7 @@ function chatParseConvert(text, p){
 
 // Banner ra mắt tính năng mới - chỉ hiện 1 lần/thiết bị (đổi NFB_VERSION khi
 // có tính năng mới muốn thông báo lại), tự ẩn sau 3.5s hoặc bấm X/bấm vào banner.
-var NFB_VERSION = 'ai_chat_v1';
+var NFB_VERSION = 'ai_chat_v2';
 var _nfbTimer = null;
 function maybeShowNewFeatureBanner(){
   try{
