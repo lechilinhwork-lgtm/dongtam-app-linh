@@ -6281,6 +6281,14 @@ function chatBuildProductAnswer(p, compact){
   if(typeof laKhachHang !== 'function' || !laKhachHang()){
     if(p.nhan>0) lines.push('Giá ĐL nhận kho: ' + p.nhan.toLocaleString('vi-VN') + 'đ/m²');
     if(p.giao>0) lines.push('Giá ĐL đi giao: ' + p.giao.toLocaleString('vi-VN') + 'đ/m²');
+    // Giá Sale (CT1/CT2) overlay từ mergeCTintoDATA - ns/gs chỉ có khi mã
+    // đang thực sự nằm trong 1 chương trình Sale đang chạy.
+    if(p.ns>0 || p.gs>0){
+      var nhanSaleLabel = p._fromCT === 'ct2' ? '🏷️ Giá Xả kho (CT2) nhận kho' : '🏷️ Giá Sale (CT1) nhận kho';
+      var giaoSaleLabel = p._fromCT === 'ct2' ? '🏷️ Giá Xả kho (CT2) đi giao' : '🏷️ Giá Sale (CT1) đi giao';
+      if(p.ns>0) lines.push(nhanSaleLabel + ': ' + p.ns.toLocaleString('vi-VN') + 'đ/m²');
+      if(p.gs>0) lines.push(giaoSaleLabel + ': ' + p.gs.toLocaleString('vi-VN') + 'đ/m²');
+    }
   }
   try{
     var tk = (typeof timTonKhoTheoQuyen==='function') ? timTonKhoTheoQuyen(p.ma) : null;
