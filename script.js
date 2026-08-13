@@ -3909,9 +3909,10 @@ function showApp(name){
   // làm GAS xử lý chậm chồng chéo (ảnh hưởng tới tốc độ hiển thị giá).
   setTimeout(function(){ fetchKhachHangFromSheet(); }, 600);
   setTimeout(function(){ fetchTonKhoChiTiet(); }, 900);
-  // Trọng lượng giờ đi kèm trong response getAll (res.trongLuong) — chỉ
-  // gọi rời khi getAll không trả kèm (xem xử lý trong _onGetAll).
-  setTimeout(function(){ gasWarmUp(); }, 1200);
+  // Trọng lượng (255KB, phần nặng nhất) đã bỏ khỏi getAll để giảm tải cụm
+  // giá chính - giờ luôn gọi rời, giãn cách sau cùng vì ít khẩn cấp nhất.
+  setTimeout(function(){ fetchTrongLuong(); }, 1500);
+  setTimeout(function(){ gasWarmUp(); }, 1800);
   // Áp dụng phân quyền hiển thị lợi nhuận (chỉ Admin thấy)
   apDungPhanQuyenLoi();
   if(typeof maybeShowNewFeatureBanner==='function') setTimeout(maybeShowNewFeatureBanner, 500);
@@ -4000,6 +4001,7 @@ function showGuestApp(){
   // Render catalog với giá lẻ + tải giá lẻ mới nhất từ Sheet (server tự giấu giá ĐL khi không có token)
   render();
   fetchAllFromSheet();
+  setTimeout(function(){ fetchTrongLuong(); }, 1500);
   if(typeof maybeShowNewFeatureBanner==='function') setTimeout(maybeShowNewFeatureBanner, 500);
 }
 
