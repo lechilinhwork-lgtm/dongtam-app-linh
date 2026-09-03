@@ -1809,8 +1809,8 @@ function showDP(ma){
   // Cập nhật label GIÁ ĐẠI LÝ → GIÁ SALE nếu là SP từ CT1/CT2
   var giaDlLabel = document.getElementById('dp-gia-dl-label');
   if(giaDlLabel){
-    if(p._fromCT==='CT1') giaDlLabel.innerHTML='🔥 GIÁ SALE THÁNG <span style="font-size:10px;background:#E8F5E9;color:#1B5E20;padding:1px 6px;border-radius:4px">CT1</span>';
-    else if(p._fromCT==='CT2') giaDlLabel.innerHTML='📦 GIÁ XẢ KHO <span style="font-size:10px;background:#FFF3E0;color:#E65100;padding:1px 6px;border-radius:4px">CT2</span>';
+    if(p._fromCT==='CT1') giaDlLabel.innerHTML='🔥 GIÁ SALE THÁNG '+thangHienTai()+' <span style="font-size:10px;background:#E8F5E9;color:#1B5E20;padding:1px 6px;border-radius:4px">CT1</span>';
+    else if(p._fromCT==='CT2') giaDlLabel.innerHTML='📦 GIÁ XẢ KHO THÁNG '+thangHienTai()+' <span style="font-size:10px;background:#FFF3E0;color:#E65100;padding:1px 6px;border-radius:4px">CT2</span>';
     else giaDlLabel.textContent='GIÁ ĐẠI LÝ';
   }
   // Tra giá sale từ CT1_DATA / CT2_DATA (nếu đã load)
@@ -3315,6 +3315,13 @@ function slideKdImg(dir){
   },{passive:true});
 })();
 
+// Tháng hiện tại (VD "09") - lấy tự động theo ngày hệ thống, để nhãn "Sale
+// tháng"/"Xả kho tháng" tự đổi đúng khi sang tháng mới, khỏi phải sửa code
+// tay mỗi tháng (từng bị lỗi hiện "tháng 08" dù đã sang tháng 9).
+function thangHienTai(){
+  return String(new Date().getMonth()+1).padStart(2,'0');
+}
+
 // Dựng nội dung báo giá text (dùng chung cho popup chi tiết SP + Zalo nhanh)
 function layNoiDungBaoGia(ma){
   var p=DATA.find(function(x){return x.ma===ma;});
@@ -3345,7 +3352,7 @@ function layNoiDungBaoGia(ma){
   // % giảm luôn tính so với Giá lẻ (không phải so với giá ĐL gốc)
   var pct = function(sale){ return (le>0 && sale>0) ? Math.round((le-sale)/le*100) : 0; };
 
-  var lines = ['GẠCH ĐỒNG TÂM KV23'+(isSale?(isCT2?' – XẢ KHO CT2':' – SALE THÁNG'):'')];
+  var lines = ['GẠCH ĐỒNG TÂM KV23'+(isSale?(isCT2?' – XẢ KHO THÁNG '+thangHienTai():' – SALE THÁNG '+thangHienTai()):'')];
   lines.push('📌 Mã: '+p.ma);
   lines.push('📐 Kích cỡ: '+p.kc);
   try{
@@ -3430,7 +3437,7 @@ function shareZaloSale(p){
   var f=function(n){ return n>0?n.toLocaleString('vi-VN')+'đ/m²':'–'; };
   // % giảm luôn tính so với Giá lẻ (không phải so với giá ĐL gốc)
   var pct=function(sale){ return (p.le>0 && sale>0) ? Math.round((p.le-sale)/p.le*100) : 0; };
-  var lines=['GẠCH ĐỒNG TÂM KV23'+(isCT2?' – XẢ KHO CT2':' – SALE THÁNG')];
+  var lines=['GẠCH ĐỒNG TÂM KV23'+(isCT2?' – XẢ KHO THÁNG '+thangHienTai():' – SALE THÁNG '+thangHienTai())];
   lines.push('📌 Mã: '+p.ma);
   lines.push('📐 Kích cỡ: '+(p.kc||''));
   try{
