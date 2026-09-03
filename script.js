@@ -3345,9 +3345,13 @@ function layNoiDungBaoGia(ma){
   // % giảm luôn tính so với Giá lẻ (không phải so với giá ĐL gốc)
   var pct = function(sale){ return (le>0 && sale>0) ? Math.round((le-sale)/le*100) : 0; };
 
-  var lines = ['GẠCH ĐỒNG TÂM KV23'+(isSale?(isCT2?' – XẢ KHO CT2':' – SALE THÁNG 08 VÀ THÁNG 9'):'')];
+  var lines = ['GẠCH ĐỒNG TÂM KV23'+(isSale?(isCT2?' – XẢ KHO CT2':' – SALE THÁNG'):'')];
   lines.push('📌 Mã: '+p.ma);
   lines.push('📐 Kích cỡ: '+p.kc);
+  try{
+    var qc0 = (typeof getQuyCach==='function') ? getQuyCach(p.kc, p.cat) : null;
+    if(qc0) lines.push('📦 '+qc0.vien+' viên/thùng · '+qc0.m2+' m²/thùng'+(qc0.kg?' · '+qc0.kg+' kg/thùng':''));
+  }catch(e0){}
   lines.push('━━━━━━━━━━━━━━');
 
   if(isSale){
@@ -3361,7 +3365,9 @@ function layNoiDungBaoGia(ma){
       if(vetGH>0) lines.push('VÉT KHO – Đi giao: '+f(vetGH)+(pct(vetGH)>0?' (giảm '+pct(vetGH)+'% so với giá lẻ)':''));
     }
     lines.push('━━━━━━━━━━━━━━');
+    lines.push('⚠️ Lưu ý: hàng Sale cần đặt tròn thùng mới được áp dụng giá giảm.');
     lines.push(isCT2?'Xả kho – số lượng có hạn, hết là hết!':'Ưu đãi trong tháng – đặt hàng sớm để giữ giá tốt nhất!');
+    lines.push('Phần nào chưa rõ, anh/chị cứ hỏi lại giúp em nhé!');
   } else {
     if(le>0)      lines.push('1. Giá lẻ: '+f(le));
     if(le>0)      lines.push('');
@@ -3427,9 +3433,13 @@ function shareZaloSale(p){
   var f=function(n){ return n>0?n.toLocaleString('vi-VN')+'đ/m²':'–'; };
   // % giảm luôn tính so với Giá lẻ (không phải so với giá ĐL gốc)
   var pct=function(sale){ return (p.le>0 && sale>0) ? Math.round((p.le-sale)/p.le*100) : 0; };
-  var lines=['GẠCH ĐỒNG TÂM KV23'+(isCT2?' – XẢ KHO CT2':' – SALE THÁNG 08 VÀ THÁNG 9')];
+  var lines=['GẠCH ĐỒNG TÂM KV23'+(isCT2?' – XẢ KHO CT2':' – SALE THÁNG')];
   lines.push('📌 Mã: '+p.ma);
   lines.push('📐 Kích cỡ: '+(p.kc||''));
+  try{
+    var qc0 = (typeof getQuyCach==='function') ? getQuyCach(p.kc, p.cat) : null;
+    if(qc0) lines.push('📦 '+qc0.vien+' viên/thùng · '+qc0.m2+' m²/thùng'+(qc0.kg?' · '+qc0.kg+' kg/thùng':''));
+  }catch(e0){}
   lines.push('━━━━━━━━━━━━━━');
   if(p.le>0){
     lines.push('Giá lẻ: '+f(p.le));
@@ -3443,7 +3453,9 @@ function shareZaloSale(p){
     if(p.ct150gh>0) lines.push('VÉT KHO – Đi giao: '+f(p.ct150gh)+(pct(p.ct150gh)>0?' (giảm '+pct(p.ct150gh)+'% so với giá lẻ)':''));
   }
   lines.push('━━━━━━━━━━━━━━');
+  lines.push('⚠️ Lưu ý: hàng Sale cần đặt tròn thùng mới được áp dụng giá giảm.');
   lines.push(isCT2?'Xả kho – số lượng có hạn, hết là hết!':'Ưu đãi trong tháng – đặt hàng sớm để giữ giá tốt nhất!');
+  lines.push('Phần nào chưa rõ, anh/chị cứ hỏi lại giúp em nhé!');
   var msg=lines.join('\n');
   navigator.clipboard&&navigator.clipboard.writeText
     ?navigator.clipboard.writeText(msg).then(function(){showToast('✅ Đã copy! Paste vào Zalo');}).catch(function(){fallbackCopy(msg);})
