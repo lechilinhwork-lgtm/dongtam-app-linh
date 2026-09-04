@@ -174,12 +174,15 @@ function applyGiaGach(res){
     // Tìm trong DATA hiện tại
     var p = DATA.find(function(x){return x.ma===ma;});
     if(p){
-      // Mã đã có → chỉ cập nhật nếu giá > 0 (tránh ghi đè bằng 0 khi Sheet lỗi)
+      // Mã đã có → chỉ cập nhật giá thường nếu > 0 (tránh ghi đè bằng 0 khi
+      // Sheet lỗi). RIÊNG ns/gs (giá Sale) LUÔN ghi đè kể cả về 0 - vì 0 ở
+      // đây là trạng thái hợp lệ "hết sale", giữ nguyên giá Sale cũ sẽ làm
+      // badge 🔥 SALE dính mãi trên mã đã hết chương trình từ lâu.
       if(le>0)   p.le=le;
       if(nhan>0) p.nhan=nhan;
       if(giao>0) p.giao=giao;
-      if(ns>0)   p.ns=ns;
-      if(gs>0)   p.gs=gs;
+      p.ns=ns;
+      p.gs=gs;
       if(row.sap) p.sap=String(row.sap).trim();
       // Tên hóa đơn (dùng khi xuất PDF/Excel để khớp đúng tên trên hóa đơn VAT)
       if(row.tenHD) p.tenHD=String(row.tenHD).trim();
