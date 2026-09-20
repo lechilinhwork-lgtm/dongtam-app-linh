@@ -4215,6 +4215,60 @@ function tinhSoVien(item){
   return {soVien:soVien, soVienExact:soVienExact, vienPerM2:Math.round(vienPerM2*10)/10, kg:kgFallback, kgChinhXac:kgPerVien>0};
 }
 
+// ===== PHÂN TÍCH SỐ LƯỢNG GẠCH THEO ĐÚNG VẬT LÝ =====
+// Viên là đơn vị nhỏ nhất bán được. Chỉ được coi là "đúng" khi số m² khớp ĐÚNG số
+// viên nguyên (sai lệch làm tròn tối đa 0.0005 m² vì m² nhập tối đa 3 số thập
+// phân); "tròn thùng" khi số viên đó chia hết cho số viên/thùng. Mọi trường hợp
+// khác là GẦN ĐÚNG -> UI phải hiện "≈" + cảnh báo, không được hiện "=" / "tròn".
+// tolM2: dung sai m² (mặc định 0.0005; nhập theo thùng thì truyền ~0 vì chính xác tuyệt đối).
+function phanTichGach(qtyM2, qc, kgPerVien, tolM2){
+  if(!qc || !qc.m2 || !qc.vien || !(qtyM2>0)) return null;
+  var tol = (tolM2===undefined) ? 0.0005 : tolM2;
+  var m2PerVien = qc.m2/qc.vien;
+  var vien = Math.round(qtyM2/m2PerVien);
+  var vienExact = Math.abs(qtyM2 - vien*m2PerVien) <= tol + 1e-9;
+  var thungLe = qtyM2/qc.m2;
+  var tn = vienExact ? Math.floor(vien/qc.vien) : Math.floor(thungLe+1e-9);
+  var vienDu = vienExact ? (vien - tn*qc.vien) : null;
+  var kg=null, kgExact=false;
+  if(kgPerVien>0){ kg=Math.round(vien*kgPerVien*10)/10; kgExact=vienExact; }
+  else if(qc.kg){ kg=Math.round(thungLe*qc.kg*10)/10; kgExact=false; } // trọng lượng ước lượng theo nhóm kích cỡ
+  return {m2:qtyM2, vien:vien, vienExact:vienExact, thungLe:thungLe, thungNguyen:tn, vienDu:vienDu,
+          tronThung: vienExact && vien>0 && vienDu===0,
+          vienPerThung:qc.vien, m2PerThung:qc.m2, kg:kg, kgExact:kgExact};
+}
+// Ngói tính theo viên: chỉ "đúng" khi số viên là số nguyên
+function phanTichNgoi(qtyVien, vienPerThung){
+  if(!(qtyVien>0) || !(vienPerThung>0)) return null;
+  var vien=Math.round(qtyVien);
+  var vienExact=Math.abs(qtyVien-vien)<1e-9;
+  var thungLe=qtyVien/vienPerThung;
+  var tn=vienExact?Math.floor(vien/vienPerThung):Math.floor(thungLe+1e-9);
+  var vienDu=vienExact?(vien-tn*vienPerThung):null;
+  return {vien:vien, vienExact:vienExact, thungLe:thungLe, thungNguyen:tn, vienDu:vienDu,
+          tronThung:vienExact&&vien>0&&vienDu===0, vienPerThung:vienPerThung, kg:null, kgExact:false};
+}
+function fmtSoThap(n,d){ var f=Math.pow(10,d); return String(Math.round(n*f)/f); }
+// HTML dòng trạng thái + số liệu quy đổi (popup chi tiết + giỏ hàng)
+function htmlPhanTich(a){
+  var ok='#2E7D32', warn='#E65100';
+  var kgHtml=a.kg?' · '+(a.kgExact?'=':'≈')+' <b>'+a.kg+'</b> kg':'';
+  if(a.tronThung){
+    return '<span style="color:'+ok+';font-weight:700">✓ Tròn thùng</span> = <b>'+a.thungNguyen+'</b> thùng · = <b>'+a.vien+'</b> viên'+kgHtml;
+  }
+  if(a.vienExact){
+    var parts=(a.thungNguyen>0?'<b>'+a.thungNguyen+'</b> thùng + ':'')+'<b>'+a.vienDu+'</b> viên';
+    return '<span style="color:'+warn+';font-weight:700">⚠ Chưa tròn thùng</span> = '+parts+(a.thungNguyen>0?' (= <b>'+a.vien+'</b> viên)':'')+kgHtml;
+  }
+  return '<span style="color:'+warn+';font-weight:700">⚠ Gần đúng — số lượng chưa khớp viên/thùng</span> ≈ <b>'+fmtSoThap(a.thungLe,2)+'</b> thùng · ≈ <b>'+a.vien+'</b> viên'+kgHtml;
+}
+// Bản chữ thuần (cho PDF/báo giá): số thùng + trạng thái đúng/gần đúng
+function textThungPhanTich(a){
+  if(a.tronThung) return a.thungNguyen+' thùng';
+  if(a.vienExact) return (a.thungNguyen>0?a.thungNguyen+' thùng + ':'')+a.vienDu+' viên';
+  return '≈ '+fmtSoThap(a.thungLe,2)+' thùng';
+}
+
 // Hàng CT1/CT2 (có giá Sale) CHỈ được hưởng giá Sale khi lấy đủ thùng
 // nguyên - phần dư ra không đủ 1 thùng (viên lẻ) tính theo giá ĐL thường
 // (không sale). Chỉ áp dụng với kích cỡ bán được lẻ viên (kích cỡ "chỉ bán
@@ -4356,49 +4410,53 @@ function calcDpQty(){
   var snapEl = document.getElementById('dp-qty-snap');
   if(!qc || !qc.m2){ convertEl.textContent=''; if(snapEl) snapEl.style.display='none'; return; }
 
-  // "=" khi con số là đúng phép nhân/chia (thùng, kg, m²) - "≈" CHỈ khi số
-  // viên bị làm tròn thật sự (input không khớp đúng bội số viên vật lý).
-  function isInt(n){ return Math.abs(n-Math.round(n))<1e-6; }
+  // Chỉ hiện "=" / "✓ Tròn thùng" khi số lượng khớp ĐÚNG viên nguyên (và viên chia
+  // hết cho số viên/thùng). Còn lại hiện "≈" + cảnh báo - xem phanTichGach().
+  var kgVien = (typeof kgPerVienCuaMa==='function') ? kgPerVienCuaMa(p.ma) : null;
+  if(!(val>0)){ convertEl.textContent=''; if(snapEl) snapEl.style.display='none'; return; }
   if(dpUnit==='thung'){
-    var m2=Math.round(val*qc.m2*100)/100;
-    var vienRaw=val*qc.vien, vienExact=isInt(vienRaw), vien=Math.round(vienRaw);
-    var kgV=qc.kg?Math.round(val*qc.kg*10)/10:0;
-    convertEl.innerHTML='= <b>'+m2+'</b> m²'+(vien?' · '+(vienExact?'=':'≈')+' <b>'+vien+'</b> viên':'')+(kgV?' · <b>'+kgV+'</b> kg':'');
+    var m2Raw=val*qc.m2, m2=Math.round(m2Raw*100)/100;
+    // Nhập theo thùng: chính xác tuyệt đối, không có dung sai làm tròn m²
+    var aT=phanTichGach(m2Raw, qc, kgVien, 1e-6);
+    convertEl.innerHTML=(Math.abs(m2-m2Raw)<1e-9?'= ':'≈ ')+'<b>'+m2+'</b> m²<br>'+htmlPhanTich(aT);
     if(snapEl) snapEl.style.display='none';
   } else {
-    var thung=Math.round((val/qc.m2)*100)/100, thungN=Math.ceil(val/qc.m2);
-    var vienRawT=qc.vien?val/qc.m2*qc.vien:0, vienExactT=isInt(vienRawT), vienT=Math.round(vienRawT);
-    var kgT=qc.kg?Math.round(val/qc.m2*qc.kg*10)/10:0;
-    var lamTron=thungN!==thung?' (làm tròn: <b>'+thungN+'</b> thùng)':'';
-    convertEl.innerHTML='= <b>'+thung+'</b> thùng'+lamTron
-      +(vienT?'<br>'+(vienExactT?'=':'≈')+' <b>'+vienT+'</b> viên':'')+(kgT?' · <b>'+kgT+'</b> kg':'');
-    renderDpQtySnap(val, qc, snapEl);
+    var a=phanTichGach(val, qc, kgVien);
+    convertEl.innerHTML=htmlPhanTich(a);
+    renderDpQtySnap(val, qc, snapEl, a);
   }
 }
 
 // Gạch chỉ bán được theo viên/thùng nguyên (không xuất kho được số m² lẻ),
 // nên khi khách/nhân viên gõ tay 1 số m² tuỳ ý, hiện sẵn 2 lựa chọn làm tròn
 // gần nhất (xuống/lên đúng 1 viên) để bấm chọn nhanh, khỏi tự tính tay.
-function renderDpQtySnap(val, qc, snapEl){
+function renderDpQtySnap(val, qc, snapEl, a){
   if(!snapEl || !qc.vien) { if(snapEl) snapEl.style.display='none'; return; }
+  a = a || phanTichGach(val, qc, null);
+  // Đã khớp viên VÀ tròn thùng -> không cần gợi ý gì
+  if(!a || a.tronThung){ snapEl.style.display='none'; return; }
   var m2PerVien = qc.m2/qc.vien;
-  var vienExact = val/m2PerVien;
-  var vienDown = Math.floor(vienExact+1e-6);
-  if(vienDown<0) vienDown=0;
-  var vienUp = vienDown+1;
-  // Nếu số đang gõ đã đúng khớp 1 số nguyên viên rồi thì khỏi cần gợi ý
-  if(Math.abs(vienExact-vienDown)<1e-6){ snapEl.style.display='none'; return; }
   function label(vienTong){
-    var m2=Math.round(vienTong*m2PerVien*100)/100;
+    var m2=Math.round(vienTong*m2PerVien*1000)/1000;
     var thungN=Math.floor(vienTong/qc.vien), vienDu=vienTong-thungN*qc.vien;
-    var thungStr=thungN+' thùng'+(vienDu>0?' + '+vienDu+' viên':'');
+    var thungStr=(thungN>0?thungN+' thùng':'')+(vienDu>0?(thungN>0?' + ':'')+vienDu+' viên':'');
     return {m2:m2, text:thungStr+' — '+m2+' m²'};
   }
-  var down=label(vienDown), up=label(vienUp);
+  var btns=[];
+  function btn(title,l){
+    btns.push('<button type="button" onclick="_snapDpQty('+l.m2+')" style="flex:1;padding:8px 6px;border-radius:8px;border:1.5px solid var(--bd2);background:var(--bg2);color:var(--t1);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--f)">'+title+'<br>'+l.text+'</button>');
+  }
+  // Số m² chưa khớp viên: gợi ý viên gần nhất xuống/lên
+  if(!a.vienExact){
+    var vienDown=Math.max(0,Math.floor(val/m2PerVien+1e-9));
+    if(vienDown>0) btn('↓ Làm tròn xuống viên', label(vienDown));
+    btn('↑ Làm tròn lên viên', label(vienDown+1));
+  }
+  // Chưa tròn thùng: gợi ý đủ thùng nguyên (tối thiểu 1 thùng)
+  var thungLen=Math.max(1, a.vienExact ? (a.thungNguyen+1) : Math.ceil(a.thungLe-1e-9));
+  btn('▣ Đủ thùng', label(thungLen*qc.vien));
   snapEl.style.display='flex';
-  snapEl.innerHTML=
-    '<button type="button" onclick="_snapDpQty('+down.m2+')" style="flex:1;padding:8px 6px;border-radius:8px;border:1.5px solid var(--bd2);background:var(--bg2);color:var(--t1);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--f)">↓ Làm tròn xuống<br>'+down.text+'</button>'
-    +'<button type="button" onclick="_snapDpQty('+up.m2+')" style="flex:1;padding:8px 6px;border-radius:8px;border:1.5px solid var(--bd2);background:var(--bg2);color:var(--t1);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--f)">↑ Làm tròn lên<br>'+up.text+'</button>';
+  snapEl.innerHTML=btns.join('');
 }
 function _snapDpQty(m2){
   document.getElementById('dp-qty-input').value=m2;
@@ -4626,38 +4684,31 @@ function renderDon(){
         +'font-family:var(--f);-moz-appearance:textfield;" />'
       +'<button data-qty="'+item.ma+'" data-d="1" class="qty-btn" style="flex-shrink:0">+</button>'
       +'<span style="font-size:11px;color:var(--t2)">'+unit+'</span>'
-      +(function(){
-        var t=tinhThung(item);
-        if(!t) return '';
-        var out='';
-        if(item.loai==='kinh'){
-          // Gạch kính: đơn vị thùng, chỉ hiện tổng thùng
-          out+='<span style="font-size:11px;color:#0D47A1;margin-left:8px">💎 '+t.thungNguyen+' thùng (6 viên/thùng)</span>';
-        } else if(t.chiBanThung){
-          // Chỉ bán thùng — cảnh báo + m² làm tròn
-          out+='<span style="font-size:10px;background:#FFF3E0;color:#E65100;padding:1px 6px;border-radius:4px;font-weight:700;margin-left:6px">⚠️ Chỉ xuất thùng</span>';
-          out+='<br><span style="font-size:11px;color:#0D47A1">→ '+t.thungNguyen+' thùng × '+(t.m2perThung||0)+' m²/thùng = '+((t.m2ThucTe||0).toFixed(2))+' m²</span>';
-        } else {
-          var thungStr=Math.round(t.thung*100)/100;
-          var thungDisp=thungStr%1===0?thungStr.toString():thungStr.toFixed(2);
-          // Số thùng là phép chia đúng (m² ÷ m²/thùng) - không phải làm tròn
-          // vật lý như viên, nên luôn hiện dấu "=" chứ không phải "≈".
-          out+='<span style="font-size:11px;color:#0D47A1;margin-left:8px">= '+thungDisp+' thùng ('+t.note+')</span>';
-        }
-        return out;
-      })()
-      +(function(){
-        if(item.loai==='keo'||item.loai==='kinh'||item.loai==='ngoi') return '';
-        var v=tinhSoVien(item);
-        if(!v||!v.soVien) return '';
-        // Chỉ hiện "≈" khi số m² nhập KHÔNG khớp đúng bội số viên (viên thật
-        // sự bị làm tròn) - còn lại (khớp đúng viên) hiện "=" cho đúng bản chất.
-        var s='<span style="font-size:11px;color:var(--t2);margin-left:8px">'+(v.soVienExact?'=':'≈')+' '+v.soVien+' viên';
-        if(v.kg) s+=' · '+v.kg+'kg';
-        s+='</span>';
-        return s;
-      })()
       +'</div>'
+      // Dòng quy đổi thùng/viên/kg: nằm riêng dưới ô nhập (đủ chỗ cho cảnh báo).
+      // Chỉ hiện "=" / "✓ Tròn thùng" khi khớp ĐÚNG viên nguyên - còn lại "≈" + cảnh báo.
+      +(function(){
+        var box=function(h){ return '<div style="font-size:11.5px;line-height:1.55;color:#0D47A1;margin:-2px 0 8px">'+h+'</div>'; };
+        var t=tinhThung(item);
+        if(item.loai==='kinh') return t?box('💎 '+t.thungNguyen+' thùng (6 viên/thùng)'):'';
+        if(item.loai==='keo') return '';
+        if(item.loai==='ngoi'){
+          var pn=NGOI.find(function(x){return x.ma===item.ma;});
+          var mm=pn&&pn.dong_goi?String(pn.dong_goi).match(/(\d+)/):null;
+          var an=mm?phanTichNgoi(parseFloat(item.qty),parseInt(mm[1],10)):null;
+          return an?box(htmlPhanTich(an)+' <span style="color:var(--t2)">('+pn.dong_goi+')</span>'):'';
+        }
+        var out='';
+        if(t && t.chiBanThung){
+          // Chỉ bán thùng — cảnh báo + m² làm tròn
+          out+='<span style="font-size:10px;background:#FFF3E0;color:#E65100;padding:1px 6px;border-radius:4px;font-weight:700">⚠️ Chỉ xuất thùng</span> '
+             +'→ '+t.thungNguyen+' thùng × '+(t.m2perThung||0)+' m²/thùng = '+((t.m2ThucTe||0).toFixed(2))+' m²';
+        }
+        var qcI=getQuyCach(item.kc,item.cat);
+        var aG=qcI?phanTichGach(parseFloat(item.qty)||0,qcI,kgPerVienCuaMa(item.ma)):null;
+        if(aG) out+=(out?'<br>':'')+htmlPhanTich(aG)+' <span style="color:var(--t2)">('+fmtSoThap(qcI.m2,2)+' m²/thùng · '+qcI.vien+' viên/thùng)</span>';
+        return out?box(out):'';
+      })()
       // Bảng giá 3 hàng (hoặc tách 2 phần Sale/Thường nếu mua lẻ không đủ thùng)
       +'<div style="background:var(--bg2);border-radius:var(--r8);padding:8px 10px;font-size:12px">'
       +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:0.5px solid var(--bd)">'
@@ -5642,12 +5693,24 @@ function xuatPDF(){
     var loaiLabel = item.loai==='ngoi'?'Ngói':item.loai==='keo'?'Keo':'Gạch';
     var t=tinhThung(item);
     var thungStr='';
+    // Phân tích đúng/gần đúng theo viên nguyên - dùng cho cả cột thùng lẫn "(= N viên)" bên dưới
+    var aPdf=null;
+    if(item.loai==='ngoi'){
+      var pnP=NGOI.find(function(x){return x.ma===item.ma;});
+      var mmP=pnP&&pnP.dong_goi?String(pnP.dong_goi).match(/(\d+)/):null;
+      aPdf=mmP?phanTichNgoi(parseFloat(item.qty),parseInt(mmP[1],10)):null;
+    } else if(item.loai!=='keo' && item.loai!=='kinh'){
+      var qcP=getQuyCach(item.kc,item.cat);
+      aPdf=qcP?phanTichGach(parseFloat(item.qty)||0,qcP,kgPerVienCuaMa(item.ma)):null;
+    }
     if(t){
       if(t.chiBanThung){
         thungStr=t.thungNguyen+' thùng';
+      } else if(aPdf){
+        thungStr=textThungPhanTich(aPdf);
       } else {
         var tn=Math.round(t.thung*100)/100;
-        thungStr=(tn%1===0?tn.toString():tn.toFixed(2))+' thùng';
+        thungStr=(tn%1===0?tn.toString():'≈ '+tn.toFixed(2))+' thùng';
       }
     }
     return '<tr>'
@@ -5658,8 +5721,12 @@ function xuatPDF(){
       +(function(){
         var v=tinhSoVien(item);
         var qtyStr=item.qty+' '+(item.unit||'m²');
-        if(v&&v.soVien) qtyStr+=' (='+v.soVien+' viên)';
-        if(v&&v.kg) qtyStr+='<br><span class="sub" style="color:#6A1B9A">⚖️ '+v.kg.toLocaleString('vi-VN')+' kg</span>';
+        // "=" chỉ khi khớp đúng viên nguyên; ngược lại "≈" (báo giá gửi khách phải nói rõ là gần đúng)
+        if(v&&v.soVien) qtyStr+=' ('+(aPdf?(aPdf.vienExact?'=':'≈'):(v.soVienExact?'=':'≈'))+v.soVien+' viên)';
+        if(v&&v.kg){
+          var kgExactPdf=aPdf?aPdf.kgExact:v.kgChinhXac;
+          qtyStr+='<br><span class="sub" style="color:#6A1B9A">⚖️ '+(kgExactPdf?'':'≈ ')+v.kg.toLocaleString('vi-VN')+' kg</span>';
+        }
         return '<td class="tc">'+qtyStr+'</td>';
       })()
       +'<td class="tc" style="color:#0D47A1;font-weight:600">'+thungStr+'</td>'
