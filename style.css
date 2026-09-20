@@ -314,7 +314,7 @@ button:active,.fb:active,.bn:active,.nmuc-card:active{transform:scale(.97)}
 
 /* ===== INPUTS ===== */
 input,button,select{font-family:var(--f);outline:none;-webkit-appearance:none}
-input[type=text],input[type=number],input[type=password]{
+input[type=text],input[type=number],input[type=password],input[type=tel],input[type=email],input[type=search]{
   width:100%;background:var(--bg1);
   border:1.5px solid var(--bd);border-radius:var(--r);
   padding:12px 14px;font-size:15px;color:var(--t1);
@@ -1006,6 +1006,12 @@ input::placeholder{color:var(--t3)}
 .don-item-ma{font-size:14px;font-weight:700;color:var(--t1)}
 .don-item-sub{font-size:11px;color:var(--t2);margin-top:2px;margin-bottom:10px}
 .qty-row{display:flex;align-items:center;gap:10px}
+/* Giỏ hàng: mỗi sản phẩm là 1 thẻ riêng (trước đây trần, dính sát nhau) */
+.cart-item{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r12);padding:12px;margin-bottom:10px}
+/* Nút xuất PDF/Excel: trước đây không có style nào (co lại, vuông, lệch cỡ) */
+.export-btn{flex:1;padding:11px 8px;border:none;border-radius:var(--r8);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)}
+/* Chống iOS tự phóng to trang khi bấm vào ô nhập (ô có font < 16px) */
+@media(max-width:767px){input,textarea,select{font-size:16px !important}}
 .qty-btn{width:34px;height:34px;border-radius:50%;background:var(--bg2);border:1.5px solid var(--bd);font-size:18px;font-weight:700;color:var(--t1);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0}
 .qty-btn:active{background:var(--red);color:#fff;border-color:var(--red)}
 #don-totals{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-top:10px}

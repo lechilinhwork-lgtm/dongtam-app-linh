@@ -4613,7 +4613,7 @@ function renderDon(){
       +'<p style="font-size:11px;color:var(--t2)">'+item.ma+(item.kc&&item.kc!=='–'?' · '+item.kc:'')+'</p>'
       +(item.ns>0?'<span style="font-size:10px;background:#FDECEA;color:#8B0000;padding:1px 6px;border-radius:4px;font-weight:600">🔥 SALE</span>':'')
       +'</div>'
-      +'<button data-rm="'+item.ma+'" style="color:var(--t3);border:none;background:transparent;font-size:18px;cursor:pointer;flex-shrink:0">✕</button>'
+      +'<button data-rm="'+item.ma+'" style="color:var(--t2);border:none;background:transparent;font-size:18px;cursor:pointer;flex-shrink:0;width:40px;height:40px;margin:-8px -8px 0 0" aria-label="Xóa sản phẩm">✕</button>'
       +'</div>'
       +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">'
       +'<button data-qty="'+item.ma+'" data-d="-1" class="qty-btn" style="flex-shrink:0">−</button>'
