@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="DT Sales"/>
 <meta name="theme-color" content="#C0232A"/>
 <title>Đồng Tâm – Sales Tool</title>
-<link rel="stylesheet" href="style.css?v=nav44">
+<link rel="stylesheet" href="style.css?v=nav51">
 </head>
 <body>
 
@@ -775,6 +775,11 @@
     <button onclick="clearDon()" style="width:100%;padding:10px;border-radius:var(--r8);border:1px solid var(--bd2);background:transparent;font-size:13px;color:var(--t2);cursor:pointer;font-family:var(--f)">
       🗑 Xóa đơn hàng
     </button>
+    <!-- Thanh cố định đáy (chỉ hiện trên mobile - xem style.css): luôn thấy tổng tiền + nút Đặt hàng, khỏi cuộn tới cuối trang -->
+    <div id="don-sticky-bar">
+      <div class="dsb-total"><span>Tổng giá lẻ</span><b id="dsb-total-le">–</b></div>
+      <button type="button" class="dsb-btn" onclick="guiDonHang()">📦 Đặt hàng</button>
+    </div>
   </div>
 </div>
 
@@ -882,6 +887,6 @@
 
 
 
-<script src="script.js?v=nav103" defer></script>
+<script src="script.js?v=nav106" defer></script>
 </body>
 </html>

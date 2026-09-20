@@ -3092,6 +3092,9 @@ function loadImg(ma){
   curImgList = timAnhMulti(ma);
 
   curImgIdx = 0;
+  // Desktop: có ảnh thì chia 2 cột (ảnh trái, giá phải) - xem style.css .dp-has-img
+  var panelGia = document.getElementById('dp-panel-gia');
+  if(panelGia) panelGia.classList.toggle('dp-has-img', curImgList.length > 0);
 
   if(curImgList.length > 0){
     wrap.style.display = 'block';
@@ -4766,7 +4769,35 @@ function setDonQty(ma,val){
   updateDonBadge();
   renderDon();
 }
-function removeDon(ma){donItems=donItems.filter(function(x){return x.ma!==ma;});updateDonBadge();renderDon();}
+function removeDon(ma){
+  var idx=donItems.findIndex(function(x){return x.ma===ma;});
+  if(idx<0) return;
+  var removed=donItems[idx];
+  donItems=donItems.filter(function(x){return x.ma!==ma;});
+  updateDonBadge();renderDon();
+  // Xóa nhầm 1 chạm -> cho hoàn tác 5 giây, đặt lại đúng vị trí cũ
+  showUndoToast('Đã xóa '+(removed.ten||removed.ma),function(){
+    donItems.splice(Math.min(idx,donItems.length),0,removed);
+    updateDonBadge();renderDon();
+  });
+}
+function showUndoToast(msg,onUndo){
+  var old=document.querySelector('.dt-toast');
+  if(old) old.remove();
+  var t=document.createElement('div');
+  t.className='dt-toast';
+  t.style.cssText='position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 8px 8px 18px;border-radius:24px;font-size:13px;font-weight:600;z-index:9999;display:flex;align-items:center;gap:12px;box-shadow:0 4px 16px rgba(0,0,0,.28);max-width:92vw';
+  var s=document.createElement('span');
+  s.textContent=msg;
+  s.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+  var b=document.createElement('button');
+  b.type='button'; b.textContent='Hoàn tác';
+  b.style.cssText='background:#fff;color:#C0232A;border:none;border-radius:16px;padding:6px 14px;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0';
+  b.onclick=function(){ t.remove(); onUndo(); };
+  t.appendChild(s); t.appendChild(b);
+  document.body.appendChild(t);
+  setTimeout(function(){ if(t.parentNode) t.remove(); },5000);
+}
 function guiDonHang(){
   var APPS_URL='https://script.google.com/macros/s/AKfycbyrO8symCYOkWsGG0nRWPF7gpndC3mzEVUk15UvWrA0O81ZUumW-kX_gEOZhtCJ34bMVQ/exec';
   if(donItems.length===0){alert('Chưa có sản phẩm trong đơn!');return;}
@@ -4775,7 +4806,7 @@ function guiDonHang(){
   if(!ten){alert('Vui lòng nhập tên khách hàng!');document.getElementById('don-ten').focus();return;}
   if(!sdt){alert('Vui lòng nhập số điện thoại!');document.getElementById('don-sdt').focus();return;}
 
-  document.getElementById('btn-gui-don').style.display='none';
+  document.getElementById('btn-gui-don').style.display='none';var _dsb=document.getElementById('don-sticky-bar');if(_dsb)_dsb.style.display='none';
   document.getElementById('gui-don-status').style.display='block';
   document.getElementById('gui-don-ok').style.display='none';
 
@@ -4820,10 +4851,10 @@ function guiDonHang(){
     document.getElementById('gui-don-status').style.display='none';
     if(thanhCong){
       document.getElementById('gui-don-ok').style.display='block';
-      document.getElementById('btn-gui-don').style.display='none';
+      document.getElementById('btn-gui-don').style.display='none';var _dsb=document.getElementById('don-sticky-bar');if(_dsb)_dsb.style.display='none';
       fetchKhachHangFromSheet(); // nạp lại danh sách khách (vừa thêm khách mới)
     } else {
-      document.getElementById('btn-gui-don').style.display='block';
+      document.getElementById('btn-gui-don').style.display='block';var _dsb2=document.getElementById('don-sticky-bar');if(_dsb2)_dsb2.style.display='';
       alert('❌ Gửi đơn không thành công, vui lòng thử lại! (Kiểm tra mạng / Apps Script URL)');
     }
   }
@@ -5541,6 +5572,8 @@ function calcAndShowTotals(){
     }
   }
   document.getElementById('don-total-le').textContent=totalLe>0?totalLe.toLocaleString('vi-VN')+'đ':'–';
+  var dsbLe=document.getElementById('dsb-total-le');
+  if(dsbLe) dsbLe.textContent=totalLe>0?totalLe.toLocaleString('vi-VN')+'đ':'–';
   // Hiển thị 2 dòng giá ĐL theo hình thức giao
   var rowNhan=document.getElementById('row-total-nhan');
   var rowGiao=document.getElementById('row-total-giao-wrap');
@@ -6630,6 +6663,11 @@ function apDungPhanQuyenLoi(){
       var grid=document.createElement('div'); grid.id='dm-grid';
       grid.appendChild(left); grid.appendChild(right);
       content.appendChild(grid);
+      // Thanh Đặt hàng cố định đáy (mobile): phải là con trực tiếp của grid bao trọn
+      // cả trang thì position:sticky mới dính suốt lúc cuộn (nằm trong #dm-right sẽ
+      // chỉ hiện được khi đã cuộn tới khối đó).
+      var stickyBar=document.getElementById('don-sticky-bar');
+      if(stickyBar) grid.appendChild(stickyBar);
       var fields=left.querySelector('div[style*="flex-direction:column"]');
       if(fields) fields.classList.add('dm-fields');
     }
