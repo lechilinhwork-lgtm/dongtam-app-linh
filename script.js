@@ -3368,16 +3368,20 @@ function layNoiDungBaoGia(ma){
   lines.push('━━━━━━━━━━━━━━');
 
   if(isSale){
-    if(le>0)      lines.push('Giá lẻ: '+f(le));
-    if(saleNK>0)  lines.push('Giá ĐL Nhận kho: '+f(saleNK)+(pct(saleNK)>0?' (giảm '+pct(saleNK)+'% so với giá lẻ)':''));
-    if(saleGH>0)  lines.push('Giá ĐL Đi giao: '+f(saleGH)+(pct(saleGH)>0?' (giảm '+pct(saleGH)+'% so với giá lẻ)':''));
+    // Đánh số + xuống dòng trống giữa các mục (giống format giá thường) - dễ
+    // đọc trên Zalo hơn, mỗi mục tách bạch rõ ràng, khỏi tưởng nhầm 2 dòng
+    // % liền nhau là cộng dồn vào nhau.
+    var stt=1;
+    if(le>0){ lines.push(stt+++'. Giá lẻ: '+f(le)); lines.push(''); }
+    if(saleNK>0){ lines.push(stt+++'. Giá ĐL Nhận kho: '+f(saleNK)+(pct(saleNK)>0?' (giảm '+pct(saleNK)+'% so với giá lẻ)':'')); lines.push(''); }
+    if(saleGH>0){ lines.push(stt+++'. Giá ĐL Đi giao: '+f(saleGH)+(pct(saleGH)>0?' (giảm '+pct(saleGH)+'% so với giá lẻ)':'')); }
     // Lưu ý: 2 mức trên tính ĐỘC LẬP so với giá lẻ (giao hàng có thêm phí vận
     // chuyển nên % thấp hơn nhận kho) - KHÔNG phải giao hàng giảm thêm chồng
     // lên nhận kho. Ghi rõ để khách khỏi hiểu nhầm "giảm thêm 29% nữa".
     if(isCT2 && (vetNK>0 || vetGH>0)){
       lines.push('');
-      if(vetNK>0) lines.push('VÉT KHO – Nhận kho: '+f(vetNK)+(pct(vetNK)>0?' (giảm '+pct(vetNK)+'% so với giá lẻ)':''));
-      if(vetGH>0) lines.push('VÉT KHO – Đi giao: '+f(vetGH)+(pct(vetGH)>0?' (giảm '+pct(vetGH)+'% so với giá lẻ)':''));
+      if(vetNK>0){ lines.push(stt+++'. VÉT KHO – Nhận kho: '+f(vetNK)+(pct(vetNK)>0?' (giảm '+pct(vetNK)+'% so với giá lẻ)':'')); lines.push(''); }
+      if(vetGH>0) lines.push(stt+++'. VÉT KHO – Đi giao: '+f(vetGH)+(pct(vetGH)>0?' (giảm '+pct(vetGH)+'% so với giá lẻ)':''));
     }
     lines.push('━━━━━━━━━━━━━━');
     lines.push('⚠️ Đặt tròn thùng mới được giá Sale · '+(isCT2?'Xả kho số lượng có hạn, hết là hết!':'Ưu đãi trong tháng, đặt sớm giữ giá tốt')+' · Chưa rõ gì cứ hỏi lại em nhé!');
@@ -3454,13 +3458,14 @@ function shareZaloSale(p){
     if(qc0) lines.push('📦 '+qc0.vien+' viên/thùng · '+qc0.m2+' m²/thùng'+(qc0.kg?' · '+qc0.kg+' kg/thùng':''));
   }catch(e0){}
   lines.push('━━━━━━━━━━━━━━');
-  if(p.le>0) lines.push('Giá lẻ: '+f(p.le));
-  if(p.nk>0) lines.push('Giá ĐL Nhận kho: '+f(p.nk)+(pct(p.nk)>0?' (giảm '+pct(p.nk)+'% so với giá lẻ)':''));
-  if(p.gh>0) lines.push('Giá ĐL Đi giao: '+f(p.gh)+(pct(p.gh)>0?' (giảm '+pct(p.gh)+'% so với giá lẻ)':''));
+  var stt2=1;
+  if(p.le>0){ lines.push(stt2+++'. Giá lẻ: '+f(p.le)); lines.push(''); }
+  if(p.nk>0){ lines.push(stt2+++'. Giá ĐL Nhận kho: '+f(p.nk)+(pct(p.nk)>0?' (giảm '+pct(p.nk)+'% so với giá lẻ)':'')); lines.push(''); }
+  if(p.gh>0) lines.push(stt2+++'. Giá ĐL Đi giao: '+f(p.gh)+(pct(p.gh)>0?' (giảm '+pct(p.gh)+'% so với giá lẻ)':''));
   if(isCT2 && ((p.ct150nk||0)>0 || (p.ct150gh||0)>0)){
     lines.push('');
-    if(p.ct150nk>0) lines.push('VÉT KHO – Nhận kho: '+f(p.ct150nk)+(pct(p.ct150nk)>0?' (giảm '+pct(p.ct150nk)+'% so với giá lẻ)':''));
-    if(p.ct150gh>0) lines.push('VÉT KHO – Đi giao: '+f(p.ct150gh)+(pct(p.ct150gh)>0?' (giảm '+pct(p.ct150gh)+'% so với giá lẻ)':''));
+    if(p.ct150nk>0){ lines.push(stt2+++'. VÉT KHO – Nhận kho: '+f(p.ct150nk)+(pct(p.ct150nk)>0?' (giảm '+pct(p.ct150nk)+'% so với giá lẻ)':'')); lines.push(''); }
+    if(p.ct150gh>0) lines.push(stt2+++'. VÉT KHO – Đi giao: '+f(p.ct150gh)+(pct(p.ct150gh)>0?' (giảm '+pct(p.ct150gh)+'% so với giá lẻ)':''));
   }
   lines.push('━━━━━━━━━━━━━━');
   lines.push('⚠️ Đặt tròn thùng mới được giá Sale · '+(isCT2?'Xả kho số lượng có hạn, hết là hết!':'Ưu đãi trong tháng, đặt sớm giữ giá tốt')+' · Chưa rõ gì cứ hỏi lại em nhé!');
