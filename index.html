@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="DT Sales"/>
 <meta name="theme-color" content="#C0232A"/>
 <title>Đồng Tâm – Sales Tool</title>
-<link rel="stylesheet" href="style.css?v=nav52">
+<link rel="stylesheet" href="style.css?v=nav53">
 </head>
 <body>
 
@@ -805,6 +805,22 @@
     <button onclick="chiaSeGioAnh()" style="flex:2;padding:11px;border-radius:10px;border:none;background:var(--red);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">📤 Chia sẻ tất cả qua Zalo</button>
   </div>
 </div>
+<!-- ===== Copy ảnh để dán vào Zalo (dùng trên máy tính, Zalo Desktop không nhận Web Share) ===== -->
+<div id="gioanh-copy-modal">
+  <div class="gacm-box">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:14px;font-weight:700">Ảnh <span id="gacm-idx">1</span>/<span id="gacm-total">1</span> — <span id="gacm-ten"></span></span>
+      <button onclick="dongGacm()" style="border:none;background:none;font-size:20px;cursor:pointer;color:var(--t2)">×</button>
+    </div>
+    <img id="gacm-img" alt="">
+    <p style="font-size:12px;color:var(--t3);margin:10px 0 0;text-align:center">Bấm <b>Copy ảnh</b>, mở Zalo rồi dán (Ctrl+V) vào khung chat. Xong thì bấm <b>Ảnh tiếp theo</b>.</p>
+    <p id="gacm-status" style="font-size:12px;text-align:center;min-height:16px;margin:6px 0 0"></p>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button onclick="gacmCopy()" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--bd2);background:transparent;color:var(--t1);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">📋 Copy ảnh</button>
+      <button id="gacm-next" onclick="gacmKeTiep()" style="flex:1;padding:11px;border-radius:10px;border:none;background:var(--red);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">Ảnh tiếp theo ➡</button>
+    </div>
+  </div>
+</div>
 <button id="ai-fab" title="AI Tư vấn — kéo để di chuyển, bấm đúp để ẩn">🤖</button>
 <div id="ai-panel">
   <div id="ai-hdr">
@@ -901,6 +917,6 @@
 
 
 
-<script src="script.js?v=nav115" defer></script>
+<script src="script.js?v=nav116" defer></script>
 </body>
 </html>

@@ -3559,12 +3559,76 @@ function renderGioAnhSheet(){
       +'</div>';
   }).join('');
 }
+// Máy tính (Windows/Mac) không đăng ký Zalo Desktop làm "Share Target" nên
+// navigator.share() mở bảng chia sẻ của Windows mà KHÔNG có Zalo trong đó.
+// => Trên máy tính, thay vì Web Share, dùng luồng "copy từng ảnh vào clipboard"
+// để nhân viên mở Zalo dán (Ctrl+V) trực tiếp vào khung chat - đúng thao tác
+// thủ công mọi người vẫn làm, chỉ tự động hoá bước copy ảnh.
+function laMayTinhBan(){ return !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent||''); }
+var _gacm=null; // {items:[{ma,ten,url}], idx}
+function moCopyPasteZalo(items){
+  if(!items.length) return;
+  _gacm={items:items, idx:0};
+  renderGacmBuoc();
+  document.getElementById('gioanh-copy-modal').classList.add('on');
+}
+function renderGacmBuoc(){
+  if(!_gacm) return;
+  var it=_gacm.items[_gacm.idx];
+  document.getElementById('gacm-idx').textContent=(_gacm.idx+1);
+  document.getElementById('gacm-total').textContent=_gacm.items.length;
+  document.getElementById('gacm-ten').textContent=it.ten;
+  document.getElementById('gacm-img').src=convertImgUrl(it.url);
+  document.getElementById('gacm-status').textContent='';
+  document.getElementById('gacm-next').textContent=(_gacm.idx<_gacm.items.length-1)?'Ảnh tiếp theo ➡':'✓ Xong, đóng lại';
+}
+function dongGacm(){
+  document.getElementById('gioanh-copy-modal').classList.remove('on');
+  _gacm=null;
+}
+function gacmKeTiep(){
+  if(!_gacm) return;
+  if(_gacm.idx<_gacm.items.length-1){ _gacm.idx++; renderGacmBuoc(); }
+  else dongGacm();
+}
+function _anhThanhPngBlob(blob){
+  return new Promise(function(resolve,reject){
+    var img=new Image();
+    img.onload=function(){
+      var cv=document.createElement('canvas');
+      cv.width=img.naturalWidth; cv.height=img.naturalHeight;
+      var ctx=cv.getContext('2d');
+      ctx.drawImage(img,0,0);
+      cv.toBlob(function(png){ if(png) resolve(png); else reject(new Error('toBlob fail')); },'image/png');
+    };
+    img.onerror=function(){ reject(new Error('load fail')); };
+    img.src=URL.createObjectURL(blob);
+  });
+}
+function gacmCopy(){
+  if(!_gacm) return;
+  var it=_gacm.items[_gacm.idx];
+  var statusEl=document.getElementById('gacm-status');
+  statusEl.textContent='⏳ Đang copy...';
+  fetch(convertImgUrl(it.url)).then(function(res){
+    if(!res.ok) throw new Error('fetch fail');
+    return res.blob();
+  }).then(_anhThanhPngBlob).then(function(pngBlob){
+    return navigator.clipboard.write([new ClipboardItem({'image/png':pngBlob})]);
+  }).then(function(){
+    statusEl.textContent='✅ Đã copy — mở Zalo, dán (Ctrl+V) vào khung chat';
+  }).catch(function(err){
+    console.log('Copy ảnh Zalo lỗi:',err);
+    statusEl.textContent='⚠️ Không copy được — bấm giữ/chuột phải ảnh bên trên để lưu thủ công';
+  });
+}
 // Gửi tất cả ảnh trong giỏ qua Zalo - nếu >5 ảnh (giới hạn Web Share API) thì
 // tự chia thành nhiều lượt gửi liên tiếp, khỏi bắt nhân viên tự đếm/tách.
 function chiaSeGioAnh(){
   if(!gioAnh.length) return;
   var items=gioAnh.slice();
   dongGioAnhSheet();
+  if(laMayTinhBan()){ moCopyPasteZalo(items); return; }
   function guiTung(list){
     if(!list.length) return;
     var batch=list.slice(0,CHIA_SE_ANH_MAX);
@@ -3622,6 +3686,10 @@ var CHIA_SE_ANH_MAX=10; // Giới hạn cứng số ảnh chia sẻ 1 lần - tr
 // chặn popup (chế độ dự phòng mở nhiều tab) và tránh Web Share API bị lỗi khi
 // đính kèm quá nhiều file cùng lúc trên 1 số điện thoại.
 function _thucHienChiaSe(urls, ma, tenSP){
+  if(laMayTinhBan()){
+    moCopyPasteZalo(urls.map(function(u,i){ return {ma:(ma||'anh')+'_'+(i+1), ten:tenSP||ma, url:u}; }));
+    return;
+  }
   var bịCắt=urls.length>CHIA_SE_ANH_MAX;
   urls=urls.slice(0,CHIA_SE_ANH_MAX);
   function moTabDuPhong(){
