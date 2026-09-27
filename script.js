@@ -16,8 +16,8 @@ var donItems=[];
 // gán giá trị, làm render() dừng giữa hàm → danh sách sản phẩm trống trắng.
 var thuocTinhMap={};
 var LOC_NANG_CAO_FIELDS=[
-  {key:'mau',label:'Màu'},{key:'congNang',label:'Công năng'},
-  {key:'tinhNang',label:'Tính năng'},{key:'hoaVan',label:'Hoa văn'},{key:'men',label:'Men'}
+  {key:'men',label:'Men'},{key:'mau',label:'Màu'},{key:'congNang',label:'Công năng'},
+  {key:'tinhNang',label:'Tính năng'},{key:'hoaVan',label:'Hoa văn'}
 ];
 var locNangCao={mau:'',congNang:'',tinhNang:'',hoaVan:'',men:''};
 // Giá trong Sheet đã bao gồm VAT 8%. Để tổng đơn khớp đúng với hóa đơn VAT
