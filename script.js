@@ -135,6 +135,9 @@ function _ensureAutoCycleObserver(){
   return _autoCycleObserver;
 }
 function registerAutoCycle(thumbEl, ma){
+  // TẮT tự động chuyển ảnh qua lại trên thẻ sản phẩm (theo yêu cầu) - luôn
+  // giữ cố định ảnh số 1 (ảnh đại diện) làm thumbnail, không tự đổi ảnh nữa.
+  return;
   if(!thumbEl || !ma || !_autoCycleTimers || typeof IntersectionObserver==='undefined') return;
   var multi=timAnhMulti(ma);
   if(multi.length<2) return;
