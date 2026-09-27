@@ -3615,7 +3615,7 @@ function _thucHienChiaSeNhieuSP(urls, items, onDone){
 // tên sản phẩm sang Zalo/Messenger/... giống nút Share gốc trên điện thoại.
 // Nếu máy/trình duyệt không hỗ trợ (thường là máy tính), tự mở từng ảnh ở
 // tab mới để nhân viên bấm giữ lưu ảnh rồi tự gửi qua Zalo.
-var CHIA_SE_ANH_MAX=5; // Giới hạn cứng số ảnh chia sẻ 1 lần - tránh trình duyệt
+var CHIA_SE_ANH_MAX=10; // Giới hạn cứng số ảnh chia sẻ 1 lần - tránh trình duyệt
 // chặn popup (chế độ dự phòng mở nhiều tab) và tránh Web Share API bị lỗi khi
 // đính kèm quá nhiều file cùng lúc trên 1 số điện thoại.
 function _thucHienChiaSe(urls, ma, tenSP){
