@@ -2305,6 +2305,7 @@ var NGOI_COLORS={
   'TITAN007':{ten:'Xanh lá',hex:'#3E6B4A'},
   'TITAN008':{ten:'Xanh nhớt',hex:'#2F5548'},
   'TITAN009':{ten:'Đỏ thanh long đậm',hex:'#6E1F28'},
+  'TITAN011':{ten:'Xanh đậm',hex:'#1F3A4D'},
   'ALPHA001':{ten:'Cam đất nung',hex:'#B3502A',datHang:true},
   'ALPHA002':{ten:'Xám xanh',hex:'#5E6B70'},
   'ALPHA003':{ten:'Nâu đậm',hex:'#4E3728'},
