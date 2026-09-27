@@ -1704,7 +1704,8 @@ function render(){
         +'</div>'
         +'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Giao hàng</span><span style="font-size:13px;font-weight:700;color:#1565C0">'+giaGiao+'</span></div>'
         +(tkText?'<div style="font-size:11px;font-weight:600;color:'+tkColor+';margin-top:2px">'+tkText+'</div>':'')
-        +'</div>';
+        +'</div>'
+        +htmlGioAnhChk(p.ma, p.ma);
     } else {
       // Mobile: layout dọc — ảnh + tên/kích cỡ + giá lẻ/nhận kho/giao + tồn kho
       var mCt1=(window.CT1_DATA||[]).find(function(x){return x.ma===p.ma;})
@@ -1747,7 +1748,8 @@ function render(){
         +'</div>'
         +'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:10px;color:#999">→ Giá ĐL giao</span><span style="font-size:11px;font-weight:700;color:#1565C0">'+mGiaGiao+'</span></div>'
         +(mTkText?'<div style="font-size:10px;font-weight:600;color:'+mTkColor+';margin-top:1px">'+mTkText+'</div>':'')
-        +'</div>';
+        +'</div>'
+        +htmlGioAnhChk(p.ma, p.ma);
     }
     div.addEventListener('click',function(){showDP(p.ma);});
     el.appendChild(div);
@@ -2427,7 +2429,7 @@ function ngoiGroupCard(list, isMain){
 
   var card=document.createElement('div');
   card.className='mk';
-  card.style.cssText='cursor:pointer'+(isMain?';border:2px solid #C0232A':'');
+  card.style.cssText='cursor:pointer;position:relative'+(isMain?';border:2px solid #C0232A':'');
 
   var giaHtml=
     '<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;margin-top:4px">'
@@ -2478,6 +2480,12 @@ function ngoiGroupCard(list, isMain){
   inf.innerHTML='<span><b>'+sel._info.code+'</b> – '+col.ten+(col.datHang?' <span style="color:#E65100">(đặt hàng trước)</span>':'')+'</span>'
     +'<span style="color:'+(tkText?'#1B5E20':'#999')+'">'+(tkText||(checkSession()?'Chưa có tồn kho':''))+'</span>';
   card.appendChild(inf);
+
+  // Giỏ ảnh: gắn theo đúng MÀU đang chọn hiển thị trên thẻ (đổi màu thì nút
+  // này tự cập nhật lại theo mã màu mới vì cả thẻ được render lại mỗi lần đổi).
+  var chkWrap=document.createElement('div');
+  chkWrap.innerHTML=htmlGioAnhChk(sel.ma, sel._info.nhom+' - '+col.ten);
+  card.appendChild(chkWrap.firstElementChild);
 
   card.addEventListener('click',function(){ showNgoi(sel.ma); });
   return card;
@@ -3480,6 +3488,126 @@ function copyZaloMsg(msg){
   navigator.clipboard&&navigator.clipboard.writeText
     ?navigator.clipboard.writeText(msg).then(function(){showToast('✅ Đã copy! Paste vào Zalo');}).catch(function(){fallbackCopy(msg);})
     :fallbackCopy(msg);
+}
+
+// ===== GIỎ ẢNH: chọn nhiều SẢN PHẨM KHÁC NHAU (khác hẳn "Chia sẻ ảnh" trong
+// popup chi tiết - cái đó chỉ chọn nhiều ảnh của CÙNG 1 sản phẩm). Dùng khi
+// khách hỏi cùng lúc nhiều mã, đánh dấu ✓ trên từng thẻ rồi gửi 1 lần qua Zalo,
+// khỏi phải mở từng sản phẩm gửi riêng lẻ.
+var gioAnh=[]; // [{ma, ten, url}]
+function timAnhDaiDien(ma){ return timAnh(ma)||''; }
+function trongGioAnh(ma){ return gioAnh.some(function(x){return x.ma===ma;}); }
+function toggleGioAnh(ma, ten){
+  var idx=gioAnh.findIndex(function(x){return x.ma===ma;});
+  if(idx>=0){ gioAnh.splice(idx,1); }
+  else {
+    var url=timAnhDaiDien(ma);
+    if(!url){ showToast('⚠️ Mã '+ma+' chưa có ảnh trong Sheet'); return; }
+    if(gioAnh.length>=30){ showToast('⚠️ Giỏ ảnh tối đa 30 sản phẩm, gửi bớt rồi thêm tiếp'); return; }
+    gioAnh.push({ma:ma, ten:ten||ma, url:url});
+  }
+  capNhatGioAnhFab();
+  var btn=document.querySelector('.gioanh-chk[data-ma="'+CSS.escape(ma)+'"]');
+  if(btn){ btn.classList.toggle('on', trongGioAnh(ma)); btn.textContent=trongGioAnh(ma)?'✓':''; }
+  if(document.getElementById('gioanh-sheet').classList.contains('on')) renderGioAnhSheet();
+}
+// HTML nút ✓ vuông đặt góc thẻ sản phẩm - dùng chung cho Gạch/Ngói/Keo/TBVS
+function htmlGioAnhChk(ma, ten){
+  var on=trongGioAnh(ma);
+  var tenEsc=String(ten||ma).replace(/'/g,"\\'").replace(/"/g,'&quot;');
+  return '<button type="button" class="gioanh-chk'+(on?' on':'')+'" data-ma="'+ma+'" '
+    +'onclick="event.stopPropagation();toggleGioAnh(\''+ma+'\',\''+tenEsc+'\')" title="Thêm vào giỏ ảnh">'+(on?'✓':'')+'</button>';
+}
+function capNhatGioAnhFab(){
+  var fab=document.getElementById('gioanh-fab');
+  var cnt=document.getElementById('gioanh-count');
+  if(!fab||!cnt) return;
+  cnt.textContent=gioAnh.length;
+  fab.classList.toggle('show', gioAnh.length>0);
+}
+function moGioAnhSheet(){
+  renderGioAnhSheet();
+  document.getElementById('gioanh-sheet').classList.add('on');
+  document.getElementById('gioanh-sheet-bg').classList.add('on');
+}
+function dongGioAnhSheet(){
+  document.getElementById('gioanh-sheet').classList.remove('on');
+  document.getElementById('gioanh-sheet-bg').classList.remove('on');
+}
+function xoaHetGioAnh(){
+  gioAnh.forEach(function(x){
+    var btn=document.querySelector('.gioanh-chk[data-ma="'+CSS.escape(x.ma)+'"]');
+    if(btn){ btn.classList.remove('on'); btn.textContent=''; }
+  });
+  gioAnh=[];
+  capNhatGioAnhFab();
+  renderGioAnhSheet();
+}
+function xoaKhoiGioAnh(ma){ toggleGioAnh(ma); renderGioAnhSheet(); }
+function renderGioAnhSheet(){
+  document.getElementById('gioanh-sheet-count').textContent=gioAnh.length;
+  var el=document.getElementById('gioanh-list');
+  if(!gioAnh.length){ el.innerHTML='<p style="text-align:center;color:var(--t3);padding:24px 16px;font-size:13px">Chưa chọn sản phẩm nào — bấm ✓ trên thẻ sản phẩm để thêm vào đây.</p>'; return; }
+  el.innerHTML=gioAnh.map(function(x){
+    return '<div class="gioanh-item">'
+      +'<img src="'+convertImgUrl(x.url)+'" onerror="this.style.visibility=\'hidden\'">'
+      +'<span style="flex:1;min-width:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+x.ten+'</span>'
+      +'<button class="gioanh-item-x" onclick="xoaKhoiGioAnh(\''+x.ma+'\')">✕</button>'
+      +'</div>';
+  }).join('');
+}
+// Gửi tất cả ảnh trong giỏ qua Zalo - nếu >5 ảnh (giới hạn Web Share API) thì
+// tự chia thành nhiều lượt gửi liên tiếp, khỏi bắt nhân viên tự đếm/tách.
+function chiaSeGioAnh(){
+  if(!gioAnh.length) return;
+  var items=gioAnh.slice();
+  dongGioAnhSheet();
+  function guiTung(list){
+    if(!list.length) return;
+    var batch=list.slice(0,CHIA_SE_ANH_MAX);
+    var rest=list.slice(CHIA_SE_ANH_MAX);
+    var urls=batch.map(function(x){return x.url;});
+    var tenGop=batch.map(function(x){return x.ten;}).join(', ');
+    if(rest.length){
+      showToast('📤 Đang gửi '+batch.length+' ảnh (còn '+rest.length+' ảnh chờ gửi tiếp)...');
+    }
+    _thucHienChiaSeNhieuSP(urls, batch, function(){
+      if(rest.length) setTimeout(function(){ guiTung(rest); }, 600);
+      else showToast('✅ Đã gửi xong '+items.length+' sản phẩm');
+    });
+  }
+  guiTung(items);
+}
+// Giống _thucHienChiaSe nhưng mỗi ảnh là 1 SẢN PHẨM KHÁC NHAU nên đặt tên file
+// theo đúng mã sản phẩm tương ứng (thay vì cùng 1 mã lặp lại _1/_2/_3...).
+function _thucHienChiaSeNhieuSP(urls, items, onDone){
+  function moTabDuPhong(){
+    urls.forEach(function(u){ window.open(convertImgUrl(u),'_blank'); });
+    showToast('📷 Đã mở '+urls.length+' ảnh ở tab mới — bấm giữ ảnh để lưu, rồi gửi qua Zalo');
+    if(onDone) onDone();
+  }
+  if(!(navigator.share && navigator.canShare)){ moTabDuPhong(); return; }
+  Promise.allSettled(urls.map(function(u){
+    return fetch(convertImgUrl(u)).then(function(res){ if(!res.ok) throw new Error('fetch fail'); return res.blob(); });
+  })).then(function(results){
+    var files=[];
+    results.forEach(function(r,i){
+      if(r.status==='fulfilled') files.push(new File([r.value], (items[i].ma||'anh')+'.jpg', {type:r.value.type||'image/jpeg'}));
+    });
+    if(files.length && navigator.canShare({files:files})){
+      var tieuDe=items.map(function(x){return x.ten;}).join(', ');
+      return navigator.share({files:files, title:tieuDe, text:tieuDe}).then(function(){
+        forcePaintStrong();
+        if(onDone) onDone();
+      });
+    }
+    throw new Error('canShare false hoặc không có ảnh nào tải được');
+  }).catch(function(err){
+    forcePaintStrong();
+    if(err&&err.name==='AbortError'){ if(onDone) onDone(); return; }
+    console.log('Web Share thất bại (giỏ ảnh), dùng tab dự phòng:',err);
+    moTabDuPhong();
+  });
 }
 
 // ===== CHIA SẺ NHIỀU ẢNH SẢN PHẨM (qua Zalo/app khác trên điện thoại) =====

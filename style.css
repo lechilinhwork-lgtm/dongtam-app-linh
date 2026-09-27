@@ -663,10 +663,47 @@ input::placeholder{color:var(--t3)}
 .mk{
   background:var(--bg1);border:1px solid var(--bd);
   border-radius:var(--r);padding:10px 12px;
-  margin-bottom:0;cursor:pointer;
+  margin-bottom:0;cursor:pointer;position:relative;
   display:flex;justify-content:space-between;align-items:center;
   transition:box-shadow .18s ease,transform .18s ease,border-color .18s ease;
 }
+
+/* ===== GIỎ ẢNH: chọn nhiều sản phẩm khác nhau, gửi Zalo 1 lần ===== */
+.gioanh-chk{
+  position:absolute;top:8px;right:8px;z-index:3;
+  width:26px;height:26px;border-radius:7px;
+  border:2px solid var(--red);background:var(--bg1);
+  cursor:pointer;padding:0;font-size:14px;font-weight:900;color:var(--red);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 4px rgba(0,0,0,.12);
+}
+.gioanh-chk.on{background:var(--red);color:#fff}
+.gioanh-chk:active{transform:scale(.9)}
+#gioanh-fab{
+  position:fixed;left:16px;bottom:88px;z-index:1000;
+  display:none;align-items:center;gap:8px;
+  background:var(--red);color:#fff;border:none;border-radius:24px;
+  padding:11px 18px 11px 14px;font-size:13px;font-weight:700;cursor:pointer;
+  box-shadow:0 4px 16px rgba(0,0,0,.28);font-family:var(--f);
+}
+#gioanh-fab.show{display:flex}
+#gioanh-fab .gioanh-badge{background:#fff;color:var(--red);border-radius:50%;min-width:20px;height:20px;padding:0 4px;font-size:12px;display:flex;align-items:center;justify-content:center}
+@media(min-width:768px){#gioanh-fab{left:24px;bottom:24px}}
+#gioanh-sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9998;display:none}
+#gioanh-sheet-bg.on{display:block}
+#gioanh-sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:9999;
+  background:var(--bg1);border-radius:16px 16px 0 0;
+  max-height:78vh;display:none;flex-direction:column;overflow:hidden;
+  box-shadow:0 -8px 32px rgba(0,0,0,.25);
+}
+#gioanh-sheet.on{display:flex}
+@media(min-width:768px){
+  #gioanh-sheet{left:50%;right:auto;bottom:auto;top:50%;transform:translate(-50%,-50%);width:min(480px,92vw);border-radius:16px;max-height:80vh}
+}
+.gioanh-item{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid var(--bd)}
+.gioanh-item img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--bg2)}
+.gioanh-item-x{border:none;background:none;color:var(--t3);font-size:18px;cursor:pointer;flex-shrink:0}
 .mk:active{background:#FFF5F5;border-color:var(--red)}
 /* Card gạch kính - layout dọc */
 .mk-kinh{
