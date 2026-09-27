@@ -4973,6 +4973,40 @@ var tonKhoChiTiet={};
 var tonKhoLoaded=false;
 var _tkModalMa=null, _tkModalTen=null;
 var TEN_TIER={nhanh:'🟢 Có hàng ngay',mai:'🟡 Hôm nay chuyển – mai có hàng',cho15:'🔴 Chờ 15 ngày'};
+// Danh sách kho được/không được điều chuyển + thời gian điều chuyển - cập nhật
+// theo file "DC_Kho_thoi_gian_dieu_chuyen.xlsx" (anh gửi). Chỉ hiện cho nhân
+// viên/admin trong popup Tồn kho (khách hàng không cần biết logistics nội bộ).
+var KHO_DIEU_CHUYEN={
+  'DC Bình Định':{duoc:true,tg:'15 ngày'},
+  'DC Bình Dương':{duoc:true,tg:'Trong ngày'},
+  'DC Cần Thơ':{duoc:true,tg:'2 ngày'},
+  'DC DakLak':{duoc:true,tg:'15 ngày'},
+  'DC Đồng Nai':{duoc:true,tg:'2 ngày'},
+  'DC Đồng Tháp':{duoc:true,tg:'5 ngày'},
+  'DC Hải Dương':{duoc:false,tg:''},
+  'DC Hải Phòng':{duoc:false,tg:''},
+  'DC Long An':{duoc:true,tg:'1 ngày'},
+  'DC Nghệ An':{duoc:false,tg:''},
+  'DC Nha Trang':{duoc:true,tg:'15 ngày'},
+  'DC Phan Trọng Tuệ':{duoc:false,tg:''},
+  'DC Quảng Nam':{duoc:true,tg:'Lịch 1 tháng 1 lần'},
+  'DC Tân Kiên':{duoc:true,tg:'Trong ngày'},
+  'DC Thái Nguyên':{duoc:false,tg:''},
+  'Đồng Tâm BMP':{duoc:true,tg:'1 ngày'},
+  'Đồng Tâm Dotalia':{duoc:true,tg:'1 ngày'},
+  'Đồng Tâm Miền Trung':{duoc:true,tg:'Lịch 1 tháng 1 lần'},
+  'Đồng Tâm Thương Mại HQ':{duoc:true,tg:'Tuỳ Storage location — hỏi lại NVKD/Điều Phối',ghiChu:true},
+  'DT Bê tông 620 Bến Lức':{duoc:true,tg:'1 ngày'},
+  'DT Bê tông 620 Tân Tập':{duoc:true,tg:'1 ngày'},
+  'DT CP Bến Lức':{duoc:true,tg:'1 ngày'}
+};
+function htmlDieuChuyenKho(tenKho){
+  var d=KHO_DIEU_CHUYEN[tenKho];
+  if(!d) return '';
+  if(!d.duoc) return '<span style="font-size:10.5px;color:#C62828;font-weight:600">🚫 Không điều chuyển</span>';
+  var mau=d.ghiChu?'#E65100':'#2E7D32';
+  return '<span style="font-size:10.5px;color:'+mau+';font-weight:600">🔄 Điều chuyển: '+d.tg+'</span>';
+}
 var TK_CACHE_KEY='dt_tk_v1', TK_CACHE_TTL=30*60*1000;
 function tkLoadingBanner(show){
   var el=document.getElementById('tk-loading-bar');
@@ -5327,9 +5361,11 @@ function moTonKho(ma, tenSP){
       if(!khoList.length) return;
       body+='<p style="font-size:12px;font-weight:700;margin:10px 0 6px">'+TEN_TIER[tier]+'</p>';
       khoList.forEach(function(k){
+        var dc=htmlDieuChuyenKho(k.ten);
         body+='<div style="border:1px solid var(--bd,#eee);border-radius:8px;padding:8px 10px;margin-bottom:6px">'
-          +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:4px">'
+          +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:'+(dc?'2px':'4px')+'">'
           +'<span>'+k.ten+'</span><span>'+fmtThung(k.tong,dvt,m2pt)+'</span></div>'
+          +(dc?'<div style="margin-bottom:4px">'+dc+'</div>':'')
           +k.lo.map(function(l){
             return '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2);padding:2px 0">'
               +'<span>Lô '+(l.so_lo||'–')+(l.mau?' · màu '+l.mau:'')+'</span><span>'+fmtThung(l.sl,dvt,m2pt)+'</span></div>';
