@@ -5607,23 +5607,46 @@ function moTonKho(ma, tenSP){
     body='<div style="background:#FDECEA;border-radius:10px;padding:10px 12px;margin-bottom:12px;text-align:center">'
       +'<p style="font-size:12px;color:#888;margin-bottom:2px">Tổng khả dụng toàn quốc</p>'
       +'<p style="font-size:18px;font-weight:800;color:#C0232A;margin:0">'+fmtThung(tk.tong,dvt,m2pt)+'</p></div>';
-    ['nhanh','mai','cho15'].forEach(function(tier){
-      var khoList=tk.kho.filter(function(k){return k.tier===tier;});
+    function renderKhoCard(k){
+      var dc=htmlDieuChuyenKho(k.ten);
+      return '<div style="border:1px solid var(--bd,#eee);border-radius:8px;padding:8px 10px;margin-bottom:6px">'
+        +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:'+(dc?'2px':'4px')+'">'
+        +'<span>'+k.ten+'</span><span>'+fmtThung(k.tong,dvt,m2pt)+'</span></div>'
+        +(dc?'<div style="margin-bottom:4px">'+dc+'</div>':'')
+        +k.lo.map(function(l){
+          return '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2);padding:2px 0">'
+            +'<span>Lô '+(l.so_lo||'–')+(l.mau?' · màu '+l.mau:'')+'</span><span>'+fmtThung(l.sl,dvt,m2pt)+'</span></div>';
+        }).join('')
+        +'</div>';
+    }
+    // Kho có hàng sẵn (không cần điều chuyển) - giữ nguyên nhóm "nhanh" cũ.
+    var khoNhanhSan=tk.kho.filter(function(k){return k.tier==='nhanh';});
+    if(khoNhanhSan.length){
+      body+='<p style="font-size:12px;font-weight:700;margin:10px 0 6px">'+TEN_TIER['nhanh']+'</p>';
+      khoNhanhSan.forEach(function(k){ body+=renderKhoCard(k); });
+    }
+    // Các kho còn lại (tier mai/cho15) tách theo ĐÚNG thời gian điều chuyển
+    // thật của từng kho (KHO_DIEU_CHUYEN) thay vì theo tier cũ của backend -
+    // cho ra 4 nhóm rõ ràng: Điều chuyển (≤5 ngày) → Chờ 15 ngày → Chờ 1 tháng
+    // → Không được điều chuyển.
+    function nhomDieuChuyen(tenKho){
+      var d=KHO_DIEU_CHUYEN[tenKho];
+      if(!d || !d.duoc) return 'khongdc';
+      var tg=d.tg||'';
+      if(/tháng/i.test(tg)) return 'thang';
+      var m=tg.match(/(\d+)\s*ngày/);
+      var soNgay=/trong ngày/i.test(tg)?0:(m?parseInt(m[1],10):null);
+      if(soNgay!==null && soNgay>=15) return 'cho15';
+      return 'dc';
+    }
+    var NHOM_DC_LABEL={dc:'🔄 Điều chuyển',cho15:'⏳ Chờ 15 ngày',thang:'🗓️ Chờ 1 tháng',khongdc:'🚫 Không được điều chuyển'};
+    var khoConLai=tk.kho.filter(function(k){return k.tier==='mai'||k.tier==='cho15';});
+    ['dc','cho15','thang','khongdc'].forEach(function(nhom){
+      var khoList=khoConLai.filter(function(k){return nhomDieuChuyen(k.ten)===nhom;});
       if(!khoList.length) return;
       khoList.sort(function(a,b){ return thuTuDieuChuyenKho(a.ten)-thuTuDieuChuyenKho(b.ten); });
-      body+='<p style="font-size:12px;font-weight:700;margin:10px 0 6px">'+TEN_TIER[tier]+'</p>';
-      khoList.forEach(function(k){
-        var dc=htmlDieuChuyenKho(k.ten);
-        body+='<div style="border:1px solid var(--bd,#eee);border-radius:8px;padding:8px 10px;margin-bottom:6px">'
-          +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:'+(dc?'2px':'4px')+'">'
-          +'<span>'+k.ten+'</span><span>'+fmtThung(k.tong,dvt,m2pt)+'</span></div>'
-          +(dc?'<div style="margin-bottom:4px">'+dc+'</div>':'')
-          +k.lo.map(function(l){
-            return '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2);padding:2px 0">'
-              +'<span>Lô '+(l.so_lo||'–')+(l.mau?' · màu '+l.mau:'')+'</span><span>'+fmtThung(l.sl,dvt,m2pt)+'</span></div>';
-          }).join('')
-          +'</div>';
-      });
+      body+='<p style="font-size:12px;font-weight:700;margin:10px 0 6px">'+NHOM_DC_LABEL[nhom]+'</p>';
+      khoList.forEach(function(k){ body+=renderKhoCard(k); });
     });
     ghiChu='<p style="font-size:11px;color:#888;margin-bottom:10px">Mỗi lô là 1 lần sản xuất — nên lấy hết trong 1 lô để tránh lệch màu khi thi công cùng 1 công trình.</p>';
   }
