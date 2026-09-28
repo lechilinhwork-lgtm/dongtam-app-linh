@@ -3615,21 +3615,60 @@ function _ghepNhanLenAnh(blob, ma){
       var tt=layThongTinSP(ma);
       if(ma){
         var w=cv.width, h=cv.height;
-        var phan=[String(ma)];
-        if(tt&&tt.kc) phan.push('Kích thước: '+tt.kc);
-        if(tt&&tt.le>0) phan.push('Giá lẻ: '+fmt(tt.le)+'/m²');
-        var nhan=phan.join('  ·  ');
-        var bannerH=Math.max(22, Math.round(h*0.045));
+        // Cỡ chữ tính theo căn bậc 2 diện tích (không tính riêng theo chiều
+        // cao) để ảnh vuông/ngang/dọc đều ra chữ to đều nhau, tránh ảnh vuông
+        // (vd 400x400) bị chữ nhỏ xíu do bề ngang hẹp hơn ảnh ngang dài.
+        var ref=Math.sqrt(w*h);
+        var logoSize=Math.max(22, Math.round(ref*0.052));
+        var pad=Math.round(logoSize*0.32);
+        var fontMa=Math.round(logoSize*0.6);
+        var fontSub=Math.round(logoSize*0.48);
+        var maTxt=String(ma);
+        var subParts=[];
+        if(tt&&tt.kc) subParts.push('Kích thước: '+tt.kc);
+        if(tt&&tt.le>0) subParts.push('Giá lẻ: '+fmt(tt.le)+'/m²');
+        var subTxt=subParts.join('  ·  ');
+        var logoX=10, textX=logoX+logoSize+8;
+        ctx.font='bold '+fontMa+'px Arial, sans-serif';
+        var wMa=ctx.measureText(maTxt).width;
+        ctx.font=fontSub+'px Arial, sans-serif';
+        var wSub=subTxt?ctx.measureText('  ·  '+subTxt).width:0;
+        var haiDong=subTxt && (textX+wMa+wSub+12>w);
+        var bannerH=haiDong ? (fontMa+fontSub+pad*3) : (logoSize+pad*2);
         ctx.fillStyle='rgba(0,0,0,0.68)';
         ctx.fillRect(0, h-bannerH, w, bannerH);
-        var fontSize=Math.round(bannerH*0.48);
+        // Logo tròn nhỏ "ĐT" (Đồng Tâm) bên trái nhãn cho chuyên nghiệp
+        var logoCy=h-bannerH/2;
+        ctx.beginPath();
+        ctx.arc(logoX+logoSize/2, logoCy, logoSize/2, 0, Math.PI*2);
+        ctx.fillStyle='#C0232A';
+        ctx.fill();
         ctx.fillStyle='#fff';
-        ctx.textBaseline='middle';
-        ctx.font='bold '+fontSize+'px Arial, sans-serif';
-        while(ctx.measureText(nhan).width>w-20 && fontSize>8){
-          fontSize--; ctx.font='bold '+fontSize+'px Arial, sans-serif';
+        ctx.textAlign='center';
+        ctx.font='bold '+Math.round(logoSize*0.42)+'px Arial, sans-serif';
+        ctx.fillText('ĐT', logoX+logoSize/2, logoCy+1);
+        ctx.textAlign='left';
+        if(!haiDong){
+          ctx.textBaseline='middle';
+          ctx.fillStyle='#fff';
+          ctx.font='bold '+fontMa+'px Arial, sans-serif';
+          ctx.fillText(maTxt, textX, logoCy);
+          if(subTxt){
+            ctx.fillStyle='#EAEAEA';
+            ctx.font=fontSub+'px Arial, sans-serif';
+            ctx.fillText('  ·  '+subTxt, textX+wMa, logoCy);
+          }
+        } else {
+          ctx.textBaseline='middle';
+          var y1=h-bannerH+pad+fontMa/2;
+          var y2=y1+fontMa/2+pad*0.6+fontSub/2;
+          ctx.fillStyle='#fff';
+          ctx.font='bold '+fontMa+'px Arial, sans-serif';
+          ctx.fillText(maTxt, textX, y1);
+          ctx.fillStyle='#EAEAEA';
+          ctx.font=fontSub+'px Arial, sans-serif';
+          ctx.fillText(subTxt, textX, y2);
         }
-        ctx.fillText(nhan, 10, h-bannerH/2);
       }
       cv.toBlob(function(png){ if(png) resolve(png); else reject(new Error('toBlob fail')); },'image/png');
     };
