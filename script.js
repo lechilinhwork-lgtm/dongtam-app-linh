@@ -3510,7 +3510,7 @@ function toggleGioAnh(ma, ten){
   else {
     var url=timAnhDaiDien(ma);
     if(!url){ showToast('⚠️ Mã '+ma+' chưa có ảnh trong Sheet'); return; }
-    if(gioAnh.length>=30){ showToast('⚠️ Giỏ ảnh tối đa 30 sản phẩm, gửi bớt rồi thêm tiếp'); return; }
+    if(gioAnh.length>=CHIA_SE_ANH_MAX){ showToast('⚠️ Giỏ ảnh tối đa '+CHIA_SE_ANH_MAX+' sản phẩm/lượt gửi (Zalo/trình duyệt dễ lỗi hoặc chặn nếu gửi quá nhiều ảnh cùng lúc) — gửi lượt này rồi thêm tiếp'); return; }
     gioAnh.push({ma:ma, ten:ten||ma, url:url});
   }
   capNhatGioAnhFab();
@@ -3553,8 +3553,6 @@ function xoaHetGioAnh(){
 function xoaKhoiGioAnh(ma){ toggleGioAnh(ma); renderGioAnhSheet(); }
 function renderGioAnhSheet(){
   document.getElementById('gioanh-sheet-count').textContent=gioAnh.length;
-  var note=document.getElementById('gioanh-note');
-  if(note) note.style.display=(gioAnh.length>CHIA_SE_ANH_MAX)?'block':'none';
   var el=document.getElementById('gioanh-list');
   if(!gioAnh.length){ el.innerHTML='<p style="text-align:center;color:var(--t3);padding:24px 16px;font-size:13px">Chưa chọn sản phẩm nào — bấm ✓ trên thẻ sản phẩm để thêm vào đây.</p>'; return; }
   el.innerHTML=gioAnh.map(function(x){
@@ -3864,7 +3862,9 @@ function chiaSeAnhSanPham(ma, tenSP){
   var ov=document.createElement('div');
   ov.id='img-picker-ov';
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
-  var sel=imgs.map(function(){ return true; }); // mặc định chọn tất
+  // Mặc định chọn tối đa CHIA_SE_ANH_MAX ảnh đầu (không tự chọn hết rồi mới
+  // cắt bớt nữa) - để số đếm hiển thị ngay từ đầu khớp với số thật sự gửi được.
+  var sel=imgs.map(function(_,i){ return i<CHIA_SE_ANH_MAX; });
   function buildUI(){
     var nSel=sel.filter(Boolean).length;
     ov.innerHTML='<div style="background:var(--bg1);border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">'
@@ -3872,7 +3872,7 @@ function chiaSeAnhSanPham(ma, tenSP){
       +'<span style="font-size:14px;font-weight:700;color:var(--t1)">Chọn ảnh chia sẻ</span>'
       +'<button id="ipc-close" style="border:none;background:none;font-size:20px;cursor:pointer;color:var(--t2);padding:0 4px">×</button>'
       +'</div>'
-      +(imgs.length>CHIA_SE_ANH_MAX?'<p style="font-size:11px;color:var(--t2);padding:6px 16px 0;margin:0">ℹ️ Mỗi lượt gửi tối đa '+CHIA_SE_ANH_MAX+' ảnh (Zalo/trình duyệt dễ lỗi hoặc chặn nếu gửi quá nhiều ảnh cùng lúc) — chọn quá số này sẽ tự lấy '+CHIA_SE_ANH_MAX+' ảnh đầu.</p>':'')
+      +(imgs.length>CHIA_SE_ANH_MAX?'<p style="font-size:11px;color:var(--t2);padding:6px 16px 0;margin:0">ℹ️ Chỉ chọn được tối đa <b>'+CHIA_SE_ANH_MAX+' ảnh</b>/lượt gửi (Zalo/trình duyệt dễ lỗi hoặc chặn nếu gửi quá nhiều ảnh cùng lúc) — bỏ bớt ảnh cũ để chọn ảnh khác.</p>':'')
       +'<div style="display:flex;gap:8px;padding:8px 16px;border-bottom:1px solid var(--bd)">'
       +'<button id="ipc-all" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--bd);background:'+(nSel===imgs.length?'var(--red)':'var(--bg2)')+';color:'+(nSel===imgs.length?'#fff':'var(--t1)')+';font-size:12px;font-weight:600;cursor:pointer">Chọn tất cả</button>'
       +'<button id="ipc-none" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--bd);background:var(--bg2);color:var(--t1);font-size:12px;font-weight:600;cursor:pointer">Bỏ chọn</button>'
@@ -3886,21 +3886,29 @@ function chiaSeAnhSanPham(ma, tenSP){
           +'</div>';
       }).join('')
       +'</div>'
-      +(nSel>CHIA_SE_ANH_MAX
-        ?'<div style="padding:8px 16px;background:#FFF3CD;color:#856404;font-size:12px;text-align:center">⚠️ Đã chọn '+nSel+' ảnh, nhưng mỗi lượt chỉ gửi tối đa '+CHIA_SE_ANH_MAX+' (tránh Zalo/trình duyệt lỗi) — sẽ dùng '+CHIA_SE_ANH_MAX+' ảnh đầu, còn lại bấm chia sẻ thêm lượt nữa nếu cần</div>'
-        :'')
       +'<div style="padding:10px 16px 20px;border-top:1px solid var(--bd)">'
       +'<button id="ipc-share" style="width:100%;padding:12px;border:none;border-radius:10px;background:'+(nSel>0?'var(--red)':'#ccc')+';color:#fff;font-size:14px;font-weight:700;cursor:pointer">'
-      +(nSel>0?'🖼️ Chia sẻ '+Math.min(nSel,CHIA_SE_ANH_MAX)+' ảnh':'Chưa chọn ảnh nào')
+      +(nSel>0?'🖼️ Chia sẻ '+nSel+' ảnh':'Chưa chọn ảnh nào')
       +'</button>'
       +'</div>'
       +'</div>';
     // events
     ov.querySelector('#ipc-close').onclick=function(){ document.body.removeChild(ov); };
-    ov.querySelector('#ipc-all').onclick=function(){ sel=sel.map(function(){return true;}); buildUI(); };
+    ov.querySelector('#ipc-all').onclick=function(){
+      sel=sel.map(function(_,i){ return i<CHIA_SE_ANH_MAX; });
+      if(imgs.length>CHIA_SE_ANH_MAX) showToast('ℹ️ Chỉ chọn được tối đa '+CHIA_SE_ANH_MAX+' ảnh/lần, đã chọn sẵn '+CHIA_SE_ANH_MAX+' ảnh đầu');
+      buildUI();
+    };
     ov.querySelector('#ipc-none').onclick=function(){ sel=sel.map(function(){return false;}); buildUI(); };
     ov.querySelectorAll('[data-i]').forEach(function(el){
-      el.onclick=function(){ var i=+el.getAttribute('data-i'); sel[i]=!sel[i]; buildUI(); };
+      el.onclick=function(){
+        var i=+el.getAttribute('data-i');
+        if(!sel[i] && nSel>=CHIA_SE_ANH_MAX){
+          showToast('⚠️ Đã chọn tối đa '+CHIA_SE_ANH_MAX+' ảnh — bỏ bớt ảnh khác trước khi chọn thêm');
+          return;
+        }
+        sel[i]=!sel[i]; buildUI();
+      };
     });
     var shareBtn=ov.querySelector('#ipc-share');
     if(nSel>0) shareBtn.onclick=function(){
