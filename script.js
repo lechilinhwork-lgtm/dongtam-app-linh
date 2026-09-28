@@ -5239,6 +5239,18 @@ var KHO_DIEU_CHUYEN={
   'DT Bê tông 620 Tân Tập':{duoc:true,tg:'1 ngày'},
   'DT CP Bến Lức':{duoc:true,tg:'1 ngày'}
 };
+// Xếp hạng kho theo thời gian lấy hàng (nhanh nhất trước) - kho không điều
+// chuyển được hoặc chưa rõ thời gian bị đẩy xuống cuối danh sách.
+function thuTuDieuChuyenKho(tenKho){
+  var d=KHO_DIEU_CHUYEN[tenKho];
+  if(!d || !d.duoc) return 9999;
+  var tg=d.tg||'';
+  if(/trong ngày/i.test(tg)) return 0;
+  var m=tg.match(/(\d+)\s*ngày/);
+  if(m) return parseInt(m[1],10);
+  if(/tháng/i.test(tg)) return 200;
+  return 500;
+}
 function htmlDieuChuyenKho(tenKho){
   var d=KHO_DIEU_CHUYEN[tenKho];
   if(!d) return '';
@@ -5598,6 +5610,7 @@ function moTonKho(ma, tenSP){
     ['nhanh','mai','cho15'].forEach(function(tier){
       var khoList=tk.kho.filter(function(k){return k.tier===tier;});
       if(!khoList.length) return;
+      khoList.sort(function(a,b){ return thuTuDieuChuyenKho(a.ten)-thuTuDieuChuyenKho(b.ten); });
       body+='<p style="font-size:12px;font-weight:700;margin:10px 0 6px">'+TEN_TIER[tier]+'</p>';
       khoList.forEach(function(k){
         var dc=htmlDieuChuyenKho(k.ten);
