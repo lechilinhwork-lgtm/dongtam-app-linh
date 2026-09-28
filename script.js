@@ -2060,7 +2060,8 @@ function renderSale(){
         +'<button onclick="event.stopPropagation();shareZaloSale(window.__salePTmp_'+p.ma.replace(/[^a-z0-9]/gi,'_')+')" style="padding:6px 8px;font-size:11px;border:none;border-radius:8px;background:#0068FF;color:#fff;font-weight:700;cursor:pointer">Zalo ↗</button>'
         +'<button onclick="event.stopPropagation();addToDon(\''+p.ma+'\');showToast(\'✓ Đã thêm '+p.ma+'\')" style="flex:1;padding:6px 8px;font-size:11px;border:none;border-radius:8px;background:#C0232A;color:#fff;font-weight:700;cursor:pointer">+ Thêm</button>'
         +'</div>'
-        +'</div>';
+        +'</div>'
+        +htmlGioAnhChk(p.ma, p.ma);
       var safeKey='__salePTmp_'+p.ma.replace(/[^a-z0-9]/gi,'_');
       window[safeKey]=p;
       dcard.addEventListener('click',function(){ showDP(p.ma); });
@@ -2102,6 +2103,9 @@ function renderSale(){
       } else {
         imgWrap.innerHTML='<div class="sale-img-placeholder">🔲</div>';
       }
+      var chkWrapSale=document.createElement('div');
+      chkWrapSale.innerHTML=htmlGioAnhChk(p.ma, p.ma);
+      imgWrap.appendChild(chkWrapSale.firstElementChild);
     }
     buildImgArea();
     card.appendChild(imgWrap);
