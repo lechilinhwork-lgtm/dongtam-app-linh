@@ -3601,8 +3601,12 @@ function gacmKeTiep(){
 function layThongTinSP(ma){
   if(!ma) return null;
   var p;
-  if(typeof DATA!=='undefined'){ p=DATA.find(function(x){return x.ma===ma;}); if(p) return {kc:p.kc||'', le:p.le||0}; }
-  if(typeof NGOI_KEO!=='undefined'){ p=NGOI_KEO.find(function(x){return x.ma===ma;}); if(p) return {kc:p.kc||'', le:p.le||0}; }
+  // Bọc .find bằng "x&&" - 1 số mảng dữ liệu (đặc biệt TBVS combo) có thể lẫn
+  // phần tử undefined, không chặn thì .find crash làm treo cả Promise chia sẻ
+  // ảnh (Promise không resolve/reject được vì lỗi ném ra giữa chừng img.onload).
+  if(typeof DATA!=='undefined'){ p=DATA.find(function(x){return x&&x.ma===ma;}); if(p) return {kc:p.kc||'', le:p.le||0}; }
+  if(typeof NGOI_KEO!=='undefined'){ p=NGOI_KEO.find(function(x){return x&&x.ma===ma;}); if(p) return {kc:p.kc||'', le:p.le||0}; }
+  if(typeof TBVS!=='undefined'){ p=TBVS.find(function(x){return x&&x.ma===ma;}); if(p) return {kc:'', le:p.le||0}; }
   return null;
 }
 // Logo Đồng Tâm dùng để đóng dấu lên ảnh chia sẻ - tải sẵn 1 lần lúc load
@@ -3620,6 +3624,7 @@ function _ghepNhanLenAnh(blob, ma){
   return new Promise(function(resolve,reject){
     var img=new Image();
     img.onload=function(){
+    try{
       var tt=layThongTinSP(ma);
       var w=img.naturalWidth, h=img.naturalHeight;
       var bannerH=0;
@@ -3699,6 +3704,7 @@ function _ghepNhanLenAnh(blob, ma){
         }
       }
       cv.toBlob(function(png){ if(png) resolve(png); else reject(new Error('toBlob fail')); },'image/png');
+    }catch(err){ reject(err); }
     };
     img.onerror=function(){ reject(new Error('load fail')); };
     img.src=URL.createObjectURL(blob);
