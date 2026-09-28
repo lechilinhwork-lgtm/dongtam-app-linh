@@ -3553,6 +3553,8 @@ function xoaHetGioAnh(){
 function xoaKhoiGioAnh(ma){ toggleGioAnh(ma); renderGioAnhSheet(); }
 function renderGioAnhSheet(){
   document.getElementById('gioanh-sheet-count').textContent=gioAnh.length;
+  var note=document.getElementById('gioanh-note');
+  if(note) note.style.display=(gioAnh.length>CHIA_SE_ANH_MAX)?'block':'none';
   var el=document.getElementById('gioanh-list');
   if(!gioAnh.length){ el.innerHTML='<p style="text-align:center;color:var(--t3);padding:24px 16px;font-size:13px">Chưa chọn sản phẩm nào — bấm ✓ trên thẻ sản phẩm để thêm vào đây.</p>'; return; }
   el.innerHTML=gioAnh.map(function(x){
@@ -3870,6 +3872,7 @@ function chiaSeAnhSanPham(ma, tenSP){
       +'<span style="font-size:14px;font-weight:700;color:var(--t1)">Chọn ảnh chia sẻ</span>'
       +'<button id="ipc-close" style="border:none;background:none;font-size:20px;cursor:pointer;color:var(--t2);padding:0 4px">×</button>'
       +'</div>'
+      +(imgs.length>CHIA_SE_ANH_MAX?'<p style="font-size:11px;color:var(--t2);padding:6px 16px 0;margin:0">ℹ️ Mỗi lượt gửi tối đa '+CHIA_SE_ANH_MAX+' ảnh (Zalo/trình duyệt dễ lỗi hoặc chặn nếu gửi quá nhiều ảnh cùng lúc) — chọn quá số này sẽ tự lấy '+CHIA_SE_ANH_MAX+' ảnh đầu.</p>':'')
       +'<div style="display:flex;gap:8px;padding:8px 16px;border-bottom:1px solid var(--bd)">'
       +'<button id="ipc-all" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--bd);background:'+(nSel===imgs.length?'var(--red)':'var(--bg2)')+';color:'+(nSel===imgs.length?'#fff':'var(--t1)')+';font-size:12px;font-weight:600;cursor:pointer">Chọn tất cả</button>'
       +'<button id="ipc-none" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--bd);background:var(--bg2);color:var(--t1);font-size:12px;font-weight:600;cursor:pointer">Bỏ chọn</button>'
@@ -3884,7 +3887,7 @@ function chiaSeAnhSanPham(ma, tenSP){
       }).join('')
       +'</div>'
       +(nSel>CHIA_SE_ANH_MAX
-        ?'<div style="padding:8px 16px;background:#FFF3CD;color:#856404;font-size:12px;text-align:center">⚠️ Chỉ chia sẻ được tối đa '+CHIA_SE_ANH_MAX+' ảnh/lần — sẽ dùng '+CHIA_SE_ANH_MAX+' ảnh đầu trong số đã chọn</div>'
+        ?'<div style="padding:8px 16px;background:#FFF3CD;color:#856404;font-size:12px;text-align:center">⚠️ Đã chọn '+nSel+' ảnh, nhưng mỗi lượt chỉ gửi tối đa '+CHIA_SE_ANH_MAX+' (tránh Zalo/trình duyệt lỗi) — sẽ dùng '+CHIA_SE_ANH_MAX+' ảnh đầu, còn lại bấm chia sẻ thêm lượt nữa nếu cần</div>'
         :'')
       +'<div style="padding:10px 16px 20px;border-top:1px solid var(--bd)">'
       +'<button id="ipc-share" style="width:100%;padding:12px;border:none;border-radius:10px;background:'+(nSel>0?'var(--red)':'#ccc')+';color:#fff;font-size:14px;font-weight:700;cursor:pointer">'
