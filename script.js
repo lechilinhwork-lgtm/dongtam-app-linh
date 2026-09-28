@@ -3601,9 +3601,17 @@ function layThongTinSP(ma){
   if(typeof NGOI_KEO!=='undefined'){ p=NGOI_KEO.find(function(x){return x.ma===ma;}); if(p) return {kc:p.kc||'', le:p.le||0}; }
   return null;
 }
-// Vẽ lại ảnh kèm dải nhãn ở đáy (mã · kích thước · giá lẻ) trước khi chia
-// sẻ/copy, đồng thời chuyển về PNG - dùng chung cho mọi luồng chia sẻ ảnh
-// trong app. Không hiển thị giá Sale/ĐL - chỉ giá lẻ, tránh lộ giá đại lý.
+// Logo Đồng Tâm dùng để đóng dấu lên ảnh chia sẻ - tải sẵn 1 lần lúc load
+// trang, dùng lại cho mọi lần chia sẻ (khỏi tải lại). Nếu vì lý do gì đó chưa
+// tải xong kịp (hiếm) thì dùng badge tròn "ĐT" chữ làm phương án dự phòng.
+var _logoDongTam=new Image();
+_logoDongTam.src='logo-dongtam.jpg';
+var _logoDongTamOk=false;
+_logoDongTam.onload=function(){ _logoDongTamOk=true; };
+// Vẽ lại ảnh kèm dải nhãn ở đáy (mã · kích thước · giá niêm yết) trước khi
+// chia sẻ/copy, đồng thời chuyển về PNG - dùng chung cho mọi luồng chia sẻ
+// ảnh trong app. Không hiển thị giá Sale/ĐL - chỉ giá niêm yết, tránh lộ giá
+// đại lý.
 function _ghepNhanLenAnh(blob, ma){
   return new Promise(function(resolve,reject){
     var img=new Image();
@@ -3626,7 +3634,7 @@ function _ghepNhanLenAnh(blob, ma){
         var maTxt=String(ma);
         var subParts=[];
         if(tt&&tt.kc) subParts.push('Kích thước: '+tt.kc);
-        if(tt&&tt.le>0) subParts.push('Giá lẻ: '+fmt(tt.le)+'/m²');
+        if(tt&&tt.le>0) subParts.push('Giá niêm yết: '+fmt(tt.le)+'/m²');
         var subTxt=subParts.join('  ·  ');
         var logoX=10, textX=logoX+logoSize+8;
         ctx.font='bold '+fontMa+'px Arial, sans-serif';
@@ -3637,17 +3645,28 @@ function _ghepNhanLenAnh(blob, ma){
         var bannerH=haiDong ? (fontMa+fontSub+pad*3) : (logoSize+pad*2);
         ctx.fillStyle='rgba(0,0,0,0.68)';
         ctx.fillRect(0, h-bannerH, w, bannerH);
-        // Logo tròn nhỏ "ĐT" (Đồng Tâm) bên trái nhãn cho chuyên nghiệp
+        // Logo Đồng Tâm bên trái nhãn cho chuyên nghiệp - khung nền trắng nhỏ
+        // vì file logo gốc nền trắng, dự phòng badge tròn "ĐT" nếu logo lỡ
+        // chưa tải kịp.
         var logoCy=h-bannerH/2;
-        ctx.beginPath();
-        ctx.arc(logoX+logoSize/2, logoCy, logoSize/2, 0, Math.PI*2);
-        ctx.fillStyle='#C0232A';
-        ctx.fill();
-        ctx.fillStyle='#fff';
-        ctx.textAlign='center';
-        ctx.font='bold '+Math.round(logoSize*0.42)+'px Arial, sans-serif';
-        ctx.fillText('ĐT', logoX+logoSize/2, logoCy+1);
-        ctx.textAlign='left';
+        if(_logoDongTamOk){
+          ctx.fillStyle='#fff';
+          ctx.fillRect(logoX, logoCy-logoSize/2, logoSize, logoSize);
+          var iw=_logoDongTam.naturalWidth, ih=_logoDongTam.naturalHeight;
+          var scale=Math.min(logoSize/iw, logoSize/ih)*0.9;
+          var dw=iw*scale, dh=ih*scale;
+          ctx.drawImage(_logoDongTam, logoX+(logoSize-dw)/2, logoCy-dh/2, dw, dh);
+        } else {
+          ctx.beginPath();
+          ctx.arc(logoX+logoSize/2, logoCy, logoSize/2, 0, Math.PI*2);
+          ctx.fillStyle='#C0232A';
+          ctx.fill();
+          ctx.fillStyle='#fff';
+          ctx.textAlign='center';
+          ctx.font='bold '+Math.round(logoSize*0.42)+'px Arial, sans-serif';
+          ctx.fillText('ĐT', logoX+logoSize/2, logoCy+1);
+          ctx.textAlign='left';
+        }
         if(!haiDong){
           ctx.textBaseline='middle';
           ctx.fillStyle='#fff';
