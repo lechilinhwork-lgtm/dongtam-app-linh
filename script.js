@@ -3605,7 +3605,7 @@ function layThongTinSP(ma){
 // trang, dùng lại cho mọi lần chia sẻ (khỏi tải lại). Nếu vì lý do gì đó chưa
 // tải xong kịp (hiếm) thì dùng badge tròn "ĐT" chữ làm phương án dự phòng.
 var _logoDongTam=new Image();
-_logoDongTam.src='logo-dongtam.jpg';
+_logoDongTam.src='logo-dongtam.png';
 var _logoDongTamOk=false;
 _logoDongTam.onload=function(){ _logoDongTamOk=true; };
 // Vẽ lại ảnh kèm dải nhãn ở đáy (mã · kích thước · giá niêm yết) trước khi
@@ -3616,39 +3616,43 @@ function _ghepNhanLenAnh(blob, ma){
   return new Promise(function(resolve,reject){
     var img=new Image();
     img.onload=function(){
-      var cv=document.createElement('canvas');
-      cv.width=img.naturalWidth; cv.height=img.naturalHeight;
-      var ctx=cv.getContext('2d');
-      ctx.drawImage(img,0,0);
       var tt=layThongTinSP(ma);
+      var w=img.naturalWidth, h=img.naturalHeight;
+      var bannerH=0;
+      var fontMa=0, fontSub=0, pad=0, logoSize=0, logoX=10, textX=0, haiDong=false, maTxt='', subTxt='';
       if(ma){
-        var w=cv.width, h=cv.height;
         // Cỡ chữ tính theo căn bậc 2 diện tích (không tính riêng theo chiều
         // cao) để ảnh vuông/ngang/dọc đều ra chữ to đều nhau, tránh ảnh vuông
         // (vd 400x400) bị chữ nhỏ xíu do bề ngang hẹp hơn ảnh ngang dài.
         var ref=Math.sqrt(w*h);
-        var logoSize=Math.max(22, Math.round(ref*0.052));
-        var pad=Math.round(logoSize*0.32);
-        var fontMa=Math.round(logoSize*0.6);
-        var fontSub=Math.round(logoSize*0.48);
-        var maTxt=String(ma);
+        logoSize=Math.max(22, Math.round(ref*0.052));
+        pad=Math.round(logoSize*0.32);
+        fontMa=Math.round(logoSize*0.6);
+        fontSub=Math.round(logoSize*0.48);
+        maTxt=String(ma);
         var subParts=[];
         if(tt&&tt.kc) subParts.push('Kích thước: '+tt.kc);
         if(tt&&tt.le>0) subParts.push('Giá niêm yết: '+fmt(tt.le)+'/m²');
-        var subTxt=subParts.join('  ·  ');
-        var logoX=10, textX=logoX+logoSize+8;
-        ctx.font='bold '+fontMa+'px Arial, sans-serif';
-        var wMa=ctx.measureText(maTxt).width;
-        ctx.font=fontSub+'px Arial, sans-serif';
-        var wSub=subTxt?ctx.measureText('  ·  '+subTxt).width:0;
-        var haiDong=subTxt && (textX+wMa+wSub+12>w);
-        var bannerH=haiDong ? (fontMa+fontSub+pad*3) : (logoSize+pad*2);
-        ctx.fillStyle='rgba(0,0,0,0.68)';
-        ctx.fillRect(0, h-bannerH, w, bannerH);
-        // Logo Đồng Tâm bên trái nhãn cho chuyên nghiệp - khung nền trắng nhỏ
-        // vì file logo gốc nền trắng, dự phòng badge tròn "ĐT" nếu logo lỡ
-        // chưa tải kịp.
-        var logoCy=h-bannerH/2;
+        subTxt=subParts.join('  ·  ');
+        textX=logoX+logoSize+8;
+        var tmpCv=document.createElement('canvas'), tmpCtx=tmpCv.getContext('2d');
+        tmpCtx.font='bold '+fontMa+'px Arial, sans-serif';
+        var wMa=tmpCtx.measureText(maTxt).width;
+        tmpCtx.font=fontSub+'px Arial, sans-serif';
+        var wSub=subTxt?tmpCtx.measureText('  ·  '+subTxt).width:0;
+        haiDong=subTxt && (textX+wMa+wSub+12>w);
+        bannerH=haiDong ? (fontMa+fontSub+pad*3) : (logoSize+pad*2);
+      }
+      // Dải nhãn nằm ở PHẦN THÊM RIÊNG dưới ảnh (mở rộng canvas), không đè
+      // lên ảnh gốc - tránh che mất tem nhãn/mã in sẵn trên ảnh sản phẩm.
+      var cv=document.createElement('canvas');
+      cv.width=w; cv.height=h+bannerH;
+      var ctx=cv.getContext('2d');
+      ctx.drawImage(img,0,0);
+      if(ma){
+        ctx.fillStyle='#2A2A2A';
+        ctx.fillRect(0, h, w, bannerH);
+        var logoCy=h+bannerH/2;
         if(_logoDongTamOk){
           ctx.fillStyle='#fff';
           ctx.fillRect(logoX, logoCy-logoSize/2, logoSize, logoSize);
@@ -3671,15 +3675,16 @@ function _ghepNhanLenAnh(blob, ma){
           ctx.textBaseline='middle';
           ctx.fillStyle='#fff';
           ctx.font='bold '+fontMa+'px Arial, sans-serif';
+          var wMa2=ctx.measureText(maTxt).width;
           ctx.fillText(maTxt, textX, logoCy);
           if(subTxt){
             ctx.fillStyle='#EAEAEA';
             ctx.font=fontSub+'px Arial, sans-serif';
-            ctx.fillText('  ·  '+subTxt, textX+wMa, logoCy);
+            ctx.fillText('  ·  '+subTxt, textX+wMa2, logoCy);
           }
         } else {
           ctx.textBaseline='middle';
-          var y1=h-bannerH+pad+fontMa/2;
+          var y1=h+pad+fontMa/2;
           var y2=y1+fontMa/2+pad*0.6+fontSub/2;
           ctx.fillStyle='#fff';
           ctx.font='bold '+fontMa+'px Arial, sans-serif';
