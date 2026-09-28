@@ -3600,13 +3600,24 @@ function gacmKeTiep(){
 // mã + kích cỡ, khỏi lẫn giữa nhiều sản phẩm khi gửi hàng loạt qua Zalo.
 function layThongTinSP(ma){
   if(!ma) return null;
-  var p;
-  // Bọc .find bằng "x&&" - 1 số mảng dữ liệu (đặc biệt TBVS combo) có thể lẫn
-  // phần tử undefined, không chặn thì .find crash làm treo cả Promise chia sẻ
+  // NGOI_KEO chỉ là mảng seed gốc (mã cũ kiểu "TITAN001") - Ngói/Kính/Keo
+  // thực tế hiển thị/chia sẻ dùng mảng RIÊNG được build lại từ Sheet (NGOI,
+  // KINH, KEO) với mã SAP thật, KHÔNG cùng tham chiếu với NGOI_KEO nữa nên
+  // phải tra đúng các mảng sống này, tra NGOI_KEO sẽ luôn ra null (không tìm
+  // thấy) cho sản phẩm Ngói/Kính.
+  var arrs=[];
+  if(typeof DATA!=='undefined') arrs.push(DATA);
+  if(typeof NGOI!=='undefined') arrs.push(NGOI);
+  if(typeof KINH!=='undefined') arrs.push(KINH);
+  if(typeof KEO!=='undefined') arrs.push(KEO);
+  if(typeof TBVS!=='undefined') arrs.push(TBVS);
+  // Bọc .find bằng "x&&" - 1 số mảng dữ liệu có thể lẫn phần tử undefined lúc
+  // đang tải/merge, không chặn thì .find crash làm treo cả Promise chia sẻ
   // ảnh (Promise không resolve/reject được vì lỗi ném ra giữa chừng img.onload).
-  if(typeof DATA!=='undefined'){ p=DATA.find(function(x){return x&&x.ma===ma;}); if(p) return {kc:p.kc||'', le:p.le||0}; }
-  if(typeof NGOI_KEO!=='undefined'){ p=NGOI_KEO.find(function(x){return x&&x.ma===ma;}); if(p) return {kc:p.kc||'', le:p.le||0}; }
-  if(typeof TBVS!=='undefined'){ p=TBVS.find(function(x){return x&&x.ma===ma;}); if(p) return {kc:'', le:p.le||0}; }
+  for(var i=0;i<arrs.length;i++){
+    var p=arrs[i].find(function(x){return x&&x.ma===ma;});
+    if(p) return {kc:p.kc||'', le:p.le||0};
+  }
   return null;
 }
 // Logo Đồng Tâm dùng để đóng dấu lên ảnh chia sẻ - tải sẵn 1 lần lúc load
