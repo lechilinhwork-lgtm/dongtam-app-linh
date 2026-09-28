@@ -3615,24 +3615,21 @@ function _ghepNhanLenAnh(blob, ma){
       var tt=layThongTinSP(ma);
       if(ma){
         var w=cv.width, h=cv.height;
-        var dong=[ {t:String(ma), b:true} ];
-        if(tt&&tt.kc) dong.push({t:'Kích thước: '+tt.kc, b:false});
-        if(tt&&tt.le>0) dong.push({t:'Giá lẻ: '+fmt(tt.le)+'/m²', b:false});
-        var lineH=Math.max(18, Math.round(h*0.038));
-        var pad=Math.round(lineH*0.35);
-        var bannerH=lineH*dong.length+pad*2;
+        var phan=[String(ma)];
+        if(tt&&tt.kc) phan.push('Kích thước: '+tt.kc);
+        if(tt&&tt.le>0) phan.push('Giá lẻ: '+fmt(tt.le)+'/m²');
+        var nhan=phan.join('  ·  ');
+        var bannerH=Math.max(22, Math.round(h*0.045));
         ctx.fillStyle='rgba(0,0,0,0.68)';
         ctx.fillRect(0, h-bannerH, w, bannerH);
+        var fontSize=Math.round(bannerH*0.48);
+        ctx.fillStyle='#fff';
         ctx.textBaseline='middle';
-        dong.forEach(function(d,i){
-          var fontSize=Math.round(lineH*(d.b?0.62:0.52));
-          ctx.fillStyle=d.b?'#fff':'#EAEAEA';
-          ctx.font=(d.b?'bold ':'')+fontSize+'px Arial, sans-serif';
-          while(ctx.measureText(d.t).width>w-24 && fontSize>9){
-            fontSize--; ctx.font=(d.b?'bold ':'')+fontSize+'px Arial, sans-serif';
-          }
-          ctx.fillText(d.t, 12, h-bannerH+pad+lineH*i+lineH/2);
-        });
+        ctx.font='bold '+fontSize+'px Arial, sans-serif';
+        while(ctx.measureText(nhan).width>w-20 && fontSize>8){
+          fontSize--; ctx.font='bold '+fontSize+'px Arial, sans-serif';
+        }
+        ctx.fillText(nhan, 10, h-bannerH/2);
       }
       cv.toBlob(function(png){ if(png) resolve(png); else reject(new Error('toBlob fail')); },'image/png');
     };
