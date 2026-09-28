@@ -3570,6 +3570,28 @@ function renderGioAnhSheet(){
 // thủ công mọi người vẫn làm, chỉ tự động hoá bước copy ảnh.
 function laMayTinhBan(){ return !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent||''); }
 var _gacm=null; // {items:[{ma,ten,url}], idx}
+// Link Drive gốc (không qua nén/resize) của 1 ảnh - kèm theo khi chia sẻ để
+// khách bấm xem full nét, vì Zalo tự nén ảnh gửi trong chat khá mờ, khách
+// không soi được chi tiết vân/biên gạch.
+function layLinkGocAnh(url){
+  if(!url) return '';
+  var m=url.match(/\/d\/([a-zA-Z0-9_-]{20,})/);
+  if(m) return 'https://drive.google.com/file/d/'+m[1]+'/view';
+  return url;
+}
+function gacmCopyLink(){
+  if(!_gacm) return;
+  var it=_gacm.items[_gacm.idx];
+  var link=layLinkGocAnh(it.url);
+  var statusEl=document.getElementById('gacm-status');
+  if(!link){ statusEl.textContent='⚠️ Không lấy được link ảnh này'; return; }
+  navigator.clipboard.writeText(link).then(function(){
+    statusEl.textContent='✅ Đã copy link — dán thêm 1 dòng dưới ảnh trong Zalo';
+  }).catch(function(err){
+    console.log('Copy link ảnh gốc lỗi:',err);
+    statusEl.textContent='⚠️ Không copy được link — bấm giữ dòng này để copy thủ công: '+link;
+  });
+}
 function moCopyPasteZalo(items){
   if(!items.length) return;
   _gacm={items:items, idx:0};
@@ -3784,7 +3806,12 @@ function _thucHienChiaSeNhieuSP(urls, items, onDone){
     });
     if(files.length && navigator.canShare({files:files})){
       var tieuDe=items.map(function(x){return x.ten;}).join(', ');
-      return navigator.share({files:files, title:tieuDe, text:tieuDe}).then(function(){
+      // Kèm link ảnh gốc (Drive, không qua nén) từng sản phẩm - Zalo tự nén
+      // ảnh gửi trong chat khá mờ, khách cần xem chi tiết vân/biên gạch thì
+      // bấm link để mở bản gốc rõ nét trên trình duyệt.
+      var linkLines=items.map(function(x,i){ return (i+1)+'. '+x.ten+': '+layLinkGocAnh(urls[i]); }).join('\n');
+      var textNoiDung=tieuDe+'\n\n🔍 Xem ảnh gốc nét (Zalo hay nén mờ ảnh gửi):\n'+linkLines;
+      return navigator.share({files:files, title:tieuDe, text:textNoiDung}).then(function(){
         forcePaintStrong();
         if(onDone) onDone();
       });
@@ -3833,12 +3860,17 @@ function _thucHienChiaSe(urls, ma, tenSP){
       return _ghepNhanLenAnh(r.value, ma).catch(function(){ return r.value; });
     }));
   }).then(function(blobs){
-    var files=[];
+    var files=[], linkUrls=[];
     blobs.forEach(function(b,i){
-      if(b) files.push(new File([b],(ma||'anh')+'_'+(i+1)+'.png',{type:'image/png'}));
+      if(b){ files.push(new File([b],(ma||'anh')+'_'+(i+1)+'.png',{type:'image/png'})); linkUrls.push(urls[i]); }
     });
     if(files.length && navigator.canShare({files:files})){
-      return navigator.share({files:files,title:tenSP||ma,text:tenSP||ma}).then(function(){
+      // Kèm link ảnh gốc (Drive, không qua nén) - Zalo tự nén ảnh gửi trong
+      // chat khá mờ, khách cần xem chi tiết vân/biên gạch thì bấm link để mở
+      // bản gốc rõ nét trên trình duyệt.
+      var textNoiDung=(tenSP||ma)+'\n\n🔍 Xem ảnh gốc nét (Zalo hay nén mờ ảnh gửi):\n'
+        +linkUrls.map(function(u,i){ return linkUrls.length>1?((i+1)+'. '+layLinkGocAnh(u)):layLinkGocAnh(u); }).join('\n');
+      return navigator.share({files:files,title:tenSP||ma,text:textNoiDung}).then(function(){
         forcePaintStrong();
         if(files.length<urls.length) showToast('⚠️ Chỉ chia sẻ được '+files.length+'/'+urls.length+' ảnh (1 số ảnh tải lỗi)');
         else if(bịCắt) showToast('✅ Đã chia sẻ '+files.length+' ảnh (giới hạn tối đa '+CHIA_SE_ANH_MAX+' ảnh/lần)');
