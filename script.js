@@ -3594,20 +3594,17 @@ function gacmKeTiep(){
 // Tra kích cỡ (kc) của 1 mã sản phẩm bất kỳ (Gạch nằm ở DATA, Ngói/Kính/Keo
 // nằm ở NGOI_KEO) để đóng dấu lên ảnh chia sẻ - khách xem ảnh biết ngay đúng
 // mã + kích cỡ, khỏi lẫn giữa nhiều sản phẩm khi gửi hàng loạt qua Zalo.
-function layKichCoTheoMa(ma){
-  if(!ma) return '';
+function layThongTinSP(ma){
+  if(!ma) return null;
   var p;
-  if(typeof DATA!=='undefined'){ p=DATA.find(function(x){return x.ma===ma;}); if(p&&p.kc) return p.kc; }
-  if(typeof NGOI_KEO!=='undefined'){ p=NGOI_KEO.find(function(x){return x.ma===ma;}); if(p&&p.kc) return p.kc; }
-  return '';
+  if(typeof DATA!=='undefined'){ p=DATA.find(function(x){return x.ma===ma;}); if(p) return {kc:p.kc||'', le:p.le||0}; }
+  if(typeof NGOI_KEO!=='undefined'){ p=NGOI_KEO.find(function(x){return x.ma===ma;}); if(p) return {kc:p.kc||'', le:p.le||0}; }
+  return null;
 }
-function nhanTenSP(ma){
-  var kc=layKichCoTheoMa(ma);
-  return kc ? (ma+' · '+kc) : (ma||'');
-}
-// Vẽ lại ảnh kèm dải chữ (mã + kích cỡ) đè lên đáy ảnh trước khi chia sẻ/copy,
-// đồng thời chuyển về PNG - dùng chung cho mọi luồng chia sẻ ảnh trong app.
-function _ghepNhanLenAnh(blob, nhan){
+// Vẽ lại ảnh kèm dải nhãn ở đáy (mã · kích thước · giá lẻ) trước khi chia
+// sẻ/copy, đồng thời chuyển về PNG - dùng chung cho mọi luồng chia sẻ ảnh
+// trong app. Không hiển thị giá Sale/ĐL - chỉ giá lẻ, tránh lộ giá đại lý.
+function _ghepNhanLenAnh(blob, ma){
   return new Promise(function(resolve,reject){
     var img=new Image();
     img.onload=function(){
@@ -3615,19 +3612,27 @@ function _ghepNhanLenAnh(blob, nhan){
       cv.width=img.naturalWidth; cv.height=img.naturalHeight;
       var ctx=cv.getContext('2d');
       ctx.drawImage(img,0,0);
-      if(nhan){
+      var tt=layThongTinSP(ma);
+      if(ma){
         var w=cv.width, h=cv.height;
-        var bannerH=Math.max(34, Math.round(h*0.09));
+        var dong=[ {t:String(ma), b:true} ];
+        if(tt&&tt.kc) dong.push({t:'Kích thước: '+tt.kc, b:false});
+        if(tt&&tt.le>0) dong.push({t:'Giá lẻ: '+fmt(tt.le)+'/m²', b:false});
+        var lineH=Math.max(18, Math.round(h*0.038));
+        var pad=Math.round(lineH*0.35);
+        var bannerH=lineH*dong.length+pad*2;
         ctx.fillStyle='rgba(0,0,0,0.68)';
         ctx.fillRect(0, h-bannerH, w, bannerH);
-        var fontSize=Math.round(bannerH*0.5);
-        ctx.fillStyle='#fff';
         ctx.textBaseline='middle';
-        ctx.font='bold '+fontSize+'px Arial, sans-serif';
-        while(ctx.measureText(nhan).width>w-24 && fontSize>10){
-          fontSize--; ctx.font='bold '+fontSize+'px Arial, sans-serif';
-        }
-        ctx.fillText(nhan, 12, h-bannerH/2);
+        dong.forEach(function(d,i){
+          var fontSize=Math.round(lineH*(d.b?0.62:0.52));
+          ctx.fillStyle=d.b?'#fff':'#EAEAEA';
+          ctx.font=(d.b?'bold ':'')+fontSize+'px Arial, sans-serif';
+          while(ctx.measureText(d.t).width>w-24 && fontSize>9){
+            fontSize--; ctx.font=(d.b?'bold ':'')+fontSize+'px Arial, sans-serif';
+          }
+          ctx.fillText(d.t, 12, h-bannerH+pad+lineH*i+lineH/2);
+        });
       }
       cv.toBlob(function(png){ if(png) resolve(png); else reject(new Error('toBlob fail')); },'image/png');
     };
@@ -3643,7 +3648,7 @@ function gacmCopy(){
   fetch(convertImgUrl(it.url)).then(function(res){
     if(!res.ok) throw new Error('fetch fail');
     return res.blob();
-  }).then(function(blob){ return _ghepNhanLenAnh(blob, nhanTenSP(it.ma)); }).then(function(pngBlob){
+  }).then(function(blob){ return _ghepNhanLenAnh(blob, it.ma); }).then(function(pngBlob){
     return navigator.clipboard.write([new ClipboardItem({'image/png':pngBlob})]);
   }).then(function(){
     statusEl.textContent='✅ Đã copy — mở Zalo, dán (Ctrl+V) vào khung chat';
@@ -3689,7 +3694,7 @@ function _thucHienChiaSeNhieuSP(urls, items, onDone){
   })).then(function(results){
     return Promise.all(results.map(function(r,i){
       if(r.status!=='fulfilled') return null;
-      return _ghepNhanLenAnh(r.value, nhanTenSP(items[i].ma)).catch(function(){ return r.value; });
+      return _ghepNhanLenAnh(r.value, items[i].ma).catch(function(){ return r.value; });
     }));
   }).then(function(blobs){
     var files=[];
@@ -3736,7 +3741,6 @@ function _thucHienChiaSe(urls, ma, tenSP){
   // Dùng allSettled thay vì all: nếu 1 vài ảnh tải lỗi (mạng chập chờn) thì vẫn
   // chia sẻ được các ảnh tải thành công, thay vì huỷ chia sẻ TOÀN BỘ chỉ vì
   // 1 ảnh lỗi (đây là lý do sản phẩm nhiều ảnh hay bị "chia sẻ không hết").
-  var nhan=nhanTenSP(ma);
   Promise.allSettled(urls.map(function(u){
     return fetch(convertImgUrl(u)).then(function(res){
       if(!res.ok) throw new Error('fetch fail');
@@ -3745,7 +3749,7 @@ function _thucHienChiaSe(urls, ma, tenSP){
   })).then(function(results){
     return Promise.all(results.map(function(r){
       if(r.status!=='fulfilled') return null;
-      return _ghepNhanLenAnh(r.value, nhan).catch(function(){ return r.value; });
+      return _ghepNhanLenAnh(r.value, ma).catch(function(){ return r.value; });
     }));
   }).then(function(blobs){
     var files=[];
