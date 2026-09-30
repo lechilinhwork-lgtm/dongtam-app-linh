@@ -6398,31 +6398,46 @@ function xuatExcel(){
     var giaSale = laSale ? (curGiaoHang==='nhan' ? (item.ns||item.nhan||0) : (item.gs||item.giao||0)) : giaTinh;
     var qc = getQuyCach(item.kc, item.cat);
     var tenSp = (item.ten&&item.ten!==item.ma)?item.ten:item.ma;
+    // Cân nặng - hiển thị kèm mỗi dòng giống file PDF báo giá lẻ, để đại lý
+    // biết trọng lượng thuê xe, KHÔNG gộp dòng Thùng/Viên (giá Sale chỉ áp
+    // dụng cho hàng mua tròn thùng, phải tách riêng theo đúng chính sách).
+    var kgPerVien = kgPerVienCuaMa(item.ma);
     var split = tinhTachThungVien(item);
     if(split){
-      var donGiaThung = Math.round(giaSale*split.m2PerThung);
-      var tienThung = donGiaThung*split.thungNguyen;
-      rowsTpl.push({ma:item.ma, ten:tenSp, dvt:'Thùng', sl:split.thungNguyen, donGia:donGiaThung, thanhTien:tienThung});
-      tongCongTpl+=tienThung;
+      // Chỉ thêm dòng Thùng nếu THẬT SỰ có mua tròn thùng (thungNguyen>0) -
+      // trước đây luôn thêm dòng này dù =0, sinh dòng rác "0 Thùng · –" vô
+      // nghĩa khi khách mua chưa đủ 1 thùng (VD chỉ 1m²).
+      if(split.thungNguyen>0){
+        var donGiaThung = Math.round(giaSale*split.m2PerThung);
+        var tienThung = donGiaThung*split.thungNguyen;
+        var kgThung = kgPerVien&&qc?Math.round(split.thungNguyen*qc.vien*kgPerVien):null;
+        rowsTpl.push({ma:item.ma, ten:tenSp, dvt:'Thùng', sl:split.thungNguyen, donGia:donGiaThung, thanhTien:tienThung,
+          vienGhiChu:qc?(split.thungNguyen*qc.vien)+' viên':'', kg:kgThung});
+        tongCongTpl+=tienThung;
+      }
       var donGiaVien = Math.round(giaTinh*split.m2PerVien);
       var tienVien = donGiaVien*split.vienLe;
-      rowsTpl.push({ma:item.ma, ten:tenSp, dvt:'Viên', sl:split.vienLe, donGia:donGiaVien, thanhTien:tienVien});
+      var kgVien = kgPerVien?Math.round(split.vienLe*kgPerVien):null;
+      rowsTpl.push({ma:item.ma, ten:tenSp, dvt:'Viên', sl:split.vienLe, donGia:donGiaVien, thanhTien:tienVien, kg:kgVien});
       tongCongTpl+=tienVien;
     } else {
       var t=tinhThung(item);
-      var dvt='Thùng', sl, donGia, thanhTien;
+      var dvt='Thùng', sl, donGia, thanhTien, vienGhiChu='', kgRow=null;
       if(t && qc && qc.m2>0){
         sl = t.chiBanThung ? t.thungNguyen : Math.round((item.qty/qc.m2)*100)/100;
         donGia = Math.round(giaSale*qc.m2);
         thanhTien = Math.round(donGia*sl);
+        vienGhiChu = Math.round(sl*qc.vien)+' viên';
+        kgRow = kgPerVien?Math.round(sl*qc.vien*kgPerVien):null;
       } else if(item.loai==='keo'){
         dvt='Bao'; sl=item.qty; donGia=Math.round(giaTinh); thanhTien=Math.round(donGia*sl);
       } else if(item.loai==='ngoi'){
         dvt='Viên'; sl=item.qty; donGia=Math.round(giaTinh); thanhTien=Math.round(donGia*sl);
+        kgRow = kgPerVien?Math.round(sl*kgPerVien):null;
       } else {
         dvt=item.unit||'Thùng'; sl=item.qty; donGia=Math.round(giaTinh); thanhTien=Math.round(donGia*sl);
       }
-      rowsTpl.push({ma:item.ma, ten:tenSp, dvt:dvt, sl:sl, donGia:donGia, thanhTien:thanhTien});
+      rowsTpl.push({ma:item.ma, ten:tenSp, dvt:dvt, sl:sl, donGia:donGia, thanhTien:thanhTien, vienGhiChu:vienGhiChu, kg:kgRow});
       tongCongTpl+=thanhTien;
     }
   });
@@ -6448,12 +6463,18 @@ function xuatExcel(){
       +'<td class="td bold"'+ev+'>'+r.ma+'</td>'
       +'<td class="td"'+ev+' style="font-size:9pt">'+r.ten+'</td>'
       +'<td class="td tc"'+ev+'>'+r.dvt+'</td>'
-      +'<td class="td tc"'+ev+'>'+r.sl+'</td>'
+      +'<td class="td tc"'+ev+'>'+r.sl
+        +(r.vienGhiChu?'<br><span style="font-size:8pt;color:#888">(='+r.vienGhiChu+')</span>':'')
+        +(r.kg?'<br><span style="font-size:8pt;color:#6A1B9A">⚖️ '+r.kg.toLocaleString('vi-VN')+' kg</span>':'')
+        +'</td>'
       +'<td class="td tr"'+ev+'>'+(r.donGia>0?r.donGia.toLocaleString('vi-VN'):'–')+'</td>'
       +'<td class="td red"'+ev+'>'+(r.thanhTien>0?r.thanhTien.toLocaleString('vi-VN'):'–')+'</td>'
       +'</tr>';
   });
   h+='</tbody></table>';
+
+  // Tổng khối lượng - kèm giống PDF báo giá lẻ, để đại lý tham khảo thuê xe
+  var tongKgTpl=rowsTpl.reduce(function(s,r){ return s+(r.kg||0); },0);
 
   // Tổng — file gửi khách: KHÔNG hiện lợi nhuận/margin nội bộ
   h+='<table width="100%" cellspacing="0" cellpadding="0" style="margin-top:10px">'
@@ -6462,6 +6483,9 @@ function xuatExcel(){
     +'<td class="red" style="padding:9px 14px;font-size:12pt">'+Math.round(tongCongTpl).toLocaleString('vi-VN')+' đ</td>'
     +'</tr></table>';
   h+='<div style="margin-top:6px;font-size:8.5pt;color:#999">* Gia tren da bao gom VAT.</div>';
+  if(tongKgTpl>0){
+    h+='<div style="margin-top:4px;font-size:9pt;color:#6A1B9A">⚖️ Tổng khối lượng: <b>'+tongKgTpl.toLocaleString('vi-VN')+' kg</b> — quý khách tham khảo để thuê xe vận chuyển</div>';
+  }
 
   if(note){
     h+='<div style="margin-top:8px;background:#FFFDE7;padding:9px 14px;border-left:3px solid #FFC107;font-size:9.5pt">📝 <b>Ghi chú:</b> '+note+'</div>';
