@@ -6348,8 +6348,8 @@ function xuatExcel(){
 
   // Cố định độ rộng cột (Excel không hiểu tốt width % trong bảng HTML, phải
   // khai báo <col> theo pixel để cột "Tên sản phẩm" đủ rộng, không bị vỡ dòng).
-  var colsMain='<colgroup><col width="42"/><col width="150"/><col width="360"/>'
-    +'<col width="80"/><col width="90"/><col width="110"/><col width="130"/></colgroup>';
+  var colsMain='<colgroup><col width="42"/><col width="150"/><col width="300"/>'
+    +'<col width="70"/><col width="70"/><col width="100"/><col width="120"/><col width="150"/></colgroup>';
 
   // Header - tiêu đề + ngày lập nằm chung 1 dải, viền đỏ kéo dài hết bảng
   h+='<table width="100%" cellspacing="0" cellpadding="0" style="border-bottom:2px solid #C0232A;padding-bottom:6px;margin-bottom:4px">'
@@ -6410,34 +6410,37 @@ function xuatExcel(){
       if(split.thungNguyen>0){
         var donGiaThung = Math.round(giaSale*split.m2PerThung);
         var tienThung = donGiaThung*split.thungNguyen;
-        var kgThung = kgPerVien&&qc?Math.round(split.thungNguyen*qc.vien*kgPerVien):null;
+        var vienThung = qc?split.thungNguyen*qc.vien:null;
+        var kgThung = kgPerVien&&vienThung?Math.round(vienThung*kgPerVien):null;
         rowsTpl.push({ma:item.ma, ten:tenSp, dvt:'Thùng', sl:split.thungNguyen, donGia:donGiaThung, thanhTien:tienThung,
-          vienGhiChu:qc?(split.thungNguyen*qc.vien)+' viên':'', kg:kgThung});
+          m2:split.m2Thung, vien:vienThung, kg:kgThung});
         tongCongTpl+=tienThung;
       }
       var donGiaVien = Math.round(giaTinh*split.m2PerVien);
       var tienVien = donGiaVien*split.vienLe;
       var kgVien = kgPerVien?Math.round(split.vienLe*kgPerVien):null;
-      rowsTpl.push({ma:item.ma, ten:tenSp, dvt:'Viên', sl:split.vienLe, donGia:donGiaVien, thanhTien:tienVien, kg:kgVien});
+      rowsTpl.push({ma:item.ma, ten:tenSp, dvt:'Viên', sl:split.vienLe, donGia:donGiaVien, thanhTien:tienVien,
+        m2:split.m2Vien, vien:split.vienLe, kg:kgVien});
       tongCongTpl+=tienVien;
     } else {
       var t=tinhThung(item);
-      var dvt='Thùng', sl, donGia, thanhTien, vienGhiChu='', kgRow=null;
+      var dvt='Thùng', sl, donGia, thanhTien, m2Row=null, vienRow=null, kgRow=null;
       if(t && qc && qc.m2>0){
         sl = t.chiBanThung ? t.thungNguyen : Math.round((item.qty/qc.m2)*100)/100;
         donGia = Math.round(giaSale*qc.m2);
         thanhTien = Math.round(donGia*sl);
-        vienGhiChu = Math.round(sl*qc.vien)+' viên';
-        kgRow = kgPerVien?Math.round(sl*qc.vien*kgPerVien):null;
+        m2Row = parseFloat(item.qty)||0;
+        vienRow = Math.round(sl*qc.vien);
+        kgRow = kgPerVien?Math.round(vienRow*kgPerVien):null;
       } else if(item.loai==='keo'){
         dvt='Bao'; sl=item.qty; donGia=Math.round(giaTinh); thanhTien=Math.round(donGia*sl);
       } else if(item.loai==='ngoi'){
         dvt='Viên'; sl=item.qty; donGia=Math.round(giaTinh); thanhTien=Math.round(donGia*sl);
-        kgRow = kgPerVien?Math.round(sl*kgPerVien):null;
+        vienRow=sl; kgRow = kgPerVien?Math.round(sl*kgPerVien):null;
       } else {
         dvt=item.unit||'Thùng'; sl=item.qty; donGia=Math.round(giaTinh); thanhTien=Math.round(donGia*sl);
       }
-      rowsTpl.push({ma:item.ma, ten:tenSp, dvt:dvt, sl:sl, donGia:donGia, thanhTien:thanhTien, vienGhiChu:vienGhiChu, kg:kgRow});
+      rowsTpl.push({ma:item.ma, ten:tenSp, dvt:dvt, sl:sl, donGia:donGia, thanhTien:thanhTien, m2:m2Row, vien:vienRow, kg:kgRow});
       tongCongTpl+=thanhTien;
     }
   });
@@ -6448,27 +6451,33 @@ function xuatExcel(){
     +colsMain
     +'<thead><tr>'
     +'<th class="th" width="5%">STT</th>'
-    +'<th class="th" width="16%">Mã hàng</th>'
-    +'<th class="th" width="34%">Tên sản phẩm theo hóa đơn</th>'
-    +'<th class="th" width="10%">ĐVT</th>'
-    +'<th class="th" width="10%">Số lượng</th>'
-    +'<th class="th" width="12%">Đơn giá</th>'
-    +'<th class="th" width="13%">Thành tiền</th>'
+    +'<th class="th" width="14%">Mã hàng</th>'
+    +'<th class="th" width="28%">Tên sản phẩm theo hóa đơn</th>'
+    +'<th class="th" width="7%">ĐVT</th>'
+    +'<th class="th" width="7%">Số lượng</th>'
+    +'<th class="th" width="10%">Đơn giá</th>'
+    +'<th class="th" width="12%">Thành tiền</th>'
+    +'<th class="th" width="17%">Ghi chú</th>'
     +'</tr></thead><tbody>';
 
   rowsTpl.forEach(function(r,i){
     var ev=i%2===0?' class="ev"':'';
+    // Cột Ghi chú - gộp m²/viên/kg quy đổi của đúng dòng này, để đại lý đối
+    // chiếu nhanh khỏi tính lại thủ công (khách yêu cầu thêm).
+    var ghiChuParts=[];
+    if(r.m2>0) ghiChuParts.push(r.m2.toLocaleString('vi-VN')+' m²');
+    if(r.vien>0) ghiChuParts.push(r.vien.toLocaleString('vi-VN')+' viên');
+    if(r.kg>0) ghiChuParts.push(r.kg.toLocaleString('vi-VN')+' kg');
+    var ghiChu=ghiChuParts.join(' · ');
     h+='<tr>'
       +'<td class="td tc"'+ev+'>'+(i+1)+'</td>'
       +'<td class="td bold"'+ev+'>'+r.ma+'</td>'
       +'<td class="td"'+ev+' style="font-size:9pt">'+r.ten+'</td>'
       +'<td class="td tc"'+ev+'>'+r.dvt+'</td>'
-      +'<td class="td tc"'+ev+'>'+r.sl
-        +(r.vienGhiChu?'<br><span style="font-size:8pt;color:#888">(='+r.vienGhiChu+')</span>':'')
-        +(r.kg?'<br><span style="font-size:8pt;color:#6A1B9A">⚖️ '+r.kg.toLocaleString('vi-VN')+' kg</span>':'')
-        +'</td>'
+      +'<td class="td tc"'+ev+'>'+r.sl+'</td>'
       +'<td class="td tr"'+ev+'>'+(r.donGia>0?r.donGia.toLocaleString('vi-VN'):'–')+'</td>'
       +'<td class="td red"'+ev+'>'+(r.thanhTien>0?r.thanhTien.toLocaleString('vi-VN'):'–')+'</td>'
+      +'<td class="td"'+ev+' style="font-size:8.5pt;color:#666">'+(ghiChu||'–')+'</td>'
       +'</tr>';
   });
   h+='</tbody></table>';
