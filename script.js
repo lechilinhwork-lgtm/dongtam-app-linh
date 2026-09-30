@@ -3982,19 +3982,6 @@ function copyText(text){
   });
 }
 
-function showZaloChat(msg){
-  // Chỉ copy vào clipboard, không mở link, không popup thêm
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(msg).then(function(){
-      showToast('✅ Đã copy! Mở Zalo paste vào chat.');
-    }).catch(function(){
-      fallbackCopy(msg);
-    });
-  } else {
-    fallbackCopy(msg);
-  }
-}
-
 function fallbackCopy(msg){
   var ta=document.createElement('textarea');
   ta.value=msg;
@@ -6598,55 +6585,6 @@ function xuatExcelNoiBo(){
 
   var fileName='NOIBO_BaoGia_'+(ten.replace(/\s/g,'_'))+'_'+ngay.replace(/\//g,'-')+'.xls';
   xuatFileExcel('﻿'+h, fileName);
-}
-
-function xuatZalo(){
-  if(donItems.length===0){alert('Chưa có sản phẩm!');return;}
-
-  var blocks = [];
-
-  donItems.forEach(function(item){
-    var unit  = item.unit||'m²';
-    var le    = item.le   ||0;
-    var nhan  = item.nhan ||0;
-    var giao  = item.giao ||0;
-    var ns    = item.ns   ||0;  // giá sale nhận kho CT150
-    var gs    = item.gs   ||0;  // giá sale giao CT150
-
-    // Tiêu đề theo loại
-    var header = item.loai==='ngoi'  ? '🏠 NGÓI ĐỒNG TÂM'
-                :item.loai==='keo'   ? '🧱 KEO ĐỒNG TÂM'
-                :item.loai==='kinh'  ? '💎 GẠCH KÍNH ĐỒNG TÂM'
-                :                     '🏪 GẠCH ĐỒNG TÂM';
-
-    var lines = [];
-    lines.push(header);
-    lines.push('━━━━━━━━━━━━━━');
-    lines.push('📦 Mã: '+item.ma);
-    if(item.kc && item.kc!=='–') lines.push('📐 Kích cỡ: '+item.kc);
-
-    // Giá niêm yết
-    if(le>0) lines.push('Giá niêm yết: '+le.toLocaleString('vi-VN')+'đ/'+unit);
-
-    // Giá nhận kho (kèm giá Sale thật nếu có - CT1/CT2, không còn CT150)
-    if(nhan>0){
-      lines.push('Giá nhận tại kho: '+nhan.toLocaleString('vi-VN')+'đ/'+unit
-        +(ns>0?' — Giá Sale: '+ns.toLocaleString('vi-VN')+'đ/'+unit+' 🔥':''));
-    }
-
-    // Giá giao hàng
-    if(giao>0){
-      lines.push('Giao tận nơi: '+giao.toLocaleString('vi-VN')+'đ/'+unit);
-    }
-
-    lines.push('━━━━━━━━━━━━━━');
-    lines.push('📞 Liên hệ báo giá chi tiết');
-
-    blocks.push(lines.join('\n'));
-  });
-
-  var msg = blocks.join('\n\n');
-  showZaloChat(msg);
 }
 
 // ===== HO TRO KHACH HANG (client-side, khong goi API tra phi) =====
