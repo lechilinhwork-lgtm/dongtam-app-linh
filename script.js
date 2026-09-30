@@ -1245,7 +1245,7 @@ function renderKinhInGach(){
       +'<div>'
       +'<div style="font-size:14px;font-weight:700;color:var(--t1)">'+p.ten+'</div>'
       +'<div style="font-size:11px;color:var(--t2);margin-top:2px">'+p.kc+' cm &middot; 6 viên/thùng</div>'
-      +'<div style="font-size:11px;color:#E65100;margin-top:2px;font-weight:600">Giá lẻ: '+p.le.toLocaleString('vi-VN')+'đ/thùng</div>'
+      +'<div style="font-size:11px;color:#E65100;margin-top:2px;font-weight:600">Giá niêm yết: '+p.le.toLocaleString('vi-VN')+'đ/thùng</div>'
       +'</div>'
       +'</div>';
 
@@ -1506,9 +1506,9 @@ function buildFilterSide(){
   h+='<div class="fs-hdr">Sắp xếp</div>'
     +'<label class="fs-row"><input type="radio" name="fs-sort" '+(!curSortGia?'checked':'')+' onchange="fsSetSort(\'\')"/> Mặc định</label>'
     +'<label class="fs-row"><input type="radio" name="fs-sort" '+(curSortGia?'checked':'')+' onchange="fsSetSort(\'gia\')"/> Giá thấp → cao</label>';
-  // Giá lẻ
+  // Giá niêm yết
   var giaOpts=[['','Tất cả'],['lt250','Dưới 250.000'],['250_350','250.000 – 350.000'],['350_500','350.000 – 500.000'],['gt500','Trên 500.000']];
-  h+='<div class="fs-hdr">Giá lẻ (đ/m²)</div>';
+  h+='<div class="fs-hdr">Giá niêm yết (đ/m²)</div>';
   giaOpts.forEach(function(o){
     h+='<label class="fs-row"><input type="radio" name="fs-gia" '+(curLocGia===o[0]?'checked':'')+' onchange="fsSetGia(\''+o[0]+'\')"/> '+o[1]+'</label>';
   });
@@ -1686,7 +1686,7 @@ function render(){
         +'<div style="padding:12px;display:flex;flex-direction:column;gap:5px;flex:1">'
         +'<div style="font-size:11px;color:#888;display:flex;align-items:center;gap:5px"><span>'+p.kc+'</span></div>'
         +'<div style="font-size:13px;font-weight:700;color:#111;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:break-all">'+p.ma+'</div>'
-        +(p.le>0?'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Giá lẻ</span><span style="font-size:12px;font-weight:600;color:#555">'+p.le.toLocaleString('vi-VN')+'đ</span></div>':'')
+        +(p.le>0?'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Giá niêm yết</span><span style="font-size:12px;font-weight:600;color:#555">'+p.le.toLocaleString('vi-VN')+'đ</span></div>':'')
         +'<div style="display:flex;justify-content:space-between;align-items:baseline">'
         +'<span style="font-size:11px;color:#999">Nhận kho</span>'
         +'<span>'
@@ -1730,7 +1730,7 @@ function render(){
         +'<span style="font-size:13px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">'+p.ma+saleDot+'</span>'
         +'</div>'
         +'<div style="height:1px;background:var(--bd);margin:1px 0"></div>'
-        +(p.le>0?'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:10px;color:#999">Giá lẻ</span><span style="font-size:11px;color:#555;font-weight:600">'+p.le.toLocaleString('vi-VN')+'đ</span></div>':'')
+        +(p.le>0?'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:10px;color:#999">Giá niêm yết</span><span style="font-size:11px;color:#555;font-weight:600">'+p.le.toLocaleString('vi-VN')+'đ</span></div>':'')
         +'<div style="display:flex;justify-content:space-between;align-items:baseline">'
         +'<span style="font-size:10px;color:#999">Giá ĐL nhận kho</span>'
         +'<span>'
@@ -2020,7 +2020,7 @@ function renderSale(){
         +'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:4px;flex:1">'
         +'<div style="font-size:11px;color:#888">'+p.kc+'</div>'
         +'<div style="font-size:13px;font-weight:700;color:#111;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:break-all">'+p.ma+'</div>'
-        +(p.le>0?'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:10px;color:#999">Giá lẻ</span><span style="font-size:11px;font-weight:600;color:#555">'+p.le.toLocaleString('vi-VN')+'đ</span></div>':'')
+        +(p.le>0?'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:10px;color:#999">Giá niêm yết</span><span style="font-size:11px;font-weight:600;color:#555">'+p.le.toLocaleString('vi-VN')+'đ</span></div>':'')
         +'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Nhận kho</span><span>'
         +(nkSale>0&&origNK>0&&origNK!==nkSale?'<span style="font-size:10px;color:#bbb;text-decoration:line-through;margin-right:4px">'+origNK.toLocaleString('vi-VN')+'đ</span>':'')
         +'<span style="font-size:14px;font-weight:800;color:#C0232A">'+nkFmt+'</span></span></div>'
@@ -2383,7 +2383,7 @@ function ngoiGroupCard(list, isMain){
 
   var giaHtml=
     '<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;margin-top:4px">'
-    +'<span>Giá lẻ <b style="color:#555">'+fmtNgoiGia(sel.le)+'</b></span>'
+    +'<span>Giá niêm yết <b style="color:#555">'+fmtNgoiGia(sel.le)+'</b></span>'
     +'<span>NK&lt;1.500v <b style="color:#C0232A">'+fmtNgoiGia(sel.nhan)+'</b></span>'
     +'<span>≥1.500v <b style="color:#388E3C">'+fmtNgoiGia(sel.nhan2)+'</b></span>'
     +'</div>';
@@ -2721,7 +2721,7 @@ function renderKeo(){
       +'</div>'
       +'<div class="keo-card-body">'
       +'<div class="keo-card-ten">'+p.ten+'</div>'
-      +(p.le>0?'<div class="keo-card-le">Giá lẻ <b>'+p.le.toLocaleString('vi-VN')+'đ</b></div>':'')
+      +(p.le>0?'<div class="keo-card-le">Giá niêm yết <b>'+p.le.toLocaleString('vi-VN')+'đ</b></div>':'')
       +'<div class="keo-card-gia"><b style="color:#7B1FA2">'+p.nhan.toLocaleString('vi-VN')+'đ</b> &lt;50</div>'
       +'<div class="keo-card-gia"><b style="color:#388E3C">'+p.nhan2.toLocaleString('vi-VN')+'đ</b> ≥50</div>'
       +tkHtml
@@ -2919,7 +2919,7 @@ function renderTBVS(){
         +'<div class="tbvs-card-body">'
         +'<div class="tbvs-card-ma">'+tenDepTBVS(p)+'</div>'
         +(p.ten?'<div class="tbvs-card-sub">Mã: '+p.ten+'</div>':'')
-        +(p.le>0?'<div class="tbvs-card-le">Giá lẻ <b>'+p.le.toLocaleString('vi-VN')+'đ</b></div>':'')
+        +(p.le>0?'<div class="tbvs-card-le">Giá niêm yết <b>'+p.le.toLocaleString('vi-VN')+'đ</b></div>':'')
         +'<div class="tbvs-card-gia">'+(p.nhan>0?p.nhan.toLocaleString('vi-VN')+'đ':'–')+' <small>nhận kho</small></div>'
         +(p.giao>0?'<div class="tbvs-card-giao">→ '+p.giao.toLocaleString('vi-VN')+'đ <small>giao hàng</small></div>':'')
         +tkHtml
@@ -5030,7 +5030,7 @@ function renderDon(){
       // Bảng giá 3 hàng (hoặc tách 2 phần Sale/Thường nếu mua lẻ không đủ thùng)
       +'<div style="background:var(--bg2);border-radius:var(--r8);padding:8px 10px;font-size:12px">'
       +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:0.5px solid var(--bd)">'
-      +'<span style="color:var(--t2)">Giá lẻ (KH)</span>'
+      +'<span style="color:var(--t2)">Giá niêm yết (KH)</span>'
       +'<span style="font-weight:600">'+(item.le>0?item.le.toLocaleString('vi-VN')+'đ/'+unit+' → '+(item.le*item.qty).toLocaleString('vi-VN')+'đ':'Liên hệ')+'</span>'
       +'</div>'
       +(function(){
