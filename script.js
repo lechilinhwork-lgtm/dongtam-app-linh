@@ -2052,7 +2052,15 @@ function renderSale(){
       if(imgs.length>0){
         var img=document.createElement('img');
         img.src=imgs[curIdx];
-        img.onerror=function(){ this.parentNode.innerHTML='<div class="sale-img-placeholder">🔲</div>'; };
+        // Chỉ thay chính thẻ <img> bằng placeholder khi lỗi tải - KHÔNG ghi đè
+        // innerHTML cả khung ảnh, vì sẽ xoá mất luôn checkbox Giỏ ảnh đã gắn
+        // (checkbox là con của khung ảnh, thêm sau đoạn code này).
+        img.onerror=function(){
+          var ph=document.createElement('div');
+          ph.className='sale-img-placeholder';
+          ph.textContent='🔲';
+          this.replaceWith(ph);
+        };
         imgWrap.appendChild(img);
 
         // Dots nếu nhiều ảnh
