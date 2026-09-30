@@ -6276,7 +6276,7 @@ function cssExcelChung(){
     +'.red{color:#C0232A;font-weight:bold;text-align:right}'
     +'.nk{color:#1B5E20;font-weight:bold;text-align:right}'
     +'.blu{color:#0D47A1;font-weight:bold;text-align:center}'
-    +'.ev{background:#fafafa}.tot{background:#fff8f8;font-weight:bold;border-top:2px solid #C0232A}'
+    +'.ev td{background:#fafafa}.tot{background:#fff8f8;font-weight:bold;border-top:2px solid #C0232A}'
     +'</style>';
 }
 
@@ -6469,15 +6469,15 @@ function xuatExcel(){
     if(r.vien>0) ghiChuParts.push(r.vien.toLocaleString('vi-VN')+' viên');
     if(r.kg>0) ghiChuParts.push(r.kg.toLocaleString('vi-VN')+' kg');
     var ghiChu=ghiChuParts.join(' · ');
-    h+='<tr>'
-      +'<td class="td tc"'+ev+'>'+(i+1)+'</td>'
-      +'<td class="td bold"'+ev+'>'+r.ma+'</td>'
-      +'<td class="td"'+ev+' style="font-size:9pt">'+r.ten+'</td>'
-      +'<td class="td tc"'+ev+'>'+r.dvt+'</td>'
-      +'<td class="td tc"'+ev+'>'+r.sl+'</td>'
-      +'<td class="td tr"'+ev+'>'+(r.donGia>0?r.donGia.toLocaleString('vi-VN'):'–')+'</td>'
-      +'<td class="td red"'+ev+'>'+(r.thanhTien>0?r.thanhTien.toLocaleString('vi-VN'):'–')+'</td>'
-      +'<td class="td"'+ev+' style="font-size:8.5pt;color:#666">'+(ghiChu||'–')+'</td>'
+    h+='<tr'+ev+'>'
+      +'<td class="td tc">'+(i+1)+'</td>'
+      +'<td class="td bold">'+r.ma+'</td>'
+      +'<td class="td" style="font-size:9pt">'+r.ten+'</td>'
+      +'<td class="td tc">'+r.dvt+'</td>'
+      +'<td class="td tc">'+r.sl+'</td>'
+      +'<td class="td tr">'+(r.donGia>0?r.donGia.toLocaleString('vi-VN'):'–')+'</td>'
+      +'<td class="td red">'+(r.thanhTien>0?r.thanhTien.toLocaleString('vi-VN'):'–')+'</td>'
+      +'<td class="td" style="font-size:8.5pt;color:#666">'+(ghiChu||'–')+'</td>'
       +'</tr>';
   });
   h+='</tbody></table>';
@@ -6584,19 +6584,19 @@ function xuatExcelNoiBo(){
     +'</tr></thead><tbody>';
   rowsData.forEach(function(r){
     var ev=r.i%2===0?' class="ev"':'';
-    h+='<tr>'
-      +'<td class="td tc"'+ev+'>'+r.i+'</td>'
-      +'<td class="td tc"'+ev+'>'+r.loai+'</td>'
-      +'<td class="td bold"'+ev+'>'+r.ma+'</td>'
-      +'<td class="td"'+ev+' style="font-size:9pt">'+(r.ten||'-')+'</td>'
-      +'<td class="td tc"'+ev+'>'+r.kc+'</td>'
-      +'<td class="td tc"'+ev+'>'+r.qty+' '+r.unit+'</td>'
-      +'<td class="td tr"'+ev+'>'+(r.le>0?r.le.toLocaleString('vi-VN'):'-')+'</td>'
-      +'<td class="td red"'+ev+'>'+(r.thLe>0?r.thLe.toLocaleString('vi-VN'):'-')+'</td>'
-      +'<td class="td nk"'+ev+'>'+(r.nhan>0?r.nhan.toLocaleString('vi-VN'):'-')+'</td>'
-      +'<td class="td nk"'+ev+'>'+(r.thNhan>0?r.thNhan.toLocaleString('vi-VN'):'-')+'</td>'
-      +'<td class="td tr mg"'+ev+'>'+r.ln.toLocaleString('vi-VN')+'</td>'
-      +'<td class="td tc mg"'+ev+'>'+r.pct+'</td>'
+    h+='<tr'+ev+'>'
+      +'<td class="td tc">'+r.i+'</td>'
+      +'<td class="td tc">'+r.loai+'</td>'
+      +'<td class="td bold">'+r.ma+'</td>'
+      +'<td class="td" style="font-size:9pt">'+(r.ten||'-')+'</td>'
+      +'<td class="td tc">'+r.kc+'</td>'
+      +'<td class="td tc">'+r.qty+' '+r.unit+'</td>'
+      +'<td class="td tr">'+(r.le>0?r.le.toLocaleString('vi-VN'):'-')+'</td>'
+      +'<td class="td red">'+(r.thLe>0?r.thLe.toLocaleString('vi-VN'):'-')+'</td>'
+      +'<td class="td nk">'+(r.nhan>0?r.nhan.toLocaleString('vi-VN'):'-')+'</td>'
+      +'<td class="td nk">'+(r.thNhan>0?r.thNhan.toLocaleString('vi-VN'):'-')+'</td>'
+      +'<td class="td tr mg">'+r.ln.toLocaleString('vi-VN')+'</td>'
+      +'<td class="td tc mg">'+r.pct+'</td>'
       +'</tr>';
   });
   h+='</tbody></table>';
