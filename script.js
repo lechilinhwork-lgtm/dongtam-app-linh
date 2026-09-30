@@ -2998,7 +2998,7 @@ function shareZaloTBVS(ma){
   lines.push('📌 '+tenDepTBVS(p));
   if(p.ten) lines.push('Mã: '+p.ten);
   lines.push('━━━━━━━━━━━━━━');
-  if(p.le>0) lines.push('Giá lẻ: '+p.le.toLocaleString('vi-VN')+'đ/'+(p.dvt||'Cái'));
+  if(p.le>0) lines.push('Giá niêm yết: '+p.le.toLocaleString('vi-VN')+'đ/'+(p.dvt||'Cái'));
   if(p.nhan>0) lines.push('Giá ĐL Nhận kho: '+p.nhan.toLocaleString('vi-VN')+'đ/'+(p.dvt||'Cái'));
   if(p.giao>0) lines.push('Giá ĐL Đi giao: '+p.giao.toLocaleString('vi-VN')+'đ/'+(p.dvt||'Cái'));
   var msg=lines.join('\n');
@@ -3314,7 +3314,7 @@ function layNoiDungBaoGia(ma){
   // SP thường: nếu nk=0 nhưng ns>0 (do merge) → vẫn dùng ns làm NK thường
   if(!isSale && nk===0 && saleNK>0) nk = saleNK;
   if(!isSale && gh===0 && saleGH>0) gh = saleGH;
-  // % giảm luôn tính so với Giá lẻ (không phải so với giá ĐL gốc)
+  // % giảm luôn tính so với Giá niêm yết (không phải so với giá ĐL gốc)
   var pct = function(sale){ return (le>0 && sale>0) ? Math.round((le-sale)/le*100) : 0; };
 
   var lines = ['GẠCH ĐỒNG TÂM KV23'+(isSale?(isCT2?' – XẢ KHO THÁNG '+thangHienTai():' – SALE THÁNG '+thangHienTai()):'')];
@@ -3331,21 +3331,21 @@ function layNoiDungBaoGia(ma){
     // đọc trên Zalo hơn, mỗi mục tách bạch rõ ràng, khỏi tưởng nhầm 2 dòng
     // % liền nhau là cộng dồn vào nhau.
     var stt=1;
-    if(le>0){ lines.push(stt+++'. Giá lẻ: '+f(le)); lines.push(''); }
-    if(saleNK>0){ lines.push(stt+++'. Giá ĐL Nhận kho: '+f(saleNK)+(pct(saleNK)>0?' (giảm '+pct(saleNK)+'% so với giá lẻ)':'')); lines.push(''); }
-    if(saleGH>0){ lines.push(stt+++'. Giá ĐL Đi giao: '+f(saleGH)+(pct(saleGH)>0?' (giảm '+pct(saleGH)+'% so với giá lẻ)':'')); }
-    // Lưu ý: 2 mức trên tính ĐỘC LẬP so với giá lẻ (giao hàng có thêm phí vận
-    // chuyển nên % thấp hơn nhận kho) - KHÔNG phải giao hàng giảm thêm chồng
-    // lên nhận kho. Ghi rõ để khách khỏi hiểu nhầm "giảm thêm 29% nữa".
+    if(le>0){ lines.push(stt+++'. Giá niêm yết: '+f(le)); lines.push(''); }
+    if(saleNK>0){ lines.push(stt+++'. Giá ĐL Nhận kho: '+f(saleNK)+(pct(saleNK)>0?' (giảm '+pct(saleNK)+'% so với giá niêm yết)':'')); lines.push(''); }
+    if(saleGH>0){ lines.push(stt+++'. Giá ĐL Đi giao: '+f(saleGH)+(pct(saleGH)>0?' (giảm '+pct(saleGH)+'% so với giá niêm yết)':'')); }
+    // Lưu ý: 2 mức trên tính ĐỘC LẬP so với giá niêm yết (giao hàng có thêm
+    // phí vận chuyển nên % thấp hơn nhận kho) - KHÔNG phải giao hàng giảm thêm
+    // chồng lên nhận kho. Ghi rõ để khách khỏi hiểu nhầm "giảm thêm 29% nữa".
     if(isCT2 && (vetNK>0 || vetGH>0)){
       lines.push('');
-      if(vetNK>0){ lines.push(stt+++'. VÉT KHO – Nhận kho: '+f(vetNK)+(pct(vetNK)>0?' (giảm '+pct(vetNK)+'% so với giá lẻ)':'')); lines.push(''); }
-      if(vetGH>0) lines.push(stt+++'. VÉT KHO – Đi giao: '+f(vetGH)+(pct(vetGH)>0?' (giảm '+pct(vetGH)+'% so với giá lẻ)':''));
+      if(vetNK>0){ lines.push(stt+++'. VÉT KHO – Nhận kho: '+f(vetNK)+(pct(vetNK)>0?' (giảm '+pct(vetNK)+'% so với giá niêm yết)':'')); lines.push(''); }
+      if(vetGH>0) lines.push(stt+++'. VÉT KHO – Đi giao: '+f(vetGH)+(pct(vetGH)>0?' (giảm '+pct(vetGH)+'% so với giá niêm yết)':''));
     }
     lines.push('━━━━━━━━━━━━━━');
     lines.push('⚠️ Đặt tròn thùng mới được giá Sale · '+(isCT2?'Xả kho số lượng có hạn, hết là hết!':'Ưu đãi trong tháng, đặt sớm giữ giá tốt')+' · Chưa rõ gì cứ hỏi lại em nhé!');
   } else {
-    if(le>0)      lines.push('1. Giá lẻ: '+f(le));
+    if(le>0)      lines.push('1. Giá niêm yết: '+f(le));
     if(le>0)      lines.push('');
     if(nk>0){
       lines.push('2. Giá đại lý nhận kho: '+f(nk));
@@ -3407,7 +3407,7 @@ function znCopyZalo(){
 function shareZaloSale(p){
   var isCT2=p.loai_sale==='ct2';
   var f=function(n){ return n>0?n.toLocaleString('vi-VN')+'đ/m²':'–'; };
-  // % giảm luôn tính so với Giá lẻ (không phải so với giá ĐL gốc)
+  // % giảm luôn tính so với Giá niêm yết (không phải so với giá ĐL gốc)
   var pct=function(sale){ return (p.le>0 && sale>0) ? Math.round((p.le-sale)/p.le*100) : 0; };
   var lines=['GẠCH ĐỒNG TÂM KV23'+(isCT2?' – XẢ KHO THÁNG '+thangHienTai():' – SALE THÁNG '+thangHienTai())];
   lines.push('📌 Mã: '+p.ma);
@@ -3418,13 +3418,13 @@ function shareZaloSale(p){
   }catch(e0){}
   lines.push('━━━━━━━━━━━━━━');
   var stt2=1;
-  if(p.le>0){ lines.push(stt2+++'. Giá lẻ: '+f(p.le)); lines.push(''); }
-  if(p.nk>0){ lines.push(stt2+++'. Giá ĐL Nhận kho: '+f(p.nk)+(pct(p.nk)>0?' (giảm '+pct(p.nk)+'% so với giá lẻ)':'')); lines.push(''); }
-  if(p.gh>0) lines.push(stt2+++'. Giá ĐL Đi giao: '+f(p.gh)+(pct(p.gh)>0?' (giảm '+pct(p.gh)+'% so với giá lẻ)':''));
+  if(p.le>0){ lines.push(stt2+++'. Giá niêm yết: '+f(p.le)); lines.push(''); }
+  if(p.nk>0){ lines.push(stt2+++'. Giá ĐL Nhận kho: '+f(p.nk)+(pct(p.nk)>0?' (giảm '+pct(p.nk)+'% so với giá niêm yết)':'')); lines.push(''); }
+  if(p.gh>0) lines.push(stt2+++'. Giá ĐL Đi giao: '+f(p.gh)+(pct(p.gh)>0?' (giảm '+pct(p.gh)+'% so với giá niêm yết)':''));
   if(isCT2 && ((p.ct150nk||0)>0 || (p.ct150gh||0)>0)){
     lines.push('');
-    if(p.ct150nk>0){ lines.push(stt2+++'. VÉT KHO – Nhận kho: '+f(p.ct150nk)+(pct(p.ct150nk)>0?' (giảm '+pct(p.ct150nk)+'% so với giá lẻ)':'')); lines.push(''); }
-    if(p.ct150gh>0) lines.push(stt2+++'. VÉT KHO – Đi giao: '+f(p.ct150gh)+(pct(p.ct150gh)>0?' (giảm '+pct(p.ct150gh)+'% so với giá lẻ)':''));
+    if(p.ct150nk>0){ lines.push(stt2+++'. VÉT KHO – Nhận kho: '+f(p.ct150nk)+(pct(p.ct150nk)>0?' (giảm '+pct(p.ct150nk)+'% so với giá niêm yết)':'')); lines.push(''); }
+    if(p.ct150gh>0) lines.push(stt2+++'. VÉT KHO – Đi giao: '+f(p.ct150gh)+(pct(p.ct150gh)>0?' (giảm '+pct(p.ct150gh)+'% so với giá niêm yết)':''));
   }
   lines.push('━━━━━━━━━━━━━━');
   lines.push('⚠️ Đặt tròn thùng mới được giá Sale · '+(isCT2?'Xả kho số lượng có hạn, hết là hết!':'Ưu đãi trong tháng, đặt sớm giữ giá tốt')+' · Chưa rõ gì cứ hỏi lại em nhé!');
@@ -3907,7 +3907,7 @@ function shareZaloNgoi(ma){
   lines.push('📌 Mã: '+tenHienThi);
   lines.push('📐 Quy cách: '+p.kc+' · '+p.dong_goi);
   lines.push('━━━━━━━━━━━━━━');
-  if(p.le>0){ lines.push('1. Giá lẻ: '+f(p.le)); lines.push(''); }
+  if(p.le>0){ lines.push('1. Giá niêm yết: '+f(p.le)); lines.push(''); }
   lines.push('2. Giá đại lý lấy hàng dưới 1.500 viên:');
   lines.push('   Nhận tại kho: '+f(p.nhan));
   lines.push('   Đi giao: '+f(p.giao));
@@ -3925,7 +3925,7 @@ function shareZaloKeo(ma){
   lines.push('📌 Mã: '+p.ten);
   lines.push('📐 Quy cách: '+(p.qc||''));
   lines.push('━━━━━━━━━━━━━━');
-  if(p.le>0){ lines.push('1. Giá lẻ: '+f(p.le)); lines.push(''); }
+  if(p.le>0){ lines.push('1. Giá niêm yết: '+f(p.le)); lines.push(''); }
   lines.push('2. Giá đại lý lấy hàng dưới 50 bao:');
   lines.push('   Nhận tại kho: '+f(p.nhan));
   lines.push('   Đi giao: '+f(p.giao));
@@ -3943,7 +3943,7 @@ function shareZaloKinh(ma){
   lines.push('📌 Mã: '+p.ten);
   lines.push('📐 Kích cỡ: '+p.kc+'cm · '+p.dong_goi);
   lines.push('━━━━━━━━━━━━━━');
-  if(p.le>0){ lines.push('1. Giá lẻ: '+f(p.le)); lines.push(''); }
+  if(p.le>0){ lines.push('1. Giá niêm yết: '+f(p.le)); lines.push(''); }
   lines.push('2. Giá đại lý lấy hàng dưới 20 thùng:');
   lines.push('   Nhận tại kho: '+f(p.nhan));
   lines.push('   Đi giao: '+f(p.giao));
@@ -6625,8 +6625,8 @@ function xuatZalo(){
     lines.push('📦 Mã: '+item.ma);
     if(item.kc && item.kc!=='–') lines.push('📐 Kích cỡ: '+item.kc);
 
-    // Giá lẻ
-    if(le>0) lines.push('Giá lẻ: '+le.toLocaleString('vi-VN')+'đ/'+unit);
+    // Giá niêm yết
+    if(le>0) lines.push('Giá niêm yết: '+le.toLocaleString('vi-VN')+'đ/'+unit);
 
     // Giá nhận kho (kèm giá Sale thật nếu có - CT1/CT2, không còn CT150)
     if(nhan>0){
@@ -6781,7 +6781,7 @@ function chatBuildMultiProductAnswer(list){
 
 function chatBuildProductAnswer(p, compact){
   var lines = ['📦 ' + p.ma + (p.kc?(' · '+p.kc):'')];
-  if(p.le>0) lines.push('Giá lẻ: ' + p.le.toLocaleString('vi-VN') + 'đ/m²');
+  if(p.le>0) lines.push('Giá niêm yết: ' + p.le.toLocaleString('vi-VN') + 'đ/m²');
   if(typeof laKhachHang !== 'function' || !laKhachHang()){
     if(p.nhan>0) lines.push('Giá ĐL nhận kho: ' + p.nhan.toLocaleString('vi-VN') + 'đ/m²');
     if(p.giao>0) lines.push('Giá ĐL đi giao: ' + p.giao.toLocaleString('vi-VN') + 'đ/m²');
