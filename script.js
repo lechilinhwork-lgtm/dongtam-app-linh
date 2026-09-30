@@ -1446,6 +1446,20 @@ function toggleSortTon(){
   showToast(curSortTon?'📦 Đang xếp theo tồn kho nhiều nhất':'Đã về thứ tự mặc định');
 }
 
+// ===== Sắp xếp theo tồn kho (tab Sale) =====
+var curSortTonSale=false;
+function toggleSortTonSale(){
+  curSortTonSale=!curSortTonSale;
+  var b=document.getElementById('btn-sort-ton-sale');
+  if(b){
+    b.style.background=curSortTonSale?'var(--red)':'var(--bg1)';
+    b.style.color=curSortTonSale?'#fff':'var(--t1)';
+    b.style.borderColor=curSortTonSale?'var(--red)':'var(--bd2)';
+  }
+  renderSale();
+  showToast(curSortTonSale?'📦 Đang xếp theo tồn kho nhiều nhất':'Đã về thứ tự mặc định');
+}
+
 // ===== BỘ LỌC DỌC DESKTOP (tab Gạch) =====
 var curSortGia=false;      // sắp xếp giá lẻ thấp → cao
 var curLocGia='';          // '', lt250, 250_350, 350_500, gt500
@@ -1955,6 +1969,10 @@ function renderSale(){
   }
   if(hasLocNangCao()) list=list.filter(function(p){return khopLocNangCao(p.ma);});
   if(q) list=list.filter(function(p){ return p.ma.toUpperCase().includes(q)||(p.kc||'').includes(q); });
+  // Sắp xếp theo tồn kho nhiều nhất (nút 📦 Tồn nhiều cạnh nút Lọc)
+  if(curSortTonSale){
+    list=list.slice().sort(function(a,b){ return tonKhoTongCuaMa(b.ma)-tonKhoTongCuaMa(a.ma); });
+  }
   document.getElementById('scount').textContent=list.length+' mã đang sale';
   var el=document.getElementById('slist'); el.innerHTML='';
 
