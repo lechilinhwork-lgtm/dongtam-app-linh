@@ -6767,7 +6767,7 @@ function chatFindSimilar(text, limit){
 function chatBuildSimilarAnswer(list){
   var lines = ['🔍 Không thấy đúng mã này, có phải bạn đang tìm 1 trong các mã sau không?'];
   list.forEach(function(p){
-    lines.push('• ' + p.ma + (p.kc?(' · '+p.kc):'') + (p.le>0?(' · giá lẻ '+p.le.toLocaleString('vi-VN')+'đ'):''));
+    lines.push('• ' + p.ma + (p.kc?(' · '+p.kc):'') + (p.le>0?(' · giá niêm yết '+p.le.toLocaleString('vi-VN')+'đ'):''));
   });
   lines.push('Gõ đúng mã trong danh sách trên để mình báo đầy đủ giá + tồn kho nhé.');
   return lines.join('\n');
