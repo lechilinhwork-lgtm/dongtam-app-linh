@@ -9,3 +9,6 @@ Apps Script v11*.txt
 # Cac du an rieng khac nam chung thu muc lam viec - khong thuoc repo web ban hang nay
 congno-agent/
 dongtam-agent/
+
+# Ma nguon backend Apps Script (chua APP_KEY) - khong len repo public
+backend-gs/
