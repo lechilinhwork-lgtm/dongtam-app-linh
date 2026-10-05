@@ -3721,13 +3721,29 @@ function chiaSeGioAnh(){
     }
     _thucHienChiaSeNhieuSP(urls, batch, function(){
       if(rest.length) setTimeout(function(){ guiTung(rest); }, 600);
-      else showToast('✅ Đã gửi xong '+items.length+' sản phẩm');
     });
   }
   guiTung(items);
 }
 // Giống _thucHienChiaSe nhưng mỗi ảnh là 1 SẢN PHẨM KHÁC NHAU nên đặt tên file
 // theo đúng mã sản phẩm tương ứng (thay vì cùng 1 mã lặp lại _1/_2/_3...).
+// Tải 1 ảnh, tự thử lại tối đa 3 lần (chờ 0,5s rồi 1s) nếu lỗi mạng hoặc bị
+// Google Drive chặn tạm (429/5xx khi tải nhiều ảnh cùng lúc). Trước đây ảnh
+// lỗi bị bỏ qua im lặng làm chia sẻ thiếu ảnh (VD chọn 10 chỉ gửi được 9).
+function _taiAnhCoThuLai(url){
+  var lanThu=0;
+  function lan(){
+    return fetch(convertImgUrl(url)).then(function(res){
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      return res.blob();
+    }).catch(function(err){
+      lanThu++;
+      if(lanThu>=3) throw err;
+      return new Promise(function(r){ setTimeout(r,500*lanThu); }).then(lan);
+    });
+  }
+  return lan();
+}
 function _thucHienChiaSeNhieuSP(urls, items, onDone){
   function moTabDuPhong(){
     urls.forEach(function(u){ window.open(convertImgUrl(u),'_blank'); });
@@ -3735,27 +3751,32 @@ function _thucHienChiaSeNhieuSP(urls, items, onDone){
     if(onDone) onDone();
   }
   if(!(navigator.share && navigator.canShare)){ moTabDuPhong(); return; }
-  Promise.allSettled(urls.map(function(u){
-    return fetch(convertImgUrl(u)).then(function(res){ if(!res.ok) throw new Error('fetch fail'); return res.blob(); });
-  })).then(function(results){
+  Promise.allSettled(urls.map(_taiAnhCoThuLai)).then(function(results){
     return Promise.all(results.map(function(r,i){
       if(r.status!=='fulfilled') return null;
       return _ghepNhanLenAnh(r.value, items[i].ma).catch(function(){ return r.value; });
     }));
   }).then(function(blobs){
-    var files=[];
+    var files=[], okItems=[], okUrls=[], thieu=[];
     blobs.forEach(function(b,i){
-      if(b) files.push(new File([b], (items[i].ma||'anh')+'.png', {type:'image/png'}));
+      if(b){
+        files.push(new File([b], (items[i].ma||'anh')+'.png', {type:'image/png'}));
+        okItems.push(items[i]); okUrls.push(urls[i]);
+      } else { thieu.push(items[i].ten||items[i].ma); }
     });
     if(files.length && navigator.canShare({files:files})){
-      var tieuDe=items.map(function(x){return x.ten;}).join(', ');
-      // Kèm link ảnh gốc (Drive, không qua nén) từng sản phẩm - Zalo tự nén
-      // ảnh gửi trong chat khá mờ, khách cần xem chi tiết vân/biên gạch thì
-      // bấm link để mở bản gốc rõ nét trên trình duyệt.
-      var linkLines=items.map(function(x,i){ return (i+1)+'. '+x.ten+': '+layLinkGocAnh(urls[i]); }).join('\n');
+      var tieuDe=okItems.map(function(x){return x.ten;}).join(', ');
+      // Kèm link ảnh gốc (Drive, không qua nén) CHỈ của các ảnh thật sự gửi
+      // đi - Zalo tự nén ảnh trong chat khá mờ, khách cần xem chi tiết vân/
+      // biên gạch thì bấm link để mở bản gốc rõ nét trên trình duyệt.
+      var linkLines=okItems.map(function(x,i){ return (i+1)+'. '+x.ten+': '+layLinkGocAnh(okUrls[i]); }).join('\n');
       var textNoiDung=tieuDe+'\n\n🔍 Xem ảnh gốc nét (Zalo hay nén mờ ảnh gửi):\n'+linkLines;
       return navigator.share({files:files, title:tieuDe, text:textNoiDung}).then(function(){
         forcePaintStrong();
+        // Báo rõ số ảnh app đã đưa sang bảng chia sẻ: nếu app báo đủ mà Zalo
+        // nhận ít hơn thì do giới hạn phía Zalo/hệ điều hành, không phải do app.
+        if(thieu.length) showToast('⚠️ Chỉ chuẩn bị được '+files.length+'/'+items.length+' ảnh (không tải được: '+thieu.join(', ')+') — gửi riêng ảnh này giúp nhé');
+        else showToast('✅ App đã chuyển đủ '+files.length+'/'+items.length+' ảnh sang Zalo');
         if(onDone) onDone();
       });
     }
@@ -3792,12 +3813,7 @@ function _thucHienChiaSe(urls, ma, tenSP){
   // Dùng allSettled thay vì all: nếu 1 vài ảnh tải lỗi (mạng chập chờn) thì vẫn
   // chia sẻ được các ảnh tải thành công, thay vì huỷ chia sẻ TOÀN BỘ chỉ vì
   // 1 ảnh lỗi (đây là lý do sản phẩm nhiều ảnh hay bị "chia sẻ không hết").
-  Promise.allSettled(urls.map(function(u){
-    return fetch(convertImgUrl(u)).then(function(res){
-      if(!res.ok) throw new Error('fetch fail');
-      return res.blob();
-    });
-  })).then(function(results){
+  Promise.allSettled(urls.map(_taiAnhCoThuLai)).then(function(results){
     return Promise.all(results.map(function(r){
       if(r.status!=='fulfilled') return null;
       return _ghepNhanLenAnh(r.value, ma).catch(function(){ return r.value; });
@@ -3815,8 +3831,8 @@ function _thucHienChiaSe(urls, ma, tenSP){
         +linkUrls.map(function(u,i){ return linkUrls.length>1?((i+1)+'. '+layLinkGocAnh(u)):layLinkGocAnh(u); }).join('\n');
       return navigator.share({files:files,title:tenSP||ma,text:textNoiDung}).then(function(){
         forcePaintStrong();
-        if(files.length<urls.length) showToast('⚠️ Chỉ chia sẻ được '+files.length+'/'+urls.length+' ảnh (1 số ảnh tải lỗi)');
-        else if(bịCắt) showToast('✅ Đã chia sẻ '+files.length+' ảnh (giới hạn tối đa '+CHIA_SE_ANH_MAX+' ảnh/lần)');
+        if(files.length<urls.length) showToast('⚠️ Chỉ chuẩn bị được '+files.length+'/'+urls.length+' ảnh (1 số ảnh không tải được sau 3 lần thử)');
+        else showToast('✅ App đã chuyển đủ '+files.length+'/'+urls.length+' ảnh sang Zalo');
       });
     }
     throw new Error('canShare false hoặc không có ảnh nào tải được');
