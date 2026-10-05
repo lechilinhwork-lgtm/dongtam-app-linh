@@ -5915,10 +5915,14 @@ function moLichSuDon(){
     if(s.parentNode) s.parentNode.removeChild(s);
     delete window[cbName];
     if(res && res.status==='ok'){ lichSuDonAll=res.data||[]; renderLichSuDon(lichSuDonAll); }
+    else if(res && res.msg==='need_login'){
+      var b=document.getElementById('lich-su-don-body');
+      if(b) b.innerHTML='<p style="color:#C0232A">🔐 Phiên đăng nhập cũ — vui lòng <b>đăng xuất rồi đăng nhập lại</b> để xem lịch sử đơn của bạn.</p>';
+    }
     else { renderLichSuDonError(); }
   };
-  s.src=APPS_URL+'?action=getDonHang&username='+encodeURIComponent(sess.user||'')
-    +'&role='+encodeURIComponent(sess.role||'nv')+'&k='+encodeURIComponent(APP_KEY)+'&t='+encodeURIComponent(authTok())+'&callback='+cbName;
+  // Server tự xác định người dùng + quyền từ token, không gửi role/username nữa.
+  s.src=APPS_URL+'?action=getDonHang&k='+encodeURIComponent(APP_KEY)+'&t='+encodeURIComponent(authTok())+'&callback='+cbName;
   s.onerror=function(){ clearTimeout(t); renderLichSuDonError(); };
   document.head.appendChild(s);
 }
