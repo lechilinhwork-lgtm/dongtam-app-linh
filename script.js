@@ -5661,9 +5661,8 @@ function moTonKho(ma, tenSP){
     ghiChu='';
   } else if(khachHang){
     // Khách hàng/đại lý: KHÔNG hiện tổng toàn quốc, không lộ số lô/màu (thông
-    // tin vận hành nội bộ), không hiện số lượng từng kho. Mỗi nhóm thời gian
-    // có hàng là 1 thẻ: tổng nhóm (≤50 hiện số thật, vượt thì "50+") + tên
-    // các DC thuộc nhóm đó dạng thẻ nhỏ.
+    // tin vận hành nội bộ). Mỗi nhóm thời gian có hàng là 1 thẻ: tổng nhóm
+    // + từng DC thuộc nhóm kèm số lượng (đều giới hạn ≤50 thật, vượt thì "50+").
     // 5 nhóm theo đúng format: Có hàng ngay · Điều chuyển · Chờ 15 ngày ·
     // Chờ 1 tháng · Không được điều chuyển (cùng cách phân nhóm với nhân viên).
     var tongNhom={nhanh:0,dc:0,cho15:0,thang:0,khongdc:0};
@@ -5671,11 +5670,16 @@ function moTonKho(ma, tenSP){
     tk.kho.forEach(function(k){
       var nhom=(k.tier==='nhanh')?'nhanh':nhomDieuChuyen(k.ten);
       tongNhom[nhom]+=(k.tong||0);
-      if((k.tong||0)>0) khoNhom[nhom].push(k.ten);
+      if((k.tong||0)>0) khoNhom[nhom].push({ten:k.ten, tong:k.tong});
     });
     Object.keys(khoNhom).forEach(function(n){
-      khoNhom[n].sort(function(a,b){ return thuTuDieuChuyenKho(a)-thuTuDieuChuyenKho(b) || a.localeCompare(b,'vi'); });
+      khoNhom[n].sort(function(a,b){ return thuTuDieuChuyenKho(a.ten)-thuTuDieuChuyenKho(b.ten) || a.ten.localeCompare(b.ten,'vi'); });
     });
+    // Số lượng từng DC dạng ngắn cho thẻ nhỏ: ≤50 hiện số thật, vượt thì "50+".
+    function slKhoNgan(tong){
+      var t=Math.floor(tong);
+      return (t<=NGUONG_TON_KHACH?t:NGUONG_TON_KHACH+'+')+' '+dvt;
+    }
     var NHAN_NHOM_KH={nhanh:TEN_TIER.nhanh,dc:NHOM_DC_LABEL.dc,cho15:NHOM_DC_LABEL.cho15,thang:NHOM_DC_LABEL.thang,khongdc:NHOM_DC_LABEL.khongdc};
     body='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:10px">';
     ['nhanh','dc','cho15','thang','khongdc'].forEach(function(nhom){
@@ -5684,8 +5688,9 @@ function moTonKho(ma, tenSP){
         +'<span style="font-size:13px;font-weight:700">'+NHAN_NHOM_KH[nhom]+'</span>'
         +'<span style="font-size:16px;font-weight:800">'+hienThiTonChoKhach(tongNhom[nhom],dvt,m2pt)+'</span>'
         +'<div style="display:flex;flex-wrap:wrap;gap:4px">'
-        +khoNhom[nhom].map(function(ten){
-          return '<span style="font-size:11px;padding:3px 8px;border-radius:999px;background:var(--bg2,#f2f2f2);color:var(--t2,#666);white-space:nowrap">'+ten+'</span>';
+        +khoNhom[nhom].map(function(k){
+          return '<span style="font-size:11px;padding:3px 8px;border-radius:999px;background:var(--bg2,#f2f2f2);color:var(--t2,#666);white-space:nowrap">'
+            +k.ten+' · <b style="color:var(--t1,#222)">'+slKhoNgan(k.tong)+'</b></span>';
         }).join('')
         +'</div></div>';
     });
