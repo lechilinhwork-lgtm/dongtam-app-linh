@@ -809,7 +809,7 @@
         <span style="flex-shrink:0;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">1</span>
         <span>Bấm <b style="color:var(--t1)">Copy ảnh</b> → mở Zalo, dán (Ctrl+V) vào khung chat.</span>
       </div>
-      <div style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--t2)">
+      <div id="gacm-step2" style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--t2)">
         <span style="flex-shrink:0;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">2</span>
         <span>Bấm <b style="color:var(--t1)">Copy link gốc</b> → dán thêm 1 dòng dưới ảnh, để khách bấm xem full nét (Zalo hay nén mờ ảnh gửi).</span>
       </div>
@@ -817,7 +817,7 @@
     <p id="gacm-status" style="font-size:12px;text-align:center;min-height:16px;margin:8px 0 0"></p>
     <div style="display:flex;gap:8px;margin-top:6px">
       <button onclick="gacmCopy()" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--bd2);background:transparent;color:var(--t1);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">📋 Copy ảnh</button>
-      <button onclick="gacmCopyLink()" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--bd2);background:transparent;color:var(--t1);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">🔗 Copy link gốc</button>
+      <button id="gacm-btn-link" onclick="gacmCopyLink()" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--bd2);background:transparent;color:var(--t1);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">🔗 Copy link gốc</button>
     </div>
     <button id="gacm-next" onclick="gacmKeTiep()" style="width:100%;margin-top:8px;padding:11px;border-radius:10px;border:none;background:var(--red);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">Ảnh tiếp theo ➡</button>
   </div>
@@ -918,6 +918,6 @@
 
 
 
-<script src="script.js?v=nav152" defer></script>
+<script src="script.js?v=nav153" defer></script>
 </body>
 </html>

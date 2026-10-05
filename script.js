@@ -3535,9 +3535,10 @@ function gacmCopyLink(){
     statusEl.textContent='⚠️ Không copy được link — bấm giữ dòng này để copy thủ công: '+link;
   });
 }
-function moCopyPasteZalo(items){
+// coLink=false: ẩn bước/nút "Copy link gốc" (Giỏ ảnh nhiều sản phẩm không kèm link)
+function moCopyPasteZalo(items, coLink){
   if(!items.length) return;
-  _gacm={items:items, idx:0};
+  _gacm={items:items, idx:0, coLink:coLink!==false};
   renderGacmBuoc();
   document.getElementById('gioanh-copy-modal').classList.add('on');
 }
@@ -3549,6 +3550,9 @@ function renderGacmBuoc(){
   document.getElementById('gacm-ten').textContent=it.ten;
   document.getElementById('gacm-img').src=convertImgUrl(it.url);
   document.getElementById('gacm-status').textContent='';
+  var coLink=_gacm.coLink!==false;
+  document.getElementById('gacm-step2').style.display=coLink?'flex':'none';
+  document.getElementById('gacm-btn-link').style.display=coLink?'':'none';
   document.getElementById('gacm-next').textContent=(_gacm.idx<_gacm.items.length-1)?'Ảnh tiếp theo ➡':'✓ Xong, đóng lại';
 }
 function dongGacm(){
@@ -3709,7 +3713,7 @@ function chiaSeGioAnh(){
   if(!gioAnh.length) return;
   var items=gioAnh.slice();
   dongGioAnhSheet();
-  if(laMayTinhBan()){ moCopyPasteZalo(items); return; }
+  if(laMayTinhBan()){ moCopyPasteZalo(items, items.length===1); return; }
   function guiTung(list){
     if(!list.length) return;
     var batch=list.slice(0,CHIA_SE_ANH_MAX);
@@ -3766,11 +3770,13 @@ function _thucHienChiaSeNhieuSP(urls, items, onDone){
     });
     if(files.length && navigator.canShare({files:files})){
       var tieuDe=okItems.map(function(x){return x.ten;}).join(', ');
-      // Kèm link ảnh gốc (Drive, không qua nén) CHỈ của các ảnh thật sự gửi
-      // đi - Zalo tự nén ảnh trong chat khá mờ, khách cần xem chi tiết vân/
-      // biên gạch thì bấm link để mở bản gốc rõ nét trên trình duyệt.
-      var linkLines=okItems.map(function(x,i){ return (i+1)+'. '+x.ten+': '+layLinkGocAnh(okUrls[i]); }).join('\n');
-      var textNoiDung=tieuDe+'\n\n🔍 Xem ảnh gốc nét (Zalo hay nén mờ ảnh gửi):\n'+linkLines;
+      // Link ảnh gốc (Drive, không qua nén) CHỈ kèm khi chọn đúng 1 sản phẩm -
+      // Zalo nén ảnh khá mờ, khách cần soi chi tiết vân/biên gạch thì bấm link.
+      // Chọn từ 2 sản phẩm trở lên thì không kèm link (tránh tin nhắn dài rối).
+      var textNoiDung=tieuDe;
+      if(items.length===1 && okItems.length===1){
+        textNoiDung=tieuDe+'\n\n🔍 Xem ảnh gốc nét (Zalo hay nén mờ ảnh gửi):\n'+layLinkGocAnh(okUrls[0]);
+      }
       return navigator.share({files:files, title:tieuDe, text:textNoiDung}).then(function(){
         forcePaintStrong();
         // Báo rõ số ảnh app đã đưa sang bảng chia sẻ: nếu app báo đủ mà Zalo
