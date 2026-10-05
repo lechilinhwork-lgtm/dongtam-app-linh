@@ -5296,6 +5296,20 @@ var KHO_DIEU_CHUYEN={
   'DT Bê tông 620 Tân Tập':{duoc:true,tg:'1 ngày'},
   'DT CP Bến Lức':{duoc:true,tg:'1 ngày'}
 };
+// Phân 1 kho (ngoài nhóm "Có hàng ngay") vào đúng nhóm theo thời gian điều
+// chuyển thật: dc (≤5 ngày) / cho15 / thang (1 tháng) / khongdc. Dùng chung
+// cho cả nhân viên (thấy từng kho) và khách/đại lý (chỉ thấy tổng từng nhóm).
+function nhomDieuChuyen(tenKho){
+  var d=KHO_DIEU_CHUYEN[tenKho];
+  if(!d || !d.duoc) return 'khongdc';
+  var tg=d.tg||'';
+  if(/tháng/i.test(tg)) return 'thang';
+  var m=tg.match(/(\d+)\s*ngày/);
+  var soNgay=/trong ngày/i.test(tg)?0:(m?parseInt(m[1],10):null);
+  if(soNgay!==null && soNgay>=15) return 'cho15';
+  return 'dc';
+}
+var NHOM_DC_LABEL={dc:'🔄 Điều chuyển',cho15:'⏳ Chờ 15 ngày',thang:'🗓️ Chờ 1 tháng',khongdc:'🚫 Không được điều chuyển'};
 // Xếp hạng kho theo thời gian lấy hàng (nhanh nhất trước) - kho không điều
 // chuyển được hoặc chưa rõ thời gian bị đẩy xuống cuối danh sách.
 function thuTuDieuChuyenKho(tenKho){
@@ -5646,19 +5660,25 @@ function moTonKho(ma, tenSP){
     body='<p style="font-size:13px;color:#888;text-align:center;padding:20px 0">Hết hàng / chưa có dữ liệu tồn kho cho mã này.</p>';
     ghiChu='';
   } else if(khachHang){
-    // Khách hàng: KHÔNG hiện tổng toàn quốc. Thấy tên kho + số lượng thật
-    // nếu ≤50, vượt quá thì hiện dạng "50+" (giới hạn, không lộ số lớn).
-    // Không hiện số lô/màu (chi tiết vận hành nội bộ, dành riêng nhân viên).
-    body='';
-    ['nhanh','mai','cho15'].forEach(function(tier){
-      var khoList=tk.kho.filter(function(k){return k.tier===tier;});
-      if(!khoList.length) return;
-      body+='<p style="font-size:12px;font-weight:700;margin:10px 0 6px">'+TEN_TIER[tier]+'</p>';
-      khoList.forEach(function(k){
-        body+='<div style="border:1px solid var(--bd,#eee);border-radius:8px;padding:8px 10px;margin-bottom:6px;display:flex;justify-content:space-between;font-size:13px;font-weight:700">'
-          +'<span>'+k.ten+'</span><span>'+hienThiTonChoKhach(k.tong,dvt,m2pt)+'</span></div>';
-      });
+    // Khách hàng/đại lý: KHÔNG hiện tên kho, KHÔNG hiện tổng toàn quốc, không
+    // lộ số lô/màu (thông tin vận hành nội bộ). Chỉ 1 thẻ cho mỗi mức thời
+    // gian có hàng, số lượng của mức đó thật nếu ≤50, vượt thì hiện "50+".
+    // 5 nhóm theo đúng format: Có hàng ngay · Điều chuyển · Chờ 15 ngày ·
+    // Chờ 1 tháng · Không được điều chuyển (cùng cách phân nhóm với nhân viên).
+    var tongNhom={nhanh:0,dc:0,cho15:0,thang:0,khongdc:0};
+    tk.kho.forEach(function(k){
+      var nhom=(k.tier==='nhanh')?'nhanh':nhomDieuChuyen(k.ten);
+      tongNhom[nhom]+=(k.tong||0);
     });
+    var NHAN_NHOM_KH={nhanh:TEN_TIER.nhanh,dc:NHOM_DC_LABEL.dc,cho15:NHOM_DC_LABEL.cho15,thang:NHOM_DC_LABEL.thang,khongdc:NHOM_DC_LABEL.khongdc};
+    body='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:10px">';
+    ['nhanh','dc','cho15','thang','khongdc'].forEach(function(nhom){
+      if(tongNhom[nhom]<=0) return;
+      body+='<div style="border:1px solid var(--bd,#eee);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">'
+        +'<span style="font-size:13px;font-weight:700">'+NHAN_NHOM_KH[nhom]+'</span>'
+        +'<span style="font-size:16px;font-weight:800">'+hienThiTonChoKhach(tongNhom[nhom],dvt,m2pt)+'</span></div>';
+    });
+    body+='</div>';
     ghiChu='<p style="font-size:11px;color:#888;margin-bottom:10px">📞 Số lượng lớn vui lòng liên hệ nhân viên kinh doanh để biết chính xác và tư vấn lô hàng phù hợp: 0819 548 908.</p>';
   } else {
     body='<div style="background:#FDECEA;border-radius:10px;padding:10px 12px;margin-bottom:12px;text-align:center">'
@@ -5686,17 +5706,6 @@ function moTonKho(ma, tenSP){
     // thật của từng kho (KHO_DIEU_CHUYEN) thay vì theo tier cũ của backend -
     // cho ra 4 nhóm rõ ràng: Điều chuyển (≤5 ngày) → Chờ 15 ngày → Chờ 1 tháng
     // → Không được điều chuyển.
-    function nhomDieuChuyen(tenKho){
-      var d=KHO_DIEU_CHUYEN[tenKho];
-      if(!d || !d.duoc) return 'khongdc';
-      var tg=d.tg||'';
-      if(/tháng/i.test(tg)) return 'thang';
-      var m=tg.match(/(\d+)\s*ngày/);
-      var soNgay=/trong ngày/i.test(tg)?0:(m?parseInt(m[1],10):null);
-      if(soNgay!==null && soNgay>=15) return 'cho15';
-      return 'dc';
-    }
-    var NHOM_DC_LABEL={dc:'🔄 Điều chuyển',cho15:'⏳ Chờ 15 ngày',thang:'🗓️ Chờ 1 tháng',khongdc:'🚫 Không được điều chuyển'};
     var khoConLai=tk.kho.filter(function(k){return k.tier==='mai'||k.tier==='cho15';});
     ['dc','cho15','thang','khongdc'].forEach(function(nhom){
       var khoList=khoConLai.filter(function(k){return nhomDieuChuyen(k.ten)===nhom;});
@@ -5707,7 +5716,10 @@ function moTonKho(ma, tenSP){
     });
     ghiChu='<p style="font-size:11px;color:#888;margin-bottom:10px">Mỗi lô là 1 lần sản xuất — nên lấy hết trong 1 lô để tránh lệch màu khi thi công cùng 1 công trình.</p>';
   }
-  modal.innerHTML='<div style="background:var(--bg1,#fff);border-radius:14px;max-width:420px;width:100%;max-height:80vh;overflow:auto;padding:16px">'
+  // Khách/đại lý trên máy tính: popup rộng hơn để 5 nhóm xếp ngang (lưới), nhìn
+  // hết trong 1 màn hình, không phải cuộn lên xuống.
+  var rongPopup=(khachHang && (window.innerWidth||0)>=768)?'min(780px,94vw)':'420px';
+  modal.innerHTML='<div style="background:var(--bg1,#fff);border-radius:14px;max-width:'+rongPopup+';width:100%;max-height:80vh;overflow:auto;padding:16px">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
     +'<p style="font-size:15px;font-weight:700;margin:0">📦 Tồn kho — '+(tenSP||ma)+'</p>'
     +'<button onclick="_tkModalMa=null;document.getElementById(\'modal-ton-kho\').remove()" style="border:none;background:none;font-size:20px;cursor:pointer;line-height:1">×</button>'
