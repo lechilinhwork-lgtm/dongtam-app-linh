@@ -3522,13 +3522,23 @@ function layLinkGocAnh(url){
   if(m) return 'https://drive.google.com/file/d/'+m[1]+'/view';
   return url;
 }
+// Câu mời khách bấm link - dùng chung cho mọi nơi kèm link (đổi câu ở đây là
+// đổi toàn app): điện thoại, nhiều ảnh 1 sản phẩm, nút "Copy link" trên máy tính.
+var LOI_MOI_XEM_ANH='Bấm xem hình ảnh chi tiết:';
+// Nội dung kèm link: 1 link -> cùng dòng; nhiều link -> mỗi link 1 dòng có số.
+function textKemLinkAnh(urls){
+  var links=urls.map(layLinkGocAnh).filter(Boolean);
+  if(!links.length) return '';
+  if(links.length===1) return LOI_MOI_XEM_ANH+' '+links[0];
+  return LOI_MOI_XEM_ANH+'\n'+links.map(function(l,i){ return (i+1)+'. '+l; }).join('\n');
+}
 function gacmCopyLink(){
   if(!_gacm) return;
   var it=_gacm.items[_gacm.idx];
   var link=layLinkGocAnh(it.url);
   var statusEl=document.getElementById('gacm-status');
   if(!link){ statusEl.textContent='⚠️ Không lấy được link ảnh này'; return; }
-  navigator.clipboard.writeText(link).then(function(){
+  navigator.clipboard.writeText(textKemLinkAnh([it.url])).then(function(){
     statusEl.textContent='✅ Đã copy link — dán thêm 1 dòng dưới ảnh trong Zalo';
   }).catch(function(err){
     console.log('Copy link ảnh gốc lỗi:',err);
@@ -3775,7 +3785,7 @@ function _thucHienChiaSeNhieuSP(urls, items, onDone){
       // Chọn từ 2 sản phẩm trở lên thì không kèm link (tránh tin nhắn dài rối).
       var textNoiDung=tieuDe;
       if(items.length===1 && okItems.length===1){
-        textNoiDung=tieuDe+'\n\n🔍 Xem ảnh gốc nét (Zalo hay nén mờ ảnh gửi):\n'+layLinkGocAnh(okUrls[0]);
+        textNoiDung=tieuDe+'\n'+textKemLinkAnh([okUrls[0]]);
       }
       return navigator.share({files:files, title:tieuDe, text:textNoiDung}).then(function(){
         forcePaintStrong();
@@ -3833,8 +3843,7 @@ function _thucHienChiaSe(urls, ma, tenSP){
       // Kèm link ảnh gốc (Drive, không qua nén) - Zalo tự nén ảnh gửi trong
       // chat khá mờ, khách cần xem chi tiết vân/biên gạch thì bấm link để mở
       // bản gốc rõ nét trên trình duyệt.
-      var textNoiDung=(tenSP||ma)+'\n\n🔍 Xem ảnh gốc nét (Zalo hay nén mờ ảnh gửi):\n'
-        +linkUrls.map(function(u,i){ return linkUrls.length>1?((i+1)+'. '+layLinkGocAnh(u)):layLinkGocAnh(u); }).join('\n');
+      var textNoiDung=(tenSP||ma)+'\n'+textKemLinkAnh(linkUrls);
       return navigator.share({files:files,title:tenSP||ma,text:textNoiDung}).then(function(){
         forcePaintStrong();
         if(files.length<urls.length) showToast('⚠️ Chỉ chuẩn bị được '+files.length+'/'+urls.length+' ảnh (1 số ảnh không tải được sau 3 lần thử)');
