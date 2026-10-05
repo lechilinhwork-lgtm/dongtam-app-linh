@@ -5697,44 +5697,81 @@ function moTonKho(ma, tenSP){
     body+='</div>';
     ghiChu='<p style="font-size:11px;color:#888;margin-bottom:10px">📞 Số lượng lớn vui lòng liên hệ nhân viên kinh doanh để biết chính xác và tư vấn lô hàng phù hợp: 0819 548 908.</p>';
   } else {
-    body='<div style="background:#FDECEA;border-radius:10px;padding:10px 12px;margin-bottom:12px;text-align:center">'
+    // NVKD/Admin: 5 nhóm theo thời gian lấy hàng. Kho "nhanh" = có hàng ngay;
+    // các kho còn lại phân nhóm theo ĐÚNG thời gian điều chuyển thật của từng
+    // kho (KHO_DIEU_CHUYEN), không theo tier cũ của backend.
+    var NHOM_STAFF=[
+      {k:'nhanh',  label:TEN_TIER.nhanh,        mau:'#2E7D32'},
+      {k:'dc',     label:NHOM_DC_LABEL.dc,      mau:'#1565C0'},
+      {k:'cho15',  label:NHOM_DC_LABEL.cho15,   mau:'#E65100'},
+      {k:'thang',  label:NHOM_DC_LABEL.thang,   mau:'#6A1B9A'},
+      {k:'khongdc',label:NHOM_DC_LABEL.khongdc, mau:'#C62828'}
+    ];
+    var nhomKho={nhanh:[],dc:[],cho15:[],thang:[],khongdc:[]};
+    var tongNhomNV={nhanh:0,dc:0,cho15:0,thang:0,khongdc:0};
+    tk.kho.forEach(function(k){
+      var n=(k.tier==='nhanh')?'nhanh':nhomDieuChuyen(k.ten);
+      nhomKho[n].push(k); tongNhomNV[n]+=(k.tong||0);
+    });
+    NHOM_STAFF.forEach(function(g){
+      nhomKho[g.k].sort(function(a,b){ return thuTuDieuChuyenKho(a.ten)-thuTuDieuChuyenKho(b.ten) || (b.tong||0)-(a.tong||0); });
+    });
+    var tongCacNhom=NHOM_STAFF.reduce(function(s,g){ return s+tongNhomNV[g.k]; },0)||1;
+    // Số lượng 2 dòng: thùng (đậm) + m² quy đổi (nhỏ)
+    function slHaiDong(sl){
+      return '<div style="font-size:13px;font-weight:700">'+Math.round(sl).toLocaleString('vi-VN')+' '+(dvt||'thùng')+'</div>'
+        +(m2pt>0?'<div style="font-size:11px;color:var(--t2,#888)">≈ '+Math.round(sl*m2pt).toLocaleString('vi-VN')+' m²</div>':'');
+    }
+    // 1) Thanh tóm tắt: tổng + thanh tỷ lệ nhiều màu + chip từng nhóm (bấm để nhảy tới nhóm)
+    body='<div style="background:#FDECEA;border-radius:10px;padding:10px 12px;margin-bottom:10px;text-align:center">'
       +'<p style="font-size:12px;color:#888;margin-bottom:2px">Tổng khả dụng toàn quốc</p>'
-      +'<p style="font-size:18px;font-weight:800;color:#C0232A;margin:0">'+fmtThung(tk.tong,dvt,m2pt)+'</p></div>';
-    function renderKhoCard(k){
+      +'<p style="font-size:18px;font-weight:800;color:#C0232A;margin:0">'+fmtThung(tk.tong,dvt,m2pt)+'</p></div>'
+      +'<div style="display:flex;height:10px;border-radius:5px;overflow:hidden;margin-bottom:8px;background:#eee">'
+      +NHOM_STAFF.filter(function(g){return tongNhomNV[g.k]>0;}).map(function(g){
+        return '<div title="'+g.label+'" style="width:'+Math.max(2,tongNhomNV[g.k]/tongCacNhom*100).toFixed(1)+'%;background:'+g.mau+'"></div>';
+      }).join('')
+      +'</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">'
+      +NHOM_STAFF.filter(function(g){return tongNhomNV[g.k]>0;}).map(function(g){
+        return '<button type="button" onclick="var el=document.getElementById(\'tkg-'+g.k+'\');if(el)el.scrollIntoView({behavior:\'smooth\',block:\'nearest\'})" '
+          +'style="border:1px solid '+g.mau+';color:'+g.mau+';background:var(--bg1,#fff);border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">'
+          +g.label+' · '+Math.round(tongNhomNV[g.k]).toLocaleString('vi-VN')+'</button>';
+      }).join('')
+      +'</div>';
+    // 2) Mỗi nhóm 1 khung, mỗi kho 1 dòng gọn (tên + điều chuyển | tồn), chi tiết lô thu gọn
+    function renderKhoDong(k){
       var dc=htmlDieuChuyenKho(k.ten);
-      return '<div style="border:1px solid var(--bd,#eee);border-radius:8px;padding:8px 10px;margin-bottom:6px">'
-        +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:'+(dc?'2px':'4px')+'">'
-        +'<span>'+k.ten+'</span><span>'+fmtThung(k.tong,dvt,m2pt)+'</span></div>'
-        +(dc?'<div style="margin-bottom:4px">'+dc+'</div>':'')
-        +k.lo.map(function(l){
-          return '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2);padding:2px 0">'
-            +'<span>Lô '+(l.so_lo||'–')+(l.mau?' · màu '+l.mau:'')+'</span><span>'+fmtThung(l.sl,dvt,m2pt)+'</span></div>';
-        }).join('')
+      return '<div style="padding:8px 12px;border-top:1px solid var(--bd,#eee)">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'
+        +'<div><div style="font-size:13px;font-weight:700">'+k.ten+'</div>'+(dc?'<div style="margin-top:1px">'+dc+'</div>':'')+'</div>'
+        +'<div style="text-align:right;white-space:nowrap">'+slHaiDong(k.tong)+'</div></div>'
+        +(k.lo&&k.lo.length
+          ?'<details style="margin-top:4px"><summary style="font-size:11px;color:var(--t2,#888);cursor:pointer">'+k.lo.length+' lô</summary>'
+            +k.lo.map(function(l){
+              return '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2,#888);padding:2px 0 0 12px">'
+                +'<span>Lô '+(l.so_lo||'–')+(l.mau?' · màu '+l.mau:'')+'</span><span>'+fmtThung(l.sl,dvt,m2pt)+'</span></div>';
+            }).join('')+'</details>'
+          :'')
         +'</div>';
     }
-    // Kho có hàng sẵn (không cần điều chuyển) - giữ nguyên nhóm "nhanh" cũ.
-    var khoNhanhSan=tk.kho.filter(function(k){return k.tier==='nhanh';});
-    if(khoNhanhSan.length){
-      body+='<p style="font-size:12px;font-weight:700;margin:10px 0 6px">'+TEN_TIER['nhanh']+'</p>';
-      khoNhanhSan.forEach(function(k){ body+=renderKhoCard(k); });
-    }
-    // Các kho còn lại (tier mai/cho15) tách theo ĐÚNG thời gian điều chuyển
-    // thật của từng kho (KHO_DIEU_CHUYEN) thay vì theo tier cũ của backend -
-    // cho ra 4 nhóm rõ ràng: Điều chuyển (≤5 ngày) → Chờ 15 ngày → Chờ 1 tháng
-    // → Không được điều chuyển.
-    var khoConLai=tk.kho.filter(function(k){return k.tier==='mai'||k.tier==='cho15';});
-    ['dc','cho15','thang','khongdc'].forEach(function(nhom){
-      var khoList=khoConLai.filter(function(k){return nhomDieuChuyen(k.ten)===nhom;});
-      if(!khoList.length) return;
-      khoList.sort(function(a,b){ return thuTuDieuChuyenKho(a.ten)-thuTuDieuChuyenKho(b.ten); });
-      body+='<p style="font-size:12px;font-weight:700;margin:10px 0 6px">'+NHOM_DC_LABEL[nhom]+'</p>';
-      khoList.forEach(function(k){ body+=renderKhoCard(k); });
-    });
+    // 3) Máy tính: các nhóm xếp lưới ngang (2-3 cột); điện thoại tự về 1 cột
+    // Xếp dạng cột "thác" (column-width) thay vì grid để các nhóm ngắn/dài khít
+    // nhau, không để khoảng trống dưới nhóm ngắn.
+    body+='<div style="column-width:300px;column-gap:10px">'
+      +NHOM_STAFF.filter(function(g){return nhomKho[g.k].length;}).map(function(g){
+        return '<div id="tkg-'+g.k+'" style="border:1px solid var(--bd,#eee);border-radius:10px;overflow:hidden;display:inline-block;width:100%;margin-bottom:10px;break-inside:avoid">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:'+g.mau+'14">'
+          +'<span style="font-size:13px;font-weight:800;color:'+g.mau+'">'+g.label+'</span>'
+          +'<span style="font-size:11px;color:var(--t2,#888);white-space:nowrap"><b style="color:var(--t1,#222)">'+Math.round(tongNhomNV[g.k]).toLocaleString('vi-VN')+' '+(dvt||'thùng')+'</b> · '+nhomKho[g.k].length+' kho</span></div>'
+          +nhomKho[g.k].map(renderKhoDong).join('')
+          +'</div>';
+      }).join('')
+      +'</div>';
     ghiChu='<p style="font-size:11px;color:#888;margin-bottom:10px">Mỗi lô là 1 lần sản xuất — nên lấy hết trong 1 lô để tránh lệch màu khi thi công cùng 1 công trình.</p>';
   }
-  // Khách/đại lý trên máy tính: popup rộng hơn để 5 nhóm xếp ngang (lưới), nhìn
-  // hết trong 1 màn hình, không phải cuộn lên xuống.
-  var rongPopup=(khachHang && (window.innerWidth||0)>=768)?'min(780px,94vw)':'420px';
+  // Máy tính: popup rộng hơn để các nhóm xếp ngang (lưới), nhìn được nhiều
+  // hơn trong 1 màn hình, đỡ phải cuộn lên xuống.
+  var rongPopup=((window.innerWidth||0)>=768)?(khachHang?'min(780px,94vw)':'min(1100px,96vw)'):'420px';
   modal.innerHTML='<div style="background:var(--bg1,#fff);border-radius:14px;max-width:'+rongPopup+';width:100%;max-height:80vh;overflow:auto;padding:16px">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
     +'<p style="font-size:15px;font-weight:700;margin:0">📦 Tồn kho — '+(tenSP||ma)+'</p>'
