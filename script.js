@@ -5921,8 +5921,11 @@ function moLichSuDon(){
     }
     else { renderLichSuDonError(); }
   };
-  // Server tự xác định người dùng + quyền từ token, không gửi role/username nữa.
-  s.src=APPS_URL+'?action=getDonHang&k='+encodeURIComponent(APP_KEY)+'&t='+encodeURIComponent(authTok())+'&callback='+cbName;
+  // Backend mới tự xác định người dùng + quyền từ token và BỎ QUA username/role
+  // bên dưới; vẫn gửi để backend cũ (chưa deploy bản mới) không trả danh sách
+  // trống cho admin trong lúc chuyển tiếp. Gỡ 2 tham số này sau khi đã deploy.
+  s.src=APPS_URL+'?action=getDonHang&username='+encodeURIComponent(sess.user||'')
+    +'&role='+encodeURIComponent(sess.role||'nv')+'&k='+encodeURIComponent(APP_KEY)+'&t='+encodeURIComponent(authTok())+'&callback='+cbName;
   s.onerror=function(){ clearTimeout(t); renderLichSuDonError(); };
   document.head.appendChild(s);
 }
