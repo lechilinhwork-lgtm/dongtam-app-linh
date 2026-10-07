@@ -5684,6 +5684,31 @@ function tuVanLoChoKhach(dsLo, can){
   for(var i=0;i<dsLo.length && cong<can;i++){ chon.push(dsLo[i]); cong+=dsLo[i].tong; }
   return {loai:'ghep', lo:chon};
 }
+// Câu trả lời tư vấn lô (HTML nhỏ, có màu) cho ô "Tôi cần ___ thùng".
+function htmlTuVanLo(kq, can, dvt){
+  if(!kq) return '';
+  dvt=dvt||'thùng';
+  var tenLo=function(x){ return 'Lô '+(x.so_lo||'–')+(x.mau?' (màu '+x.mau+')':''); };
+  if(kq.loai==='lon') return '<span style="color:#666">Số lượng lớn — vui lòng liên hệ nhân viên kinh doanh 0819 548 908 để được kiểm tra lô phù hợp.</span>';
+  if(kq.loai==='du1lo'){
+    var l=kq.lo[0];
+    return '<span style="color:#2E7D32;font-weight:700">'+tenLo(l)+' đủ cho '+can+' '+dvt+' — lấy trọn được trong 1 lô, cùng màu.</span>'
+      +(l.soKho>1?' <span style="color:#666">(lô này nằm ở '+l.soKho+' kho)</span>':'');
+  }
+  if(kq.loai==='ghep') return '<span style="color:#E65100;font-weight:700">Không có lô nào đủ '+can+' '+dvt+'.</span> '
+    +'<span style="color:#666">Phải ghép '+kq.lo.length+' lô ('+kq.lo.map(tenLo).join(', ')+') nên có thể lệch màu giữa các lô — vui lòng liên hệ nhân viên kinh doanh để được tư vấn.</span>';
+  return '<span style="color:#C62828;font-weight:700">Tồn hiện có khoảng '+Math.floor(kq.tong)+' '+dvt+', chưa đủ '+can+' '+dvt+'.</span> '
+    +'<span style="color:#666">Vui lòng liên hệ nhân viên kinh doanh.</span>';
+}
+// Ô nhập "Tôi cần ___" trong popup Tồn kho của khách (đọc _tkLoKhach do
+// moTonKho gán lúc dựng popup).
+var _tkLoKhach={ds:[], dvt:'thùng'};
+function tkTinhCan(){
+  var inp=document.getElementById('tk-can'), out=document.getElementById('tk-can-kq');
+  if(!inp||!out) return;
+  var can=Math.floor(parseFloat(inp.value));
+  out.innerHTML=htmlTuVanLo(tuVanLoChoKhach(_tkLoKhach.ds, can), can, _tkLoKhach.dvt);
+}
 // Dùng cho card danh sách: nhân viên thấy số thật, khách hàng thấy giới hạn + ghi chú
 function fmtTkCard(tong, dvt){
   var t=Math.floor(tong);
@@ -5762,7 +5787,27 @@ function moTonKho(ma, tenSP){
         +'</div>';
     }
     var NHAN_NHOM_KH={nhanh:TEN_TIER.nhanh,dc:NHOM_DC_LABEL.dc,cho15:NHOM_DC_LABEL.cho15,thang:NHOM_DC_LABEL.thang,khongdc:NHOM_DC_LABEL.khongdc};
-    body='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:10px">';
+    // Khung "Tồn theo lô" toàn hệ thống + ô "Tôi cần ___ thùng": giúp khách
+    // biết lấy trọn 1 lô được không (60 thùng nhưng chia nhiều lô nhỏ).
+    var dsLo=gomLoTheoMa(tk);
+    _tkLoKhach={ds:dsLo, dvt:dvt};
+    function dongLo(x){
+      return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:3px 0">'
+        +'<span>Lô '+(x.so_lo||'–')+(x.mau?' · màu '+x.mau:'')+'</span>'
+        +'<span><b>'+slNganKhach(x.tong,dvt)+'</b>'+(x.soKho>1?' <span style="color:var(--t2,#888)">· '+x.soKho+' kho</span>':'')+'</span></div>';
+    }
+    var khungLo='';
+    if(dsLo.length){
+      khungLo='<div style="border:1px solid var(--bd,#eee);border-radius:10px;padding:12px 14px;margin-bottom:10px">'
+        +'<p style="font-size:13px;font-weight:700;margin:0 0 6px">Tồn theo lô · '+dsLo.length+' lô</p>'
+        +dsLo.slice(0,5).map(dongLo).join('')
+        +(dsLo.length>5?'<details><summary style="font-size:11px;color:var(--t2,#888);cursor:pointer;padding:3px 0">Xem thêm '+(dsLo.length-5)+' lô</summary>'+dsLo.slice(5).map(dongLo).join('')+'</details>':'')
+        +'<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--bd,#ddd)">'
+        +'<label style="font-size:12px">Tôi cần <input id="tk-can" type="number" inputmode="numeric" min="1" step="1" oninput="tkTinhCan()" '
+        +'style="width:80px;padding:6px 8px;border:1.5px solid var(--bd2,#ccc);border-radius:8px;font-size:13px;font-family:inherit"> '+dvt+'</label>'
+        +'<p id="tk-can-kq" style="font-size:12px;line-height:1.5;margin:6px 0 0"></p></div></div>';
+    }
+    body=khungLo+'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:10px">';
     ['nhanh','dc','cho15','thang','khongdc'].forEach(function(nhom){
       if(tongNhom[nhom]<=0) return;
       body+='<div style="border:1px solid var(--bd,#eee);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">'
