@@ -5756,17 +5756,23 @@ function tkTuVanNV(can, vGoc){
     var x=du[0];
     html=dong('ok',ten(x)+' đủ '+yeuCau+' — lấy trọn 1 lô, cùng màu ('+tinhTrang(x,can)+').')+nho(chiTiet(x));
     if(du.length>1) html+=nho('Còn '+(du.length-1)+' lô khác cũng đủ: '+du.slice(1,3).map(function(y){return ten(y)+' '+fm(y.tong)+(y.nhanh>=can?' (có ngay)':'');}).join(', ')+(du.length>3?'…':''));
-    copy=S.ma+': còn '+ten(x)+' đủ '+yeuCau+', cùng 1 lô nên đồng màu — '+tinhTrang(x,can)+'.';
+    var loTin='lô '+(x.so_lo||'–')+(x.mau?', màu '+x.mau:'');
+    var cuoi=(x.nhanh>=can)?'Hàng có sẵn, giao ngay được ạ.'
+      :(x.nhanh>0?'Hiện có sẵn '+fm(x.nhanh)+' '+dvt+' giao ngay, phần còn lại ('+fm(can-x.nhanh)+' '+dvt+') em điều chuyển thêm, em báo thời gian cụ thể sau ạ.'
+      :'Lô này cần điều chuyển nên em xin báo thời gian giao cụ thể sau ạ.');
+    copy='Dạ mã '+S.ma+' còn đủ '+yeuCau+', cùng 1 lô ('+loTin+') nên đồng màu khi thi công. '+cuoi;
   } else if(tongTat>=can){
     ds.sort(function(a,b){ return b.tong-a.tong; });
     var conLai=can, chon=[];
     for(var i=0;i<ds.length&&conLai>0;i++){ var lay=Math.min(conLai,ds[i].tong); chon.push({x:ds[i],lay:lay}); conLai-=lay; }
     html=dong('warn','Không có lô nào đủ '+yeuCau+' — phải ghép '+chon.length+' lô, có thể lệch màu giữa các lô.')
       +chon.map(function(c){ return nho('• '+ten(c.x)+': lấy '+fm(c.lay)+' / còn '+fm(c.x.tong)+' — '+chiTiet(c.x)); }).join('');
-    copy=S.ma+': cần '+yeuCau+' thì phải ghép '+chon.length+' lô ('+chon.map(function(c){return ten(c.x)+' '+fm(c.lay);}).join(', ')+'), có thể lệch màu nhẹ giữa các lô. Anh/chị cân nhắc giúp em nhé.';
+    copy='Dạ mã '+S.ma+' hiện không có lô nào đủ '+yeuCau+'. Để đủ hàng em phải ghép '+chon.length+' lô: '
+      +chon.map(function(c){return 'lô '+(c.x.so_lo||'–')+(c.x.mau?' (màu '+c.x.mau+')':'')+' '+fm(c.lay)+' '+dvt;}).join(', ')
+      +'. Các lô khác nhau có thể lệch màu nhẹ, anh/chị xem giúp em có đồng ý ghép không ạ.';
   } else {
     html=dong('bad','Tồn toàn quốc chỉ còn '+fm(tongTat)+' '+dvt+(m2pt>0?' (≈ '+fm(tongTat*m2pt)+' m²)':'')+' — thiếu '+fm(can-tongTat)+' '+dvt+' so với '+yeuCau+'.');
-    copy=S.ma+': hiện còn khoảng '+fm(tongTat)+' '+dvt+', chưa đủ '+yeuCau+'. Em sẽ báo lại khi có hàng.';
+    copy='Dạ mã '+S.ma+' hiện chỉ còn khoảng '+fm(tongTat)+' '+dvt+', chưa đủ '+yeuCau+'. Em sẽ báo lại ngay khi hàng về, hoặc tư vấn anh/chị mã tương tự nếu cần ạ.';
   }
   if(tongTat>=can && tongNhanh<can) html+=nho('Hàng có ngay toàn quốc: '+fm(tongNhanh)+' '+dvt+(tongNhanh>0?' — phần còn lại cần điều chuyển.':' — toàn bộ cần điều chuyển/chờ.'));
   window._tkCopyText=copy;
