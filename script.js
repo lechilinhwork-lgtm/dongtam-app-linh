@@ -5717,6 +5717,72 @@ function tkDoiDon(d){
   var inp=document.getElementById('tk-can'); if(inp) inp.placeholder=(d==='m2'?'VD: 120':'VD: 60');
   tkTinhCan();
 }
+// ===== Tư vấn "khách cần N" cho Admin/NVKD: thấy số thật, kho, nhóm giao hàng =====
+function tkTuVanNV(can, vGoc){
+  var S=_tkLoKhach, tk=S.tk, dvt=S.dvt, m2pt=S.m2pt;
+  var map={}, ds=[];
+  (tk.kho||[]).forEach(function(k){
+    var nhom=(k.tier==='nhanh')?'nhanh':nhomDieuChuyen(k.ten);
+    (k.lo||[]).forEach(function(l){
+      var sl=Number(l.sl)||0; if(sl<=0) return;
+      var key=(l.so_lo||'')+'|'+(l.mau||'');
+      if(!map[key]){ map[key]={so_lo:l.so_lo||'',mau:l.mau||'',tong:0,nhanh:0,parts:[]}; ds.push(map[key]); }
+      var o=map[key]; o.tong+=sl; if(nhom==='nhanh') o.nhanh+=sl; o.parts.push({kho:k.ten,nhom:nhom,sl:sl});
+    });
+  });
+  var tongTat=ds.reduce(function(a,x){return a+x.tong;},0);
+  var tongNhanh=ds.reduce(function(a,x){return a+x.nhanh;},0);
+  var ten=function(x){ return 'Lô '+(x.so_lo||'–')+(x.mau?' (màu '+x.mau+')':''); };
+  var fm=function(n){ return Math.round(n).toLocaleString('vi-VN'); };
+  var chiTiet=function(x,dung){
+    var ps=x.parts.slice().sort(function(a,b){ return (a.nhom==='nhanh'?0:1)-(b.nhom==='nhanh'?0:1) || b.sl-a.sl; });
+    return ps.map(function(p){ return p.kho+' '+fm(p.sl)+(p.nhom==='nhanh'?' · có ngay':' · '+(NHOM_DC_LABEL[p.nhom]||'điều chuyển')); }).join(' | ');
+  };
+  var tinhTrang=function(x,dung){
+    if(x.nhanh>=dung) return 'giao ngay được';
+    if(x.nhanh>0) return 'có ngay '+fm(x.nhanh)+', phần còn lại cần điều chuyển';
+    return 'cần điều chuyển / chờ hàng';
+  };
+  var yeuCau=(S.don==='m2'?(vGoc+' m² (≈ '+can+' '+dvt+')'):(can+' '+dvt+(m2pt>0?' (≈ '+fm(can*m2pt)+' m²)':'')));
+  var html='', copy='';
+  var mau={ok:'#2E7D32',warn:'#E65100',bad:'#C62828'};
+  var dong=function(c,t){ return '<div style="color:'+mau[c]+';font-weight:700">'+t+'</div>'; };
+  var nho=function(t){ return '<div style="color:#666;font-size:12px;margin-top:2px">'+t+'</div>'; };
+  var du=ds.filter(function(x){return x.tong>=can;});
+  if(du.length){
+    du.sort(function(a,b){
+      return ((b.nhanh>=can)-(a.nhanh>=can)) || (b.nhanh-a.nhanh) || (a.tong-b.tong);
+    });
+    var x=du[0];
+    html=dong('ok',ten(x)+' đủ '+yeuCau+' — lấy trọn 1 lô, cùng màu ('+tinhTrang(x,can)+').')+nho(chiTiet(x));
+    if(du.length>1) html+=nho('Còn '+(du.length-1)+' lô khác cũng đủ: '+du.slice(1,3).map(function(y){return ten(y)+' '+fm(y.tong)+(y.nhanh>=can?' (có ngay)':'');}).join(', ')+(du.length>3?'…':''));
+    copy=S.ma+': còn '+ten(x)+' đủ '+yeuCau+', cùng 1 lô nên đồng màu — '+tinhTrang(x,can)+'.';
+  } else if(tongTat>=can){
+    ds.sort(function(a,b){ return b.tong-a.tong; });
+    var conLai=can, chon=[];
+    for(var i=0;i<ds.length&&conLai>0;i++){ var lay=Math.min(conLai,ds[i].tong); chon.push({x:ds[i],lay:lay}); conLai-=lay; }
+    html=dong('warn','Không có lô nào đủ '+yeuCau+' — phải ghép '+chon.length+' lô, có thể lệch màu giữa các lô.')
+      +chon.map(function(c){ return nho('• '+ten(c.x)+': lấy '+fm(c.lay)+' / còn '+fm(c.x.tong)+' — '+chiTiet(c.x)); }).join('');
+    copy=S.ma+': cần '+yeuCau+' thì phải ghép '+chon.length+' lô ('+chon.map(function(c){return ten(c.x)+' '+fm(c.lay);}).join(', ')+'), có thể lệch màu nhẹ giữa các lô. Anh/chị cân nhắc giúp em nhé.';
+  } else {
+    html=dong('bad','Tồn toàn quốc chỉ còn '+fm(tongTat)+' '+dvt+(m2pt>0?' (≈ '+fm(tongTat*m2pt)+' m²)':'')+' — thiếu '+fm(can-tongTat)+' '+dvt+' so với '+yeuCau+'.');
+    copy=S.ma+': hiện còn khoảng '+fm(tongTat)+' '+dvt+', chưa đủ '+yeuCau+'. Em sẽ báo lại khi có hàng.';
+  }
+  if(tongTat>=can && tongNhanh<can) html+=nho('Hàng có ngay toàn quốc: '+fm(tongNhanh)+' '+dvt+(tongNhanh>0?' — phần còn lại cần điều chuyển.':' — toàn bộ cần điều chuyển/chờ.'));
+  window._tkCopyText=copy;
+  html+='<button type="button" onclick="tkChepTin(this)" style="margin-top:8px;border:1.5px solid #C0232A;color:#C0232A;background:#fff;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Chép tin cho khách</button>';
+  return html;
+}
+function tkChepTin(btn){
+  var t=window._tkCopyText||''; if(!t) return;
+  var xong=function(){ btn.textContent='Đã chép — dán vào Zalo'; setTimeout(function(){ btn.textContent='Chép tin cho khách'; },2500); };
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(xong,function(){ prompt('Chép tin:',t); }); return; }
+  }catch(e){}
+  var ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); xong(); }catch(e){ prompt('Chép tin:',t); }
+  ta.remove();
+}
 function tkTinhCan(){
   var inp=document.getElementById('tk-can'), out=document.getElementById('tk-can-kq');
   if(!inp||!out) return;
@@ -5728,6 +5794,7 @@ function tkTinhCan(){
     dong='<div style="color:#444;margin-bottom:4px">'+v+' m² ≈ <b>'+can+' '+dvt+'</b> <span style="color:#888">(mỗi '+dvt+' '+String(_tkLoKhach.m2pt).replace('.',',')+' m², làm tròn lên)</span></div>';
   } else can=Math.floor(v);
   if(can<1) can=1;
+  if(_tkLoKhach.nv){ out.innerHTML=dong+tkTuVanNV(can, v); return; }
   out.innerHTML=dong+htmlTuVanLo(tuVanLoChoKhach(_tkLoKhach.ds, can), can, dvt);
 }
 // Dùng cho card danh sách: nhân viên thấy số thật, khách hàng thấy giới hạn + ghi chú
@@ -5871,8 +5938,19 @@ function moTonKho(ma, tenSP){
       return '<div style="font-size:13px;font-weight:700">'+Math.round(sl).toLocaleString('vi-VN')+' '+(dvt||'thùng')+'</div>'
         +(m2pt>0?'<div style="font-size:11px;color:var(--t2,#888)">≈ '+Math.round(sl*m2pt).toLocaleString('vi-VN')+' m²</div>':'');
     }
+    // Ô "Khách cần bao nhiêu?" - tư vấn lô thật + chép tin gửi khách
+    _tkLoKhach={ds:[], dvt:dvt, m2pt:(m2pt>0?m2pt:null), don:'thung', nv:true, tk:tk, ma:ma};
+    var oCan='<div style="border:1.5px solid #C0232A33;background:#C0232A08;border-radius:12px;padding:12px 14px;margin-bottom:10px">'
+      +'<p style="font-size:14px;font-weight:700;margin:0 0 8px">Khách cần bao nhiêu?</p>'
+      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      +'<input id="tk-can" type="number" inputmode="decimal" min="1" step="any" placeholder="VD: 60" oninput="tkTinhCan()" '
+      +'style="width:100px;padding:8px 10px;border:1.5px solid var(--bd2,#ccc);border-radius:8px;font-size:15px;font-family:inherit">'
+      +'<span style="display:inline-flex"><button type="button" id="tk-don-thung" onclick="tkDoiDon(&quot;thung&quot;)">'+dvt.charAt(0).toUpperCase()+dvt.slice(1)+'</button>'
+      +(m2pt>0?'<button type="button" id="tk-don-m2" onclick="tkDoiDon(&quot;m2&quot;)">m²</button>':'')+'</span></div>'
+      +'<div id="tk-can-kq" style="font-size:13px;line-height:1.5;margin-top:8px"></div></div>';
+    setTimeout(function(){ tkDoiDon('thung'); },0);
     // 1) Thanh tóm tắt: tổng + thanh tỷ lệ nhiều màu + chip từng nhóm (bấm để nhảy tới nhóm)
-    body='<div style="background:#FDECEA;border-radius:10px;padding:10px 12px;margin-bottom:10px;text-align:center">'
+    body=oCan+'<div style="background:#FDECEA;border-radius:10px;padding:10px 12px;margin-bottom:10px;text-align:center">'
       +'<p style="font-size:12px;color:#888;margin-bottom:2px">Tổng khả dụng toàn quốc</p>'
       +'<p style="font-size:18px;font-weight:800;color:#C0232A;margin:0">'+fmtThung(tk.tong,dvt,m2pt)+'</p></div>'
       +'<div style="display:flex;height:10px;border-radius:5px;overflow:hidden;margin-bottom:8px;background:#eee">'
