@@ -5360,7 +5360,11 @@ function htmlDieuChuyenKho(tenKho){
   var mau=d.ghiChu?'#E65100':'#2E7D32';
   return '<span style="font-size:10.5px;color:'+mau+';font-weight:600">🔄 Điều chuyển: '+d.tg+'</span>';
 }
-var TK_CACHE_KEY='dt_tk_v1', TK_CACHE_TTL=30*60*1000;
+// Cache tách theo vai trò: khách chỉ thấy số đã che (≤51), nhân viên số thật -
+// tránh đổi tài khoản trên cùng máy mà dính cache của vai trò kia.
+function tkCacheKey(){ var s=checkSession(); return 'dt_tk_v2_'+((s&&s.role==='khachhang')?'kh':'nv'); }
+try{ localStorage.removeItem('dt_tk_v1'); }catch(e){}
+var TK_CACHE_TTL=30*60*1000;
 function tkLoadingBanner(show){
   var el=document.getElementById('tk-loading-bar');
   if(!el) return;
@@ -5372,7 +5376,7 @@ function fetchTonKhoChiTiet(){
   tkLoadingBanner(true);
   // Load cache ngay lập tức nếu còn hiệu lực
   try{
-    var cached=JSON.parse(localStorage.getItem(TK_CACHE_KEY)||'{}');
+    var cached=JSON.parse(localStorage.getItem(tkCacheKey())||'{}');
     if(cached.ts && cached.data && (Date.now()-cached.ts)<TK_CACHE_TTL){
       tonKhoChiTiet=cached.data;
       tonKhoLoaded=true;
@@ -5387,7 +5391,7 @@ function fetchTonKhoChiTiet(){
   window[cbName]=function(res){
     if(res && res.status==='ok' && res.data){
       tonKhoChiTiet=res.data;
-      try{ localStorage.setItem(TK_CACHE_KEY,JSON.stringify({ts:Date.now(),data:res.data})); }catch(e){}
+      try{ localStorage.setItem(tkCacheKey(),JSON.stringify({ts:Date.now(),data:res.data})); }catch(e){}
       tkLoadingBanner(false);
       if(typeof render==='function') render();
       if(typeof renderSale==='function') renderSale();
