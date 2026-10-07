@@ -227,14 +227,34 @@ function tryOpenDeepLinkNgoiKeo(){
   }catch(e){}
 }
 
-function fetchAllFromSheet(){
+// Thanh báo nhỏ ở đáy màn hình khi tải dữ liệu chậm/lỗi (không chặn thao tác).
+function bangBaoTai(msg, nutThu){
+  var id='_bao_tai', el=document.getElementById(id);
+  if(!msg){ if(el) el.remove(); return; }
+  if(!el){
+    el=document.createElement('div'); el.id=id;
+    el.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:76px;z-index:9998;background:#333;color:#fff;border-radius:20px;padding:8px 14px;font-size:12px;display:flex;gap:10px;align-items:center;max-width:92vw;box-shadow:0 2px 10px rgba(0,0,0,.3)';
+    document.body.appendChild(el);
+  }
+  el.innerHTML='<span>'+msg+'</span>'+(nutThu?'<button type="button" style="background:#fff;color:#C0232A;border:none;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">Thử lại</button>':'');
+  if(nutThu) el.querySelector('button').onclick=function(){ bangBaoTai('Đang tải lại…'); nutThu(); };
+}
+// Máy chủ Google thỉnh thoảng trả trang lỗi HTTP 200 (không gọi callback, không
+// báo onerror) hoặc treo 15-30s -> tự thử lại tối đa 2 lần trước khi báo lỗi.
+var _getAllXong=false;
+function fetchAllFromSheet(lanThu){
+  lanThu=lanThu||0;
+  if(lanThu===0) _getAllXong=false;
   var APPS_URL='https://script.google.com/macros/s/AKfycbyrO8symCYOkWsGG0nRWPF7gpndC3mzEVUk15UvWrA0O81ZUumW-kX_gEOZhtCJ34bMVQ/exec';
   var old=document.getElementById('_all_script');
   if(old) old.remove();
   window._onGetAll = function(res){
     var s=document.getElementById('_all_script');
     if(s) s.remove();
+    if(_getAllXong) return;
+    if(res && res.status==='ok'){ _getAllXong=true; bangBaoTai(''); }
     if(!res || res.status!=='ok'){
+      _getAllXong=true; bangBaoTai('');
       console.log('⚠️ getAll lỗi, rơi về gọi riêng lẻ:', res && res.msg);
       goiTuanTu([
         function(){ fetchGiaFromSheet(['gach']); },
@@ -281,7 +301,13 @@ function fetchAllFromSheet(){
   var s=document.createElement('script');
   s.id='_all_script';
   var _tok=authTok();
-  s.src=APPS_URL+'?action=getAll&k='+encodeURIComponent(APP_KEY)+'&t='+encodeURIComponent(_tok)+(_tok?'':'&g=1')+'&callback=_onGetAll';
+  s.src=APPS_URL+'?action=getAll&k='+encodeURIComponent(APP_KEY)+'&t='+encodeURIComponent(_tok)+(_tok?'':'&g=1')+(lanThu?'&r='+lanThu+Date.now():'')+'&callback=_onGetAll';
+  setTimeout(function(){
+    if(_getAllXong) return;
+    var cu=document.getElementById('_all_script'); if(cu) cu.remove();
+    if(lanThu<2){ bangBaoTai('Mạng chậm, đang thử tải lại giá & hình…'); fetchAllFromSheet(lanThu+1); }
+    else { bangBaoTai('Chưa tải được giá và hình ảnh.', function(){ fetchAllFromSheet(0); }); }
+  }, 20000);
   s.onerror=function(){
     console.log('⚠️ Không tải được dữ liệu gộp — rơi về gọi riêng lẻ');
     s.remove();
@@ -5370,7 +5396,10 @@ function tkLoadingBanner(show){
   if(!el) return;
   el.style.display=show?'flex':'none';
 }
-function fetchTonKhoChiTiet(){
+var _tkXong=false;
+function fetchTonKhoChiTiet(lanThu){
+  lanThu=(typeof lanThu==='number')?lanThu:0;
+  if(lanThu===0) _tkXong=false;
   var APPS_URL='https://script.google.com/macros/s/AKfycbyrO8symCYOkWsGG0nRWPF7gpndC3mzEVUk15UvWrA0O81ZUumW-kX_gEOZhtCJ34bMVQ/exec';
   // Hiện loading indicator
   tkLoadingBanner(true);
@@ -5389,6 +5418,7 @@ function fetchTonKhoChiTiet(){
   // Vẫn fetch GAS để cập nhật mới nhất (chạy nền)
   var cbName='_onTonKhoChiTiet';
   window[cbName]=function(res){
+    _tkXong=true;
     if(res && res.status==='ok' && res.data){
       tonKhoChiTiet=res.data;
       try{ localStorage.setItem(tkCacheKey(),JSON.stringify({ts:Date.now(),data:res.data})); }catch(e){}
@@ -5405,7 +5435,13 @@ function fetchTonKhoChiTiet(){
   if(old) old.remove();
   var s=document.createElement('script');
   s.id='_tkct_script';
-  s.src=APPS_URL+'?action=getTonKhoChiTiet&k='+encodeURIComponent(APP_KEY)+'&t='+encodeURIComponent(authTok())+'&callback='+cbName;
+  s.src=APPS_URL+'?action=getTonKhoChiTiet&k='+encodeURIComponent(APP_KEY)+'&t='+encodeURIComponent(authTok())+(lanThu?'&r='+lanThu+Date.now():'')+'&callback='+cbName;
+  setTimeout(function(){
+    if(_tkXong) return;
+    var cu=document.getElementById('_tkct_script'); if(cu) cu.remove();
+    if(lanThu<2) fetchTonKhoChiTiet(lanThu+1);
+    else { tkLoadingBanner(false); bangBaoTai('Chưa tải được tồn kho.', function(){ fetchTonKhoChiTiet(0); }); }
+  }, 20000);
   s.onerror=function(){ tkLoadingBanner(false); s.remove(); };
   document.head.appendChild(s);
 }
