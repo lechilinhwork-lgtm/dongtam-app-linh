@@ -5729,9 +5729,10 @@ function moTonKho(ma, tenSP){
     body='<p style="font-size:13px;color:#888;text-align:center;padding:20px 0">Hết hàng / chưa có dữ liệu tồn kho cho mã này.</p>';
     ghiChu='';
   } else if(khachHang){
-    // Khách hàng/đại lý: KHÔNG hiện tổng toàn quốc, không lộ số lô/màu (thông
-    // tin vận hành nội bộ). Mỗi nhóm thời gian có hàng là 1 thẻ: tổng nhóm
-    // + từng DC thuộc nhóm kèm số lượng (đều giới hạn ≤50 thật, vượt thì "50+").
+    // Khách hàng/đại lý: KHÔNG hiện tổng toàn quốc. Mỗi nhóm thời gian có hàng
+    // là 1 thẻ: tổng nhóm + từng DC thuộc nhóm kèm số lượng, bấm "N lô" xem
+    // từng lô (số lô, màu, số lượng) - mọi số lượng giới hạn ≤50 thật, vượt
+    // thì "50+".
     // 5 nhóm theo đúng format: Có hàng ngay · Điều chuyển · Chờ 15 ngày ·
     // Chờ 1 tháng · Không được điều chuyển (cùng cách phân nhóm với nhân viên).
     var tongNhom={nhanh:0,dc:0,cho15:0,thang:0,khongdc:0};
@@ -5739,15 +5740,26 @@ function moTonKho(ma, tenSP){
     tk.kho.forEach(function(k){
       var nhom=(k.tier==='nhanh')?'nhanh':nhomDieuChuyen(k.ten);
       tongNhom[nhom]+=(k.tong||0);
-      if((k.tong||0)>0) khoNhom[nhom].push({ten:k.ten, tong:k.tong});
+      if((k.tong||0)>0) khoNhom[nhom].push({ten:k.ten, tong:k.tong, lo:k.lo||[]});
     });
     Object.keys(khoNhom).forEach(function(n){
       khoNhom[n].sort(function(a,b){ return thuTuDieuChuyenKho(a.ten)-thuTuDieuChuyenKho(b.ten) || a.ten.localeCompare(b.ten,'vi'); });
     });
-    // Số lượng từng DC dạng ngắn cho thẻ nhỏ: ≤50 hiện số thật, vượt thì "50+".
-    function slKhoNgan(tong){
-      var t=Math.floor(tong);
-      return (t<=NGUONG_TON_KHACH?t:NGUONG_TON_KHACH+'+')+' '+dvt;
+    // 1 DC = 1 dòng (tên | số lượng ≤50 thật, vượt thì "50+"), bấm "N lô" để
+    // xem từng lô trong DC đó, mỗi lô cũng theo quy tắc ≤50 thật / "50+".
+    function renderKhoKhach(k){
+      var los=k.lo.filter(function(l){ return (Number(l.sl)||0)>0; });
+      return '<div style="padding:6px 0;border-top:1px solid var(--bd,#eee)">'
+        +'<div style="display:flex;justify-content:space-between;gap:8px;font-size:12px">'
+        +'<span style="color:var(--t2,#666)">'+k.ten+'</span><b>'+slNganKhach(k.tong,dvt)+'</b></div>'
+        +(los.length
+          ?'<details style="margin-top:2px"><summary style="font-size:11px;color:var(--t2,#888);cursor:pointer">'+los.length+' lô</summary>'
+            +los.map(function(l){
+              return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--t2,#888);padding:2px 0 0 12px">'
+                +'<span>Lô '+(l.so_lo||'–')+(l.mau?' · màu '+l.mau:'')+'</span><span>'+slNganKhach(l.sl,dvt)+'</span></div>';
+            }).join('')+'</details>'
+          :'')
+        +'</div>';
     }
     var NHAN_NHOM_KH={nhanh:TEN_TIER.nhanh,dc:NHOM_DC_LABEL.dc,cho15:NHOM_DC_LABEL.cho15,thang:NHOM_DC_LABEL.thang,khongdc:NHOM_DC_LABEL.khongdc};
     body='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:10px">';
@@ -5756,12 +5768,7 @@ function moTonKho(ma, tenSP){
       body+='<div style="border:1px solid var(--bd,#eee);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">'
         +'<span style="font-size:13px;font-weight:700">'+NHAN_NHOM_KH[nhom]+'</span>'
         +'<span style="font-size:16px;font-weight:800">'+hienThiTonChoKhach(tongNhom[nhom],dvt,m2pt)+'</span>'
-        +'<div style="display:flex;flex-wrap:wrap;gap:4px">'
-        +khoNhom[nhom].map(function(k){
-          return '<span style="font-size:11px;padding:3px 8px;border-radius:999px;background:var(--bg2,#f2f2f2);color:var(--t2,#666);white-space:nowrap">'
-            +k.ten+' · <b style="color:var(--t1,#222)">'+slKhoNgan(k.tong)+'</b></span>';
-        }).join('')
-        +'</div></div>';
+        +'<div>'+khoNhom[nhom].map(renderKhoKhach).join('')+'</div></div>';
     });
     body+='</div>';
     ghiChu='<p style="font-size:11px;color:#888;margin-bottom:10px">📞 Số lượng lớn vui lòng liên hệ nhân viên kinh doanh để biết chính xác và tư vấn lô hàng phù hợp: 0819 548 908.</p>';
