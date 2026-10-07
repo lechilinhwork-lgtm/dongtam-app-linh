@@ -5706,12 +5706,29 @@ function htmlTuVanLo(kq, can, dvt){
 }
 // Ô nhập "Tôi cần ___" trong popup Tồn kho của khách (đọc _tkLoKhach do
 // moTonKho gán lúc dựng popup).
-var _tkLoKhach={ds:[], dvt:'thùng'};
+var _tkLoKhach={ds:[], dvt:'thùng', m2pt:null, don:'thung'};
+// Chọn đơn vị nhập: 'thung' hoặc 'm2' (m² tự đổi ra thùng, làm tròn lên)
+function tkDoiDon(d){
+  _tkLoKhach.don=d;
+  var on='background:#C0232A;color:#fff;border-color:#C0232A', off='background:#fff;color:#444;border-color:#ccc';
+  var a=document.getElementById('tk-don-thung'), b=document.getElementById('tk-don-m2');
+  if(a) a.style.cssText=(d==='thung'?on:off)+';border-width:1.5px;border-style:solid;padding:5px 12px;border-radius:8px 0 0 8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit';
+  if(b) b.style.cssText=(d==='m2'?on:off)+';border-width:1.5px;border-style:solid;padding:5px 12px;border-radius:0 8px 8px 0;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:-1.5px';
+  var inp=document.getElementById('tk-can'); if(inp) inp.placeholder=(d==='m2'?'VD: 120':'VD: 60');
+  tkTinhCan();
+}
 function tkTinhCan(){
   var inp=document.getElementById('tk-can'), out=document.getElementById('tk-can-kq');
   if(!inp||!out) return;
-  var can=Math.floor(parseFloat(inp.value));
-  out.innerHTML=htmlTuVanLo(tuVanLoChoKhach(_tkLoKhach.ds, can), can, _tkLoKhach.dvt);
+  var v=parseFloat(String(inp.value).replace(',','.'));
+  if(!(v>0)){ out.innerHTML=''; return; }
+  var dvt=_tkLoKhach.dvt, can, dong='';
+  if(_tkLoKhach.don==='m2' && _tkLoKhach.m2pt>0){
+    can=Math.ceil(v/_tkLoKhach.m2pt-1e-6);
+    dong='<div style="color:#444;margin-bottom:4px">'+v+' m² ≈ <b>'+can+' '+dvt+'</b> <span style="color:#888">(mỗi '+dvt+' '+String(_tkLoKhach.m2pt).replace('.',',')+' m², làm tròn lên)</span></div>';
+  } else can=Math.floor(v);
+  if(can<1) can=1;
+  out.innerHTML=dong+htmlTuVanLo(tuVanLoChoKhach(_tkLoKhach.ds, can), can, dvt);
 }
 // Dùng cho card danh sách: nhân viên thấy số thật, khách hàng thấy giới hạn + ghi chú
 function fmtTkCard(tong, dvt){
@@ -5794,24 +5811,30 @@ function moTonKho(ma, tenSP){
     // Khung "Tồn theo lô" toàn hệ thống + ô "Tôi cần ___ thùng": giúp khách
     // biết lấy trọn 1 lô được không (60 thùng nhưng chia nhiều lô nhỏ).
     var dsLo=gomLoTheoMa(tk);
-    _tkLoKhach={ds:dsLo, dvt:dvt};
+    _tkLoKhach={ds:dsLo, dvt:dvt, m2pt:(m2pt>0?m2pt:null), don:'thung'};
     function dongLo(x){
-      return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:3px 0">'
+      return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:5px 0;border-top:1px solid var(--bd,#eee)">'
         +'<span>Lô '+(x.so_lo||'–')+(x.mau?' · màu '+x.mau:'')+'</span>'
-        +'<span><b>'+slNganKhach(x.tong,dvt)+'</b>'+(x.soKho>1?' <span style="color:var(--t2,#888)">· '+x.soKho+' kho</span>':'')+'</span></div>';
+        +'<b>'+slNganKhach(x.tong,dvt)+'</b></div>';
     }
     var khungLo='';
     if(dsLo.length){
-      khungLo='<div style="border:1px solid var(--bd,#eee);border-radius:10px;padding:12px 14px;margin-bottom:10px">'
-        +'<p style="font-size:13px;font-weight:700;margin:0 0 6px">Tồn theo lô · '+dsLo.length+' lô</p>'
-        +dsLo.slice(0,5).map(dongLo).join('')
-        +(dsLo.length>5?'<details><summary style="font-size:11px;color:var(--t2,#888);cursor:pointer;padding:3px 0">Xem thêm '+(dsLo.length-5)+' lô</summary>'+dsLo.slice(5).map(dongLo).join('')+'</details>':'')
-        +'<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--bd,#ddd)">'
-        +'<label style="font-size:12px">Tôi cần <input id="tk-can" type="number" inputmode="numeric" min="1" step="1" oninput="tkTinhCan()" '
-        +'style="width:80px;padding:6px 8px;border:1.5px solid var(--bd2,#ccc);border-radius:8px;font-size:13px;font-family:inherit"> '+dvt+'</label>'
-        +'<p id="tk-can-kq" style="font-size:12px;line-height:1.5;margin:6px 0 0"></p></div></div>';
+      var coM2=m2pt>0;
+      khungLo='<div style="border:1.5px solid #C0232A33;background:#C0232A08;border-radius:12px;padding:12px 14px;margin-bottom:10px">'
+        +'<p style="font-size:14px;font-weight:700;margin:0 0 8px">Bạn cần bao nhiêu?</p>'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+        +'<input id="tk-can" type="number" inputmode="decimal" min="1" step="any" placeholder="VD: 60" oninput="tkTinhCan()" '
+        +'style="width:100px;padding:8px 10px;border:1.5px solid var(--bd2,#ccc);border-radius:8px;font-size:15px;font-family:inherit">'
+        +'<span style="display:inline-flex"><button type="button" id="tk-don-thung" onclick="tkDoiDon(&quot;thung&quot;)">'+dvt.charAt(0).toUpperCase()+dvt.slice(1)+'</button>'
+        +(coM2?'<button type="button" id="tk-don-m2" onclick="tkDoiDon(&quot;m2&quot;)">m²</button>':'')+'</span></div>'
+        +'<div id="tk-can-kq" style="font-size:13px;line-height:1.5;margin-top:8px"></div></div>'
+        +'<div style="border:1px solid var(--bd,#eee);border-radius:12px;padding:12px 14px;margin-bottom:10px">'
+        +'<p style="font-size:13px;font-weight:700;margin:0 0 4px">Tồn theo lô · '+dsLo.length+' lô</p>'
+        +dsLo.slice(0,3).map(dongLo).join('')
+        +(dsLo.length>3?'<details><summary style="font-size:12px;color:#C0232A;cursor:pointer;padding:6px 0 0">Xem thêm '+(dsLo.length-3)+' lô</summary>'+dsLo.slice(3).map(dongLo).join('')+'</details>':'')
+        +'</div>';
     }
-    body=khungLo+'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:10px">';
+    body='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0 14px;align-items:start"><div>'+khungLo+'</div><div style="display:grid;grid-template-columns:1fr;gap:8px">';
     ['nhanh','dc','cho15','thang','khongdc'].forEach(function(nhom){
       if(tongNhom[nhom]<=0) return;
       body+='<div style="border:1px solid var(--bd,#eee);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">'
@@ -5819,8 +5842,9 @@ function moTonKho(ma, tenSP){
         +'<span style="font-size:16px;font-weight:800">'+hienThiTonChoKhach(tongNhom[nhom],dvt,m2pt)+'</span>'
         +'<div>'+khoNhom[nhom].map(renderKhoKhach).join('')+'</div></div>';
     });
-    body+='</div>';
-    ghiChu='<p style="font-size:11px;color:#888;margin-bottom:10px">📞 Số lượng lớn vui lòng liên hệ nhân viên kinh doanh để biết chính xác và tư vấn lô hàng phù hợp: 0819 548 908.</p>';
+    body+='</div></div><p style="font-size:11px;color:#888;margin:8px 0 0">📞 Số lượng lớn vui lòng liên hệ nhân viên kinh doanh: 0819 548 908.</p>';
+    ghiChu='';
+    setTimeout(function(){ tkDoiDon('thung'); },0);
   } else {
     // NVKD/Admin: 5 nhóm theo thời gian lấy hàng. Kho "nhanh" = có hàng ngay;
     // các kho còn lại phân nhóm theo ĐÚNG thời gian điều chuyển thật của từng
@@ -5896,8 +5920,8 @@ function moTonKho(ma, tenSP){
   }
   // Máy tính: popup rộng hơn để các nhóm xếp ngang (lưới), nhìn được nhiều
   // hơn trong 1 màn hình, đỡ phải cuộn lên xuống.
-  var rongPopup=((window.innerWidth||0)>=768)?(khachHang?'min(780px,94vw)':'min(1100px,96vw)'):'420px';
-  modal.innerHTML='<div style="background:var(--bg1,#fff);border-radius:14px;max-width:'+rongPopup+';width:100%;max-height:80vh;overflow:auto;padding:16px">'
+  var rongPopup=((window.innerWidth||0)>=768)?(khachHang?'min(920px,96vw)':'min(1100px,96vw)'):'420px';
+  modal.innerHTML='<div style="background:var(--bg1,#fff);border-radius:14px;max-width:'+rongPopup+';width:100%;max-height:92vh;overflow:auto;padding:16px">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
     +'<p style="font-size:15px;font-weight:700;margin:0">📦 Tồn kho — '+(tenSP||ma)+'</p>'
     +'<button onclick="_tkModalMa=null;document.getElementById(\'modal-ton-kho\').remove()" style="border:none;background:none;font-size:20px;cursor:pointer;line-height:1">×</button>'
