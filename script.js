@@ -5646,6 +5646,44 @@ function hienThiTonChoKhach(soLuong,dvt,m2pt){
   if(soLuong<=NGUONG_TON_KHACH) return fmtThung(soLuong,dvt,m2pt);
   return NGUONG_TON_KHACH+'+ '+(dvt||'thùng');
 }
+// Số lượng dạng ngắn cho khách (dùng cho từng DC/lô): ≤50 hiện số thật,
+// vượt thì "50+".
+function slNganKhach(soLuong,dvt){
+  var t=Math.floor(Number(soLuong)||0);
+  return (t<=NGUONG_TON_KHACH?t:NGUONG_TON_KHACH+'+')+' '+(dvt||'thùng');
+}
+// Gom tồn kho theo LÔ trên toàn hệ thống (cộng dồn cùng lô+màu ở nhiều DC),
+// xếp lô lớn → nhỏ. Mỗi phần tử: {so_lo, mau, tong, soKho}.
+function gomLoTheoMa(tk){
+  var map={}, ds=[];
+  (tk&&tk.kho||[]).forEach(function(k){
+    (k.lo||[]).forEach(function(l){
+      var sl=Number(l.sl)||0;
+      if(sl<=0) return;
+      var key=String(l.so_lo||'')+'|'+String(l.mau||'');
+      if(!map[key]){ map[key]={so_lo:l.so_lo||'', mau:l.mau||'', tong:0, kho:{}}; ds.push(map[key]); }
+      map[key].tong+=sl; map[key].kho[k.ten]=1;
+    });
+  });
+  ds.forEach(function(x){ x.soKho=Object.keys(x.kho).length; delete x.kho; });
+  ds.sort(function(a,b){ return b.tong-a.tong; });
+  return ds;
+}
+// Tư vấn "tôi cần N" cho khách: lấy trọn 1 lô được không? Số lượng khách chỉ
+// thấy tối đa 50+ nên N > 50 không kiểm chứng được -> chuyển NVKD.
+// Trả về {loai:'du1lo'|'ghep'|'khongdu'|'lon', lo:[...], tong}.
+function tuVanLoChoKhach(dsLo, can){
+  can=Number(can)||0;
+  if(can<=0) return null;
+  if(can>NGUONG_TON_KHACH) return {loai:'lon'};
+  var tongTat=dsLo.reduce(function(s,x){return s+x.tong;},0);
+  var du=dsLo.find(function(x){ return x.tong>=can; });
+  if(du) return {loai:'du1lo', lo:[du]};
+  if(tongTat<can) return {loai:'khongdu', tong:tongTat};
+  var chon=[], cong=0;
+  for(var i=0;i<dsLo.length && cong<can;i++){ chon.push(dsLo[i]); cong+=dsLo[i].tong; }
+  return {loai:'ghep', lo:chon};
+}
 // Dùng cho card danh sách: nhân viên thấy số thật, khách hàng thấy giới hạn + ghi chú
 function fmtTkCard(tong, dvt){
   var t=Math.floor(tong);
