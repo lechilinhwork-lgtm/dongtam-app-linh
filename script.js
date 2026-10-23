@@ -3632,7 +3632,8 @@ function layThongTinSP(ma){
         var nk=p.ns||(ct?ct.nk:0)||0, gh=p.gs||(ct?ct.gh:0)||0;
         if(nk>0||gh>0) sale={nk:nk, gh:gh, label:(p._fromCT==='CT2'?'XẢ KHO THÁNG ':'SALE THÁNG ')+thangHienTai()};
       }
-      return {kc:p.kc||'', le:p.le||0, sale:sale};
+      var dl=(arrs[i]===DATA)?{nk:p.nhan||0, gh:p.giao||0}:null;
+      return {kc:p.kc||'', le:p.le||0, sale:sale, dl:dl};
     }
   }
   return null;
@@ -3716,6 +3717,21 @@ function _ghepNhanLenAnh(blob, ma, doiTuong){
         // Chế độ ĐẠI LÝ + mẫu đang Sale: thêm 2 dòng dưới dải (nhãn SALE + cảnh báo
         // tròn thùng; giá Sale nhận kho / đi giao kèm % giảm so với giá niêm yết).
         // Chế độ khách lẻ KHÔNG BAO GIỜ vào nhánh này.
+        // Mẫu KHÔNG Sale: chế độ Đại lý in giá đại lý thường (nhận kho / đi giao), không nhãn SALE.
+        var dlThuong=(doiTuong==='daily' && tt && !tt.sale && tt.dl && (tt.dl.nk>0||tt.dl.gh>0))?tt.dl:null;
+        if(dlThuong){
+          var prT=[];
+          if(dlThuong.nk>0) prT.push('Giá ĐL nhận kho: '+fmt(dlThuong.nk)+'/m²');
+          if(dlThuong.gh>0) prT.push('Giá ĐL đi giao: '+fmt(dlThuong.gh)+'/m²');
+          var availT=w-logoX-10, fAT=fontSub, rowsT=[];
+          prT.forEach(function(p1){
+            var f1=Math.round(fAT*1.1); tmpCtx.font='bold '+f1+'px Arial, sans-serif';
+            while(f1>9 && tmpCtx.measureText(p1).width>availT){ f1--; tmpCtx.font='bold '+f1+'px Arial, sans-serif'; }
+            rowsT.push({t:'price', txt:p1, fP:f1, c:'#A5D6A7'});
+          });
+          extra={label:'', warn:'', fA:fAT, rows:rowsT, rowH:Math.round(fAT*1.9), top:Math.round(pad*0.3)};
+          bannerH=mainH+extra.top+extra.rowH*rowsT.length;
+        }
         if(doiTuong==='daily' && tt && tt.sale){
           var sl=tt.sale, pc=function(g){ return (tt.le>0&&g>0)?Math.round((tt.le-g)/tt.le*100):0; };
           var pr=[];
@@ -3843,7 +3859,7 @@ function _ghepNhanLenAnh(blob, ma, doiTuong){
               ctx.font=rw.fW+'px Arial, sans-serif'; ctx.fillStyle='#FFB74D';
               ctx.fillText(extra.warn, xL, yy);
             } else {
-              ctx.font='bold '+rw.fP+'px Arial, sans-serif'; ctx.fillStyle='#FFD54F';
+              ctx.font='bold '+rw.fP+'px Arial, sans-serif'; ctx.fillStyle=rw.c||'#FFD54F';
               ctx.fillText(rw.txt, xL, yy);
             }
           });
@@ -3903,7 +3919,7 @@ function renderGaDoiTuong(){
   el.innerHTML='<div style="font-size:11px;color:var(--t2);margin-bottom:5px">Gửi cho:</div>'
     +'<div style="display:flex;gap:6px">'+nut('le','Khách lẻ')+nut('daily','Đại lý')+'</div>'
     +'<div style="font-size:11px;color:var(--t2);margin-top:5px">'
-    +(dt==='daily'?'Ảnh in thêm giá Sale nhận kho / đi giao cho mẫu đang Sale. Chỉ gửi cho đại lý.':'Ảnh chỉ in giá niêm yết — an toàn khi gửi khách lẻ.')+'</div>';
+    +(dt==='daily'?'Ảnh in thêm giá đại lý nhận kho / đi giao (mẫu đang Sale có thêm nhãn SALE). Chỉ gửi cho đại lý.':'Ảnh chỉ in giá niêm yết — an toàn khi gửi khách lẻ.')+'</div>';
 }
 var _gaSan=null;   // {key, files, thieu, tong} khi đã chuẩn bị xong
 var _gaDang=0;     // mã lượt chuẩn bị đang chạy (đổi giỏ -> huỷ lượt cũ)
