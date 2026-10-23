@@ -3649,6 +3649,9 @@ _logoDongTam.onload=function(){ _logoDongTamOk=true; };
 // chia sẻ/copy, đồng thời chuyển về PNG - dùng chung cho mọi luồng chia sẻ
 // ảnh trong app. Không hiển thị giá Sale/ĐL - chỉ giá niêm yết, tránh lộ giá
 // đại lý.
+// Giá niêm yết trên ảnh: chữ đậm vừa + màu kem nhạt (hơi khác xám), để dễ thấy nhưng
+// không lấn át ảnh mẫu - khách nhìn ảnh trước, giá chỉ là thông tin đi kèm.
+var MAU_GIA_NIEM_YET='#F3E2B3';
 function _ghepNhanLenAnh(blob, ma, doiTuong){
   return new Promise(function(resolve,reject){
     var img=new Image();
@@ -3657,7 +3660,7 @@ function _ghepNhanLenAnh(blob, ma, doiTuong){
       var tt=layThongTinSP(ma);
       var w=img.naturalWidth, h=img.naturalHeight;
       var bannerH=0, mainH=0, extra=null;
-      var fontMa=0, fontSub=0, pad=0, logoSize=0, logoX=10, textX=0, haiDong=false, maTxt='', subTxt='', subLines=[];
+      var fontMa=0, fontSub=0, pad=0, logoSize=0, logoX=10, textX=0, haiDong=false, maTxt='', subTxt='', subLines=[], kcTxt='', priceTxt='';
       if(ma){
         // Cỡ chữ tính theo căn bậc 2 diện tích (không tính riêng theo chiều
         // cao) để ảnh vuông/ngang/dọc đều ra chữ to đều nhau, tránh ảnh vuông
@@ -3669,25 +3672,28 @@ function _ghepNhanLenAnh(blob, ma, doiTuong){
         fontMa=Math.round(logoSize*0.64);
         fontSub=Math.round(logoSize*0.56);
         maTxt=String(ma);
-        var subParts=[];
-        if(tt&&tt.kc) subParts.push('Kích thước: '+tt.kc);
-        if(tt&&tt.le>0) subParts.push('Giá niêm yết: '+fmt(tt.le)+'/m²');
-        subTxt=subParts.join('  ·  ');
+        kcTxt=(tt&&tt.kc)?('Kích thước: '+tt.kc):'';
+        priceTxt=(tt&&tt.le>0)?('Giá niêm yết: '+fmt(tt.le)+'/m²'):'';
+        subTxt=kcTxt||priceTxt;
         textX=logoX+logoSize+8;
         var tmpCv=document.createElement('canvas'), tmpCtx=tmpCv.getContext('2d');
         tmpCtx.font='bold '+fontMa+'px Arial, sans-serif';
         var wMa=tmpCtx.measureText(maTxt).width;
         tmpCtx.font=fontSub+'px Arial, sans-serif';
-        var wSub=subTxt?tmpCtx.measureText('  ·  '+subTxt).width:0;
+        var wSub=kcTxt?tmpCtx.measureText('  ·  '+kcTxt).width:0;
+        tmpCtx.font='bold '+fontSub+'px Arial, sans-serif';
+        if(priceTxt) wSub+=tmpCtx.measureText('  ·  '+priceTxt).width;
         haiDong=subTxt && (textX+wMa+wSub+12>w);
         // Ảnh hẹp (vd dọc): xuống dòng - mã / kích thước / giá niêm yết, mỗi thứ 1 dòng,
         // dòng nào dài quá bề ngang thì thu nhỏ chữ vừa đủ, không để bị cắt.
         if(haiDong){
           var maxW=w-textX-10;
-          if(tt&&tt.kc) subLines.push('Kích thước: '+tt.kc);
-          if(tt&&tt.le>0) subLines.push('Giá niêm yết: '+fmt(tt.le)+'/m²');
-          tmpCtx.font=fontSub+'px Arial, sans-serif';
-          while(fontSub>9 && subLines.some(function(t){ return tmpCtx.measureText(t).width>maxW; })){ fontSub--; tmpCtx.font=fontSub+'px Arial, sans-serif'; }
+          if(kcTxt) subLines.push({t:kcTxt, gia:false});
+          if(priceTxt) subLines.push({t:priceTxt, gia:true});
+          var tuaSub=function(){ return subLines.some(function(l){
+            tmpCtx.font=(l.gia?'bold ':'')+fontSub+'px Arial, sans-serif';
+            return tmpCtx.measureText(l.t).width>maxW; }); };
+          while(fontSub>9 && tuaSub()){ fontSub--; }
           tmpCtx.font='bold '+fontMa+'px Arial, sans-serif';
           while(fontMa>14 && tmpCtx.measureText(maTxt).width>maxW){ fontMa--; tmpCtx.font='bold '+fontMa+'px Arial, sans-serif'; }
         }
@@ -3781,10 +3787,17 @@ function _ghepNhanLenAnh(blob, ma, doiTuong){
           ctx.font='bold '+fontMa+'px Arial, sans-serif';
           var wMa2=ctx.measureText(maTxt).width;
           ctx.fillText(maTxt, textX, logoCy);
-          if(subTxt){
+          var xx=textX+wMa2;
+          if(kcTxt){
             ctx.fillStyle='#EAEAEA';
             ctx.font=fontSub+'px Arial, sans-serif';
-            ctx.fillText('  ·  '+subTxt, textX+wMa2, logoCy);
+            ctx.fillText('  ·  '+kcTxt, xx, logoCy);
+            xx+=ctx.measureText('  ·  '+kcTxt).width;
+          }
+          if(priceTxt){
+            ctx.fillStyle=MAU_GIA_NIEM_YET;
+            ctx.font='bold '+fontSub+'px Arial, sans-serif';
+            ctx.fillText('  ·  '+priceTxt, xx, logoCy);
           }
         } else {
           ctx.textBaseline='middle';
@@ -3792,11 +3805,11 @@ function _ghepNhanLenAnh(blob, ma, doiTuong){
           ctx.fillStyle='#fff';
           ctx.font='bold '+fontMa+'px Arial, sans-serif';
           ctx.fillText(maTxt, textX, y1);
-          subLines.forEach(function(t,k){
+          subLines.forEach(function(l,k){
             var yy=h+pad+fontMa+pad*0.35+k*(fontSub+pad*0.55)+fontSub/2;
-            ctx.fillStyle='#EAEAEA';
-            ctx.font=fontSub+'px Arial, sans-serif';
-            ctx.fillText(t, textX, yy);
+            ctx.fillStyle=l.gia?MAU_GIA_NIEM_YET:'#EAEAEA';
+            ctx.font=(l.gia?'bold ':'')+fontSub+'px Arial, sans-serif';
+            ctx.fillText(l.t, textX, yy);
           });
         }
         if(extra){
