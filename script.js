@@ -3495,6 +3495,7 @@ function htmlGioAnhChk(ma, ten){
     +'onclick="event.stopPropagation();toggleGioAnh(\''+ma+'\',\''+tenEsc+'\')" title="Thêm vào giỏ ảnh">'+(on?'✓':'')+'</button>';
 }
 function capNhatGioAnhFab(){
+  if(typeof huyGioAnhSan==='function') huyGioAnhSan();
   var fab=document.getElementById('gioanh-fab');
   var cnt=document.getElementById('gioanh-count');
   if(!fab||!cnt) return;
@@ -3752,27 +3753,86 @@ function gacmCopy(){
     statusEl.textContent='⚠️ Không copy được — bấm giữ/chuột phải ảnh bên trên để lưu thủ công';
   });
 }
-// Gửi tất cả ảnh trong giỏ qua Zalo - nếu >5 ảnh (giới hạn Web Share API) thì
-// tự chia thành nhiều lượt gửi liên tiếp, khỏi bắt nhân viên tự đếm/tách.
+// Gửi ảnh trong giỏ qua Zalo.
+// - Máy tính: luồng copy từng ảnh vào clipboard rồi dán (Ctrl+V).
+// - Điện thoại, 1 ảnh: chia sẻ 1 chạm như cũ.
+// - Điện thoại, từ 2 ảnh: 2 BƯỚC. Điện thoại chỉ cho mở bảng chia sẻ ngay sau
+//   1 lần chạm; tải + đóng dấu 5-10 ảnh mất vài giây nên làm liền sẽ bị chặn
+//   (lỗi "chọn 10 chỉ gửi được 9"). Bấm lần 1: chuẩn bị xong ảnh, bấm lần 2:
+//   mở bảng chia sẻ ngay.
+var _gaSan=null;   // {key, files, thieu, tong} khi đã chuẩn bị xong
+var _gaDang=0;     // mã lượt chuẩn bị đang chạy (đổi giỏ -> huỷ lượt cũ)
+function _gaKey(){ return gioAnh.map(function(x){return x.ma;}).join('|'); }
+function _gaBtn(){ return document.getElementById('gioanh-btn-gui'); }
+function _gaBtnText(txt, cls){
+  var b=_gaBtn(); if(!b) return;
+  b.textContent=txt;
+  b.classList.toggle('gioanh-ready', cls==='ready');
+  b.disabled=(cls==='busy');
+}
+// Đổi giỏ (thêm/bớt/xoá) -> bỏ ảnh đã chuẩn bị, nút về như ban đầu.
+function huyGioAnhSan(){
+  _gaSan=null; _gaDang++;
+  _gaBtnText('📤 Chia sẻ tất cả qua Zalo','');
+}
 function chiaSeGioAnh(){
   if(!gioAnh.length) return;
   var items=gioAnh.slice();
-  dongGioAnhSheet();
-  if(laMayTinhBan()){ moCopyPasteZalo(items, items.length===1); return; }
-  function guiTung(list){
-    if(!list.length) return;
-    var batch=list.slice(0,CHIA_SE_ANH_MAX);
-    var rest=list.slice(CHIA_SE_ANH_MAX);
-    var urls=batch.map(function(x){return x.url;});
-    var tenGop=batch.map(function(x){return x.ten;}).join(', ');
-    if(rest.length){
-      showToast('📤 Đang gửi '+batch.length+' ảnh (còn '+rest.length+' ảnh chờ gửi tiếp)...');
-    }
-    _thucHienChiaSeNhieuSP(urls, batch, function(){
-      if(rest.length) setTimeout(function(){ guiTung(rest); }, 600);
-    });
+  if(laMayTinhBan()){ dongGioAnhSheet(); moCopyPasteZalo(items, items.length===1); return; }
+  if(items.length===1){ dongGioAnhSheet(); _thucHienChiaSeNhieuSP([items[0].url], items, null); return; }
+  if(_gaSan && _gaSan.key===_gaKey()) { _guiAnhDaSan(); return; }
+  _chuanBiAnhGio(items);
+}
+// Bước 1: tải + đóng dấu TUẦN TỰ từng ảnh (tải song song dễ bị Google từ chối)
+function _chuanBiAnhGio(items){
+  if(!(navigator.share && navigator.canShare)){
+    dongGioAnhSheet();
+    items.forEach(function(x){ window.open(convertImgUrl(x.url),'_blank'); });
+    showToast('📷 Đã mở '+items.length+' ảnh ở tab mới — bấm giữ ảnh để lưu, rồi gửi qua Zalo');
+    return;
   }
-  guiTung(items);
+  var run=++_gaDang, key=_gaKey(), files=[], thieu=[];
+  function buoc(i){
+    if(run!==_gaDang) return; // giỏ đã đổi -> bỏ lượt này
+    if(i>=items.length){
+      if(!files.length){ _gaBtnText('📤 Chia sẻ tất cả qua Zalo',''); showToast('⚠️ Không tải được ảnh nào — kiểm tra mạng rồi bấm lại'); return; }
+      _gaSan={key:key, files:files, thieu:thieu, tong:items.length};
+      _gaBtnText('✅ Ảnh đã sẵn sàng — BẤM LẠI để gửi '+files.length+' ảnh','ready');
+      if(thieu.length) showToast('⚠️ Chuẩn bị được '+files.length+'/'+items.length+' ảnh (không tải được: '+thieu.join(', ')+')');
+      return;
+    }
+    _gaBtnText('⏳ Đang chuẩn bị ảnh '+(i+1)+'/'+items.length+'...','busy');
+    _taiAnhCoThuLai(items[i].url).then(function(blob){
+      return _ghepNhanLenAnh(blob, items[i].ma).catch(function(){ return blob; });
+    }).then(function(b){
+      files.push(new File([b], (items[i].ma||'anh')+'.png', {type:b.type||'image/png'}));
+    }).catch(function(){
+      thieu.push(items[i].ten||items[i].ma);
+    }).then(function(){ buoc(i+1); });
+  }
+  buoc(0);
+}
+// Bước 2: mở bảng chia sẻ NGAY (chỉ ảnh, không kèm chữ - nhiều app bỏ chữ hoặc
+// từ chối khi gửi nhiều ảnh kèm text).
+function _guiAnhDaSan(){
+  var sp=_gaSan; if(!sp) return;
+  if(!navigator.canShare({files:sp.files})){
+    huyGioAnhSan(); dongGioAnhSheet();
+    showToast('⚠️ Máy không cho chia sẻ ngần này ảnh cùng lúc — hãy thử gửi ít ảnh hơn');
+    return;
+  }
+  navigator.share({files:sp.files}).then(function(){
+    forcePaintStrong();
+    showToast('✅ App đã chuyển đủ '+sp.files.length+'/'+sp.tong+' ảnh sang Zalo');
+    huyGioAnhSan(); dongGioAnhSheet();
+  }).catch(function(err){
+    forcePaintStrong();
+    // Người dùng tự đóng bảng chia sẻ: giữ ảnh đã chuẩn bị để bấm gửi lại được
+    if(err&&err.name==='AbortError') return;
+    console.log('Web Share (giỏ ảnh) thất bại:',err);
+    huyGioAnhSan(); dongGioAnhSheet();
+    showToast('⚠️ Không mở được bảng chia sẻ — bấm lại Chia sẻ để thử lần nữa');
+  });
 }
 // Giống _thucHienChiaSe nhưng mỗi ảnh là 1 SẢN PHẨM KHÁC NHAU nên đặt tên file
 // theo đúng mã sản phẩm tương ứng (thay vì cùng 1 mã lặp lại _1/_2/_3...).
