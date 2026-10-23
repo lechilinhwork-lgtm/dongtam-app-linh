@@ -3522,6 +3522,7 @@ function xoaHetGioAnh(){
 }
 function xoaKhoiGioAnh(ma){ toggleGioAnh(ma); renderGioAnhSheet(); }
 function renderGioAnhSheet(){
+  renderGaDoiTuong();
   document.getElementById('gioanh-sheet-count').textContent=gioAnh.length;
   var el=document.getElementById('gioanh-list');
   if(!gioAnh.length){ el.innerHTML='<p style="text-align:center;color:var(--t3);padding:24px 16px;font-size:13px">Chưa chọn sản phẩm nào — bấm ✓ trên thẻ sản phẩm để thêm vào đây.</p>'; return; }
@@ -3573,9 +3574,9 @@ function gacmCopyLink(){
   });
 }
 // coLink=false: ẩn bước/nút "Copy link gốc" (Giỏ ảnh nhiều sản phẩm không kèm link)
-function moCopyPasteZalo(items, coLink){
+function moCopyPasteZalo(items, coLink, doiTuong){
   if(!items.length) return;
-  _gacm={items:items, idx:0, coLink:coLink!==false};
+  _gacm={items:items, idx:0, coLink:coLink!==false, dt:doiTuong||'le'};
   renderGacmBuoc();
   document.getElementById('gioanh-copy-modal').classList.add('on');
 }
@@ -3622,7 +3623,17 @@ function layThongTinSP(ma){
   // ảnh (Promise không resolve/reject được vì lỗi ném ra giữa chừng img.onload).
   for(var i=0;i<arrs.length;i++){
     var p=arrs[i].find(function(x){return x&&x.ma===ma;});
-    if(p) return {kc:p.kc||'', le:p.le||0};
+    if(p){
+      // Sale thật: chỉ SP từ CT1/CT2 (_fromCT). KHÔNG dùng ns/gs>0 vì gs có fallback = giao thường.
+      var sale=null;
+      if(p._fromCT==='CT1'||p._fromCT==='CT2'){
+        var ct=(typeof CT1_DATA!=='undefined'&&CT1_DATA.find(function(x){return x&&x.ma===p.ma;}))
+            ||(typeof CT2_DATA!=='undefined'&&CT2_DATA.find(function(x){return x&&x.ma===p.ma;}))||null;
+        var nk=p.ns||(ct?ct.nk:0)||0, gh=p.gs||(ct?ct.gh:0)||0;
+        if(nk>0||gh>0) sale={nk:nk, gh:gh, label:(p._fromCT==='CT2'?'XẢ KHO THÁNG ':'SALE THÁNG ')+thangHienTai()};
+      }
+      return {kc:p.kc||'', le:p.le||0, sale:sale};
+    }
   }
   return null;
 }
@@ -3637,14 +3648,14 @@ _logoDongTam.onload=function(){ _logoDongTamOk=true; };
 // chia sẻ/copy, đồng thời chuyển về PNG - dùng chung cho mọi luồng chia sẻ
 // ảnh trong app. Không hiển thị giá Sale/ĐL - chỉ giá niêm yết, tránh lộ giá
 // đại lý.
-function _ghepNhanLenAnh(blob, ma){
+function _ghepNhanLenAnh(blob, ma, doiTuong){
   return new Promise(function(resolve,reject){
     var img=new Image();
     img.onload=function(){
     try{
       var tt=layThongTinSP(ma);
       var w=img.naturalWidth, h=img.naturalHeight;
-      var bannerH=0;
+      var bannerH=0, mainH=0, extra=null;
       var fontMa=0, fontSub=0, pad=0, logoSize=0, logoX=10, textX=0, haiDong=false, maTxt='', subTxt='';
       if(ma){
         // Cỡ chữ tính theo căn bậc 2 diện tích (không tính riêng theo chiều
@@ -3676,7 +3687,28 @@ function _ghepNhanLenAnh(blob, ma){
           tmpCtx.font='bold '+fontMa+'px Arial, sans-serif';
           while(fontMa>14 && tmpCtx.measureText(maTxt).width>maxW){ fontMa--; tmpCtx.font='bold '+fontMa+'px Arial, sans-serif'; }
         }
-        bannerH=haiDong ? (fontMa+fontSub+pad*3) : (logoSize+pad*2);
+        mainH=haiDong ? (fontMa+fontSub+pad*3) : (logoSize+pad*2);
+        bannerH=mainH;
+        // Chế độ ĐẠI LÝ + mẫu đang Sale: thêm 2 dòng dưới dải (nhãn SALE + cảnh báo
+        // tròn thùng; giá Sale nhận kho / đi giao kèm % giảm so với giá niêm yết).
+        // Chế độ khách lẻ KHÔNG BAO GIỜ vào nhánh này.
+        if(doiTuong==='daily' && tt && tt.sale){
+          var sl=tt.sale, pc=function(g){ return (tt.le>0&&g>0)?Math.round((tt.le-g)/tt.le*100):0; };
+          var pr=[];
+          if(sl.nk>0) pr.push('Nhận kho: '+fmt(sl.nk)+'/m²'+(pc(sl.nk)>0?' (-'+pc(sl.nk)+'%)':''));
+          if(sl.gh>0) pr.push('Đi giao: '+fmt(sl.gh)+'/m²'+(pc(sl.gh)>0?' (-'+pc(sl.gh)+'%)':''));
+          var availW=w-logoX-10;
+          extra={label:sl.label, warn:'Đặt tròn thùng mới được giá Sale', price:pr.join('  ·  '), fA:fontSub, fW:fontSub, fP:Math.round(fontSub*1.1)};
+          tmpCtx.font='bold '+extra.fA+'px Arial, sans-serif';
+          var bw0=tmpCtx.measureText(extra.label).width+extra.fA*0.9;
+          tmpCtx.font=extra.fW+'px Arial, sans-serif';
+          while(extra.fW>9 && bw0+extra.fA*0.6+tmpCtx.measureText(extra.warn).width>availW){ extra.fW--; tmpCtx.font=extra.fW+'px Arial, sans-serif'; }
+          tmpCtx.font='bold '+extra.fP+'px Arial, sans-serif';
+          while(extra.fP>9 && tmpCtx.measureText(extra.price).width>availW){ extra.fP--; tmpCtx.font='bold '+extra.fP+'px Arial, sans-serif'; }
+          extra.rowH=Math.round(fontSub*1.9);
+          extra.top=Math.round(pad*0.3);
+          bannerH=mainH+extra.top+extra.rowH*2;
+        }
       }
       // Dải nhãn nằm ở PHẦN THÊM RIÊNG dưới ảnh (mở rộng canvas), không đè
       // lên ảnh gốc - tránh che mất tem nhãn/mã in sẵn trên ảnh sản phẩm.
@@ -3687,7 +3719,7 @@ function _ghepNhanLenAnh(blob, ma){
       if(ma){
         ctx.fillStyle='#2A2A2A';
         ctx.fillRect(0, h, w, bannerH);
-        var logoCy=h+bannerH/2;
+        var logoCy=h+mainH/2;
         if(_logoDongTamOk){
           ctx.fillStyle='#fff';
           ctx.fillRect(logoX, logoCy-logoSize/2, logoSize, logoSize);
@@ -3728,6 +3760,20 @@ function _ghepNhanLenAnh(blob, ma){
           ctx.font=fontSub+'px Arial, sans-serif';
           ctx.fillText(subTxt, textX, y2);
         }
+        if(extra){
+          var xL=logoX, yA=h+mainH+extra.top+extra.rowH/2, yB=yA+extra.rowH;
+          ctx.textBaseline='middle'; ctx.textAlign='left';
+          ctx.font='bold '+extra.fA+'px Arial, sans-serif';
+          var bw=ctx.measureText(extra.label).width+extra.fA*0.9, bh=extra.fA*1.5;
+          ctx.fillStyle='#D32F2F'; ctx.fillRect(xL, yA-bh/2, bw, bh);
+          ctx.fillStyle='#fff'; ctx.fillText(extra.label, xL+extra.fA*0.45, yA);
+          ctx.font=extra.fW+'px Arial, sans-serif'; ctx.fillStyle='#FFB74D';
+          ctx.fillText(extra.warn, xL+bw+extra.fA*0.6, yA);
+          if(extra.price){
+            ctx.font='bold '+extra.fP+'px Arial, sans-serif'; ctx.fillStyle='#FFD54F';
+            ctx.fillText(extra.price, xL, yB);
+          }
+        }
       }
       cv.toBlob(function(png){ if(png) resolve(png); else reject(new Error('toBlob fail')); },'image/png');
     }catch(err){ reject(err); }
@@ -3744,7 +3790,7 @@ function gacmCopy(){
   fetch(convertImgUrl(it.url)).then(function(res){
     if(!res.ok) throw new Error('fetch fail');
     return res.blob();
-  }).then(function(blob){ return _ghepNhanLenAnh(blob, it.ma); }).then(function(pngBlob){
+  }).then(function(blob){ return _ghepNhanLenAnh(blob, it.ma, _gacm&&_gacm.dt); }).then(function(pngBlob){
     return navigator.clipboard.write([new ClipboardItem({'image/png':pngBlob})]);
   }).then(function(){
     statusEl.textContent='✅ Đã copy — mở Zalo, dán (Ctrl+V) vào khung chat';
@@ -3760,6 +3806,31 @@ function gacmCopy(){
 //   1 lần chạm; tải + đóng dấu 5-10 ảnh mất vài giây nên làm liền sẽ bị chặn
 //   (lỗi "chọn 10 chỉ gửi được 9"). Bấm lần 1: chuẩn bị xong ảnh, bấm lần 2:
 //   mở bảng chia sẻ ngay.
+// Người nhận ảnh: 'le' (khách lẻ, mặc định, chỉ giá niêm yết) | 'daily' (đại lý: in thêm
+// giá Sale nhận kho/đi giao cho mẫu đang Sale). KHÔNG lưu lại giữa các lần mở app để
+// khỏi lỡ gửi giá đại lý cho khách lẻ. Tài khoản khách hàng/đại lý luôn là 'le'.
+var gaDoiTuong='le';
+function gaDuocChonDoiTuong(){ var s=checkSession(); return !!(s && s.role!=='khachhang'); }
+function gaDT(){ return (gaDoiTuong==='daily' && gaDuocChonDoiTuong())?'daily':'le'; }
+function datDoiTuongGioAnh(v){
+  gaDoiTuong=(v==='daily')?'daily':'le';
+  if(typeof huyGioAnhSan==='function') huyGioAnhSan();
+  renderGaDoiTuong();
+}
+function renderGaDoiTuong(){
+  var el=document.getElementById('gioanh-doituong'); if(!el) return;
+  if(!gaDuocChonDoiTuong()){ el.style.display='none'; return; }
+  el.style.display='';
+  var dt=gaDT();
+  function nut(v,txt){
+    var on=(dt===v);
+    return '<button type="button" onclick="datDoiTuongGioAnh(\''+v+'\')" style="flex:1;padding:8px 6px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f);border:1.5px solid '+(on?'var(--red)':'var(--bd2)')+';background:'+(on?'var(--red)':'transparent')+';color:'+(on?'#fff':'var(--t2)')+'">'+txt+'</button>';
+  }
+  el.innerHTML='<div style="font-size:11px;color:var(--t2);margin-bottom:5px">Gửi cho:</div>'
+    +'<div style="display:flex;gap:6px">'+nut('le','Khách lẻ')+nut('daily','Đại lý')+'</div>'
+    +'<div style="font-size:11px;color:var(--t2);margin-top:5px">'
+    +(dt==='daily'?'Ảnh in thêm giá Sale nhận kho / đi giao cho mẫu đang Sale. Chỉ gửi cho đại lý.':'Ảnh chỉ in giá niêm yết — an toàn khi gửi khách lẻ.')+'</div>';
+}
 var _gaSan=null;   // {key, files, thieu, tong} khi đã chuẩn bị xong
 var _gaDang=0;     // mã lượt chuẩn bị đang chạy (đổi giỏ -> huỷ lượt cũ)
 function _gaKey(){ return gioAnh.map(function(x){return x.ma;}).join('|'); }
@@ -3778,7 +3849,7 @@ function huyGioAnhSan(){
 function chiaSeGioAnh(){
   if(!gioAnh.length) return;
   var items=gioAnh.slice();
-  if(laMayTinhBan()){ dongGioAnhSheet(); moCopyPasteZalo(items, items.length===1); return; }
+  if(laMayTinhBan()){ dongGioAnhSheet(); moCopyPasteZalo(items, items.length===1, gaDT()); return; }
   if(items.length===1){ dongGioAnhSheet(); _thucHienChiaSeNhieuSP([items[0].url], items, null); return; }
   if(_gaSan && _gaSan.key===_gaKey()) { _guiAnhDaSan(); return; }
   _chuanBiAnhGio(items);
@@ -3791,7 +3862,7 @@ function _chuanBiAnhGio(items){
     showToast('📷 Đã mở '+items.length+' ảnh ở tab mới — bấm giữ ảnh để lưu, rồi gửi qua Zalo');
     return;
   }
-  var run=++_gaDang, key=_gaKey(), files=[], thieu=[];
+  var run=++_gaDang, key=_gaKey(), files=[], thieu=[], dt=gaDT();
   function buoc(i){
     if(run!==_gaDang) return; // giỏ đã đổi -> bỏ lượt này
     if(i>=items.length){
@@ -3803,7 +3874,7 @@ function _chuanBiAnhGio(items){
     }
     _gaBtnText('⏳ Đang chuẩn bị ảnh '+(i+1)+'/'+items.length+'...','busy');
     _taiAnhCoThuLai(items[i].url).then(function(blob){
-      return _ghepNhanLenAnh(blob, items[i].ma).catch(function(){ return blob; });
+      return _ghepNhanLenAnh(blob, items[i].ma, dt).catch(function(){ return blob; });
     }).then(function(b){
       files.push(new File([b], (items[i].ma||'anh')+'.png', {type:b.type||'image/png'}));
     }).catch(function(){
@@ -3863,7 +3934,7 @@ function _thucHienChiaSeNhieuSP(urls, items, onDone){
   Promise.allSettled(urls.map(_taiAnhCoThuLai)).then(function(results){
     return Promise.all(results.map(function(r,i){
       if(r.status!=='fulfilled') return null;
-      return _ghepNhanLenAnh(r.value, items[i].ma).catch(function(){ return r.value; });
+      return _ghepNhanLenAnh(r.value, items[i].ma, gaDT()).catch(function(){ return r.value; });
     }));
   }).then(function(blobs){
     var files=[], okItems=[], okUrls=[], thieu=[];
