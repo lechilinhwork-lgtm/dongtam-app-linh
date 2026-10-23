@@ -3644,13 +3644,13 @@ var _logoDongTam=new Image();
 _logoDongTam.src='logo-dongtam.png';
 var _logoDongTamOk=false;
 _logoDongTam.onload=function(){ _logoDongTamOk=true; };
-// DẢI THÔNG TIN Ở ĐÁY ẢNH - nền trắng, chữ tối, tối giản: ảnh mẫu là trọng tâm, giá chỉ
+// DẢI THÔNG TIN Ở ĐÁY ẢNH - nền xám đậm, chữ sáng, tối giản: ảnh mẫu là trọng tâm, giá chỉ
 // là thông tin đi kèm. Thứ bậc bằng độ đậm/màu (không dùng ô màu):
 //   mã (đậm) + kích thước (xám) / Giá niêm yết (xám + số đậm) /
-//   [Đại lý] Nhận kho | Đi giao (số đỏ nếu đang Sale) / ghi chú nhỏ.
-// Cột phải: nhãn SALE (khung đỏ, chỉ Đại lý + mẫu Sale) và logo.
+//   [Đại lý] Nhận kho | Đi giao (số cam nếu đang Sale) / ghi chú nhỏ.
+// Cột phải: nhãn SALE (khung cam, chỉ Đại lý + mẫu Sale) và logo.
 // Khách lẻ KHÔNG BAO GIỜ có giá đại lý.
-var MAU_DAI={nen:'#FFFFFF', chinh:'#1F1F1F', phu:'#7A7A7A', do:'#C0232A', vien:'#E4E4E4'};
+var MAU_DAI={nen:'#2A2A2A', chinh:'#FFFFFF', phu:'#A9A9A9', gia:'#F3E2B3', sale:'#FFB74D', vien:'#3C3C3C'};
 function _soanDaiThongTin(w, h, ma, tt, doiTuong){
   var b=Math.max(16, Math.round(Math.sqrt(w*h)*0.04));
   var pad=Math.round(b*0.9), gap=Math.round(b*0.6);
@@ -3663,8 +3663,8 @@ function _soanDaiThongTin(w, h, ma, tt, doiTuong){
   var le=(tt && tt.le>0)?tt.le:0;
 
   // Cột phải: nhãn SALE + logo
-  var logoH=_logoDongTamOk?Math.round(b*2.6):0;
-  var logoW=logoH?Math.round(logoH*_logoDongTam.naturalWidth/_logoDongTam.naturalHeight):0;
+  var logoH=_logoDongTamOk?Math.round(b*2.6):0;   // cạnh ô vuông chứa logo
+  var logoW=logoH;
   var fTag=b*0.8, tagTxt=sale?sale.tag:'';
   var tagW=tagTxt?Math.round(W(tagTxt,fTag,true)+fTag*1.3):0, tagH=tagTxt?Math.round(fTag*1.9):0;
   var rightW=Math.max(logoW,tagW);
@@ -3689,14 +3689,14 @@ function _soanDaiThongTin(w, h, ma, tt, doiTuong){
   if(tt && tt.kc) p1.push({t:tt.kc, b:false, k:1, c:MAU_DAI.phu});
   addRow(p1, b, 11);
   // Hàng 2: giá niêm yết
-  if(le>0) addRow([{t:'Giá niêm yết', b:false, k:1, c:MAU_DAI.phu},{t:fmt(le)+'/m²', b:true, k:1, c:MAU_DAI.chinh}], b, 11);
+  if(le>0) addRow([{t:'Giá niêm yết', b:false, k:1, c:MAU_DAI.phu},{t:fmt(le)+'/m²', b:true, k:1, c:MAU_DAI.gia}], b, 11);
   // Hàng 3: giá đại lý (Nhận kho | Đi giao) - gộp 1 hàng nếu vừa, không thì mỗi giá 1 hàng
   var gia=null;
   if(sale){
     var pc=function(g){ return (le>0&&g>0)?Math.round((le-g)/le*100):0; };
     gia=[];
-    if(sale.nk>0) gia.push({n:'Nhận kho', v:fmt(sale.nk)+(pc(sale.nk)>0?' (-'+pc(sale.nk)+'%)':''), c:MAU_DAI.do});
-    if(sale.gh>0) gia.push({n:'Đi giao',  v:fmt(sale.gh)+(pc(sale.gh)>0?' (-'+pc(sale.gh)+'%)':''), c:MAU_DAI.do});
+    if(sale.nk>0) gia.push({n:'Nhận kho', v:fmt(sale.nk)+(pc(sale.nk)>0?' (-'+pc(sale.nk)+'%)':''), c:MAU_DAI.sale});
+    if(sale.gh>0) gia.push({n:'Đi giao',  v:fmt(sale.gh)+(pc(sale.gh)>0?' (-'+pc(sale.gh)+'%)':''), c:MAU_DAI.sale});
   } else if(dl){
     gia=[];
     if(dl.nk>0) gia.push({n:'Nhận kho', v:fmt(dl.nk), c:MAU_DAI.chinh});
@@ -3709,7 +3709,7 @@ function _soanDaiThongTin(w, h, ma, tt, doiTuong){
     if(vua){ var r3=rg; r3.h=Math.round(r3.sz*1.55); r3.mt=Math.round(b*0.15); rows.push(r3); }
     else gia.forEach(function(g,i){ var r=addRow([{t:g.n,b:false,k:1,c:MAU_DAI.phu},{t:g.v,b:true,k:1,c:g.c}], b, 10); if(!i) r.mt=Math.round(b*0.15); });
   }
-  // Ghi chú nhỏ (chỉ Đại lý): cảnh báo tròn thùng (Sale) · quy cách thùng; và nhắc không chuyển tiếp
+  // Ghi chú nhỏ 1 dòng (chỉ Đại lý): cảnh báo tròn thùng (Sale) · quy cách thùng
   if(daily && (sale||dl)){
     var ghi=[];
     if(sale) ghi.push('Đặt tròn thùng mới được giá Sale');
@@ -3718,7 +3718,6 @@ function _soanDaiThongTin(w, h, ma, tt, doiTuong){
       if(qc&&qc.m2) ghi.push((qc.vien?qc.vien+' viên · ':'')+qc.m2+' m²/thùng');
     }catch(e){}
     if(ghi.length){ var rn=addRow([{t:ghi.join('  ·  '), b:false, k:1, c:MAU_DAI.phu}], b*0.78, 9); rn.mt=Math.round(b*0.15); }
-    var rn2=addRow([{t:'Giá đại lý, không chuyển tiếp cho khách lẻ', b:false, k:1, c:'#A8A8A8'}], b*0.68, 8); rn2.mt=0;
   }
 
   var hText=rows.reduce(function(s2,r){ return s2+r.h+r.mt; },0);
@@ -3744,13 +3743,19 @@ function _soanDaiThongTin(w, h, ma, tt, doiTuong){
     var yr=y0+Math.round(pad*0.75);
     if(tagTxt){
       var tx=w-pad-tagW;
-      ctx.strokeStyle=MAU_DAI.do; ctx.lineWidth=Math.max(1.5, b*0.1);
+      ctx.strokeStyle=MAU_DAI.sale; ctx.lineWidth=Math.max(1.5, b*0.1);
       ctx.strokeRect(tx, yr, tagW, tagH);
-      ctx.font=F(fTag,true); ctx.fillStyle=MAU_DAI.do; ctx.textAlign='center';
+      ctx.font=F(fTag,true); ctx.fillStyle=MAU_DAI.sale; ctx.textAlign='center';
       ctx.fillText(tagTxt, tx+tagW/2, yr+tagH/2+1); ctx.textAlign='left';
       yr+=tagH+Math.round(gap*0.7);
     } else { yr=y0+Math.round((height-logoH)/2); }
-    if(logoH) ctx.drawImage(_logoDongTam, w-pad-logoW, yr, logoW, logoH);
+    if(logoH){
+      var lx=w-pad-logoW;
+      ctx.fillStyle='#FFFFFF'; ctx.fillRect(lx, yr, logoW, logoH);
+      var sc=Math.min(logoW/_logoDongTam.naturalWidth, logoH/_logoDongTam.naturalHeight)*0.82;
+      var dw=_logoDongTam.naturalWidth*sc, dh=_logoDongTam.naturalHeight*sc;
+      ctx.drawImage(_logoDongTam, lx+(logoW-dw)/2, yr+(logoH-dh)/2, dw, dh);
+    }
   }};
 }
 // Vẽ lại ảnh kèm dải thông tin ở đáy (mở rộng canvas, không đè lên ảnh), chuyển về PNG -
