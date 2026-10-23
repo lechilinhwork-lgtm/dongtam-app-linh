@@ -3655,7 +3655,7 @@ function _ghepNhanLenAnh(blob, ma, doiTuong){
     try{
       var tt=layThongTinSP(ma);
       var w=img.naturalWidth, h=img.naturalHeight;
-      var bannerH=0, mainH=0, extra=null;
+      var bannerH=0, mainH=0, extra=null, tagMode=false, tag=null;
       var fontMa=0, fontSub=0, pad=0, logoSize=0, logoX=10, textX=0, haiDong=false, maTxt='', subTxt='';
       if(ma){
         // Cỡ chữ tính theo căn bậc 2 diện tích (không tính riêng theo chiều
@@ -3667,6 +3667,7 @@ function _ghepNhanLenAnh(blob, ma, doiTuong){
         pad=Math.round(logoSize*0.3);
         fontMa=Math.round(logoSize*0.64);
         fontSub=Math.round(logoSize*0.56);
+        var baseMa=fontMa, baseSub=fontSub;
         maTxt=String(ma);
         var subParts=[];
         if(tt&&tt.kc) subParts.push('Kích thước: '+tt.kc);
@@ -3688,6 +3689,29 @@ function _ghepNhanLenAnh(blob, ma, doiTuong){
           while(fontMa>14 && tmpCtx.measureText(maTxt).width>maxW){ fontMa--; tmpCtx.font='bold '+fontMa+'px Arial, sans-serif'; }
         }
         mainH=haiDong ? (fontMa+fontSub+pad*3) : (logoSize+pad*2);
+        // Có giá niêm yết -> bố cục 3 dòng: mã / kích thước / THẺ ĐỎ chứa số tiền
+        // to, đậm, trắng (số tiền là thứ nổi nhất). Không có giá -> giữ bố cục cũ.
+        tagMode=!!(tt&&tt.le>0);
+        if(tagMode){
+          fontMa=baseMa; fontSub=baseSub;
+          var maxW2=w-textX-10;
+          tmpCtx.font='bold '+fontMa+'px Arial, sans-serif';
+          while(fontMa>14 && tmpCtx.measureText(maTxt).width>maxW2){ fontMa--; tmpCtx.font='bold '+fontMa+'px Arial, sans-serif'; }
+          var kcTxt=tt.kc?('Kích thước: '+tt.kc):'';
+          tmpCtx.font=fontSub+'px Arial, sans-serif';
+          while(fontSub>12 && kcTxt && tmpCtx.measureText(kcTxt).width>maxW2){ fontSub--; tmpCtx.font=fontSub+'px Arial, sans-serif'; }
+          tag={kc:kcTxt, label:'Giá niêm yết', amt:fmt(tt.le)+'/m²', fP:Math.round(fontMa*1.3)};
+          var tagW=function(){
+            tag.fL=Math.round(tag.fP*0.5); tag.padX=Math.round(tag.fP*0.4); tag.gap=Math.round(tag.fP*0.35);
+            tmpCtx.font=tag.fL+'px Arial, sans-serif'; tag.wL=tmpCtx.measureText(tag.label).width;
+            tmpCtx.font='bold '+tag.fP+'px Arial, sans-serif'; tag.wA=tmpCtx.measureText(tag.amt).width;
+            return tag.padX*2+tag.wL+tag.gap+tag.wA;
+          }
+          while(tag.fP>13 && tagW()>maxW2) tag.fP--;
+          tagW();
+          tag.h=Math.round(tag.fP*1.5);
+          mainH=Math.round(pad+fontMa+pad*0.35+(kcTxt?(fontSub+pad*0.6):0)+tag.h+pad);
+        }
         bannerH=mainH;
         // Chế độ ĐẠI LÝ + mẫu đang Sale: thêm 2 dòng dưới dải (nhãn SALE + cảnh báo
         // tròn thùng; giá Sale nhận kho / đi giao kèm % giảm so với giá niêm yết).
@@ -3698,16 +3722,34 @@ function _ghepNhanLenAnh(blob, ma, doiTuong){
           if(sl.nk>0) pr.push('Nhận kho: '+fmt(sl.nk)+'/m²'+(pc(sl.nk)>0?' (-'+pc(sl.nk)+'%)':''));
           if(sl.gh>0) pr.push('Đi giao: '+fmt(sl.gh)+'/m²'+(pc(sl.gh)>0?' (-'+pc(sl.gh)+'%)':''));
           var availW=w-logoX-10;
-          extra={label:sl.label, warn:'Đặt tròn thùng mới được giá Sale', price:pr.join('  ·  '), fA:fontSub, fW:fontSub, fP:Math.round(fontSub*1.1)};
-          tmpCtx.font='bold '+extra.fA+'px Arial, sans-serif';
-          var bw0=tmpCtx.measureText(extra.label).width+extra.fA*0.9;
-          tmpCtx.font=extra.fW+'px Arial, sans-serif';
-          while(extra.fW>9 && bw0+extra.fA*0.6+tmpCtx.measureText(extra.warn).width>availW){ extra.fW--; tmpCtx.font=extra.fW+'px Arial, sans-serif'; }
-          tmpCtx.font='bold '+extra.fP+'px Arial, sans-serif';
-          while(extra.fP>9 && tmpCtx.measureText(extra.price).width>availW){ extra.fP--; tmpCtx.font='bold '+extra.fP+'px Arial, sans-serif'; }
-          extra.rowH=Math.round(fontSub*1.9);
-          extra.top=Math.round(pad*0.3);
-          bannerH=mainH+extra.top+extra.rowH*2;
+          var fA=fontSub, WARN='Đặt tròn thùng mới được giá Sale';
+          tmpCtx.font='bold '+fA+'px Arial, sans-serif';
+          var bw0=tmpCtx.measureText(sl.label).width+fA*0.9;
+          // Cảnh báo cùng hàng với nhãn nếu vừa (chữ không nhỏ hơn 75%), không thì xuống hàng riêng.
+          var fW=fA; tmpCtx.font=fW+'px Arial, sans-serif';
+          var wRoom=availW-bw0-fA*0.6;
+          while(fW>Math.round(fA*0.75) && tmpCtx.measureText(WARN).width>wRoom){ fW--; tmpCtx.font=fW+'px Arial, sans-serif'; }
+          var warnInline=tmpCtx.measureText(WARN).width<=wRoom;
+          var rows=[{t:'badge', warnInline:warnInline, fW:fW}];
+          if(!warnInline){
+            fW=fA; tmpCtx.font=fW+'px Arial, sans-serif';
+            while(fW>9 && tmpCtx.measureText(WARN).width>availW){ fW--; tmpCtx.font=fW+'px Arial, sans-serif'; }
+            rows.push({t:'warn', fW:fW});
+          }
+          // Giá Sale: 1 hàng nếu vừa (chữ không nhỏ hơn 80%), không thì mỗi giá 1 hàng.
+          var fP=Math.round(fA*1.1), pj=pr.join('  ·  ');
+          tmpCtx.font='bold '+fP+'px Arial, sans-serif';
+          while(fP>Math.round(fA*0.8) && tmpCtx.measureText(pj).width>availW){ fP--; tmpCtx.font='bold '+fP+'px Arial, sans-serif'; }
+          if(tmpCtx.measureText(pj).width<=availW){ rows.push({t:'price', txt:pj, fP:fP}); }
+          else {
+            pr.forEach(function(p1){
+              var f1=Math.round(fA*1.1); tmpCtx.font='bold '+f1+'px Arial, sans-serif';
+              while(f1>9 && tmpCtx.measureText(p1).width>availW){ f1--; tmpCtx.font='bold '+f1+'px Arial, sans-serif'; }
+              rows.push({t:'price', txt:p1, fP:f1});
+            });
+          }
+          extra={label:sl.label, warn:WARN, fA:fA, rows:rows, rowH:Math.round(fA*1.9), top:Math.round(pad*0.3)};
+          bannerH=mainH+extra.top+extra.rowH*rows.length;
         }
       }
       // Dải nhãn nằm ở PHẦN THÊM RIÊNG dưới ảnh (mở rộng canvas), không đè
@@ -3738,7 +3780,30 @@ function _ghepNhanLenAnh(blob, ma, doiTuong){
           ctx.fillText('ĐT', logoX+logoSize/2, logoCy+1);
           ctx.textAlign='left';
         }
-        if(!haiDong){
+        if(tagMode){
+          ctx.textBaseline='middle'; ctx.textAlign='left';
+          ctx.fillStyle='#fff';
+          ctx.font='bold '+fontMa+'px Arial, sans-serif';
+          ctx.fillText(maTxt, textX, h+pad+fontMa/2);
+          var yCur=h+pad+fontMa+pad*0.35;
+          if(tag.kc){
+            ctx.fillStyle='#EAEAEA';
+            ctx.font=fontSub+'px Arial, sans-serif';
+            ctx.fillText(tag.kc, textX, yCur+fontSub/2);
+            yCur+=fontSub+pad*0.6;
+          }
+          var tW=tag.padX*2+tag.wL+tag.gap+tag.wA;
+          ctx.fillStyle='#C0232A';
+          if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(textX, yCur, tW, tag.h, tag.h*0.2); ctx.fill(); }
+          else ctx.fillRect(textX, yCur, tW, tag.h);
+          var yT=yCur+tag.h/2+1;
+          ctx.fillStyle='rgba(255,255,255,0.9)';
+          ctx.font=tag.fL+'px Arial, sans-serif';
+          ctx.fillText(tag.label, textX+tag.padX, yT);
+          ctx.fillStyle='#fff';
+          ctx.font='bold '+tag.fP+'px Arial, sans-serif';
+          ctx.fillText(tag.amt, textX+tag.padX+tag.wL+tag.gap, yT);
+        } else if(!haiDong){
           ctx.textBaseline='middle';
           ctx.fillStyle='#fff';
           ctx.font='bold '+fontMa+'px Arial, sans-serif';
@@ -3761,18 +3826,27 @@ function _ghepNhanLenAnh(blob, ma, doiTuong){
           ctx.fillText(subTxt, textX, y2);
         }
         if(extra){
-          var xL=logoX, yA=h+mainH+extra.top+extra.rowH/2, yB=yA+extra.rowH;
+          var xL=logoX;
           ctx.textBaseline='middle'; ctx.textAlign='left';
-          ctx.font='bold '+extra.fA+'px Arial, sans-serif';
-          var bw=ctx.measureText(extra.label).width+extra.fA*0.9, bh=extra.fA*1.5;
-          ctx.fillStyle='#D32F2F'; ctx.fillRect(xL, yA-bh/2, bw, bh);
-          ctx.fillStyle='#fff'; ctx.fillText(extra.label, xL+extra.fA*0.45, yA);
-          ctx.font=extra.fW+'px Arial, sans-serif'; ctx.fillStyle='#FFB74D';
-          ctx.fillText(extra.warn, xL+bw+extra.fA*0.6, yA);
-          if(extra.price){
-            ctx.font='bold '+extra.fP+'px Arial, sans-serif'; ctx.fillStyle='#FFD54F';
-            ctx.fillText(extra.price, xL, yB);
-          }
+          extra.rows.forEach(function(rw,i){
+            var yy=h+mainH+extra.top+extra.rowH*(i+0.5);
+            if(rw.t==='badge'){
+              ctx.font='bold '+extra.fA+'px Arial, sans-serif';
+              var bw=ctx.measureText(extra.label).width+extra.fA*0.9, bh=extra.fA*1.5;
+              ctx.fillStyle='#F57C00'; ctx.fillRect(xL, yy-bh/2, bw, bh);
+              ctx.fillStyle='#fff'; ctx.fillText(extra.label, xL+extra.fA*0.45, yy);
+              if(rw.warnInline){
+                ctx.font=rw.fW+'px Arial, sans-serif'; ctx.fillStyle='#FFB74D';
+                ctx.fillText(extra.warn, xL+bw+extra.fA*0.6, yy);
+              }
+            } else if(rw.t==='warn'){
+              ctx.font=rw.fW+'px Arial, sans-serif'; ctx.fillStyle='#FFB74D';
+              ctx.fillText(extra.warn, xL, yy);
+            } else {
+              ctx.font='bold '+rw.fP+'px Arial, sans-serif'; ctx.fillStyle='#FFD54F';
+              ctx.fillText(rw.txt, xL, yy);
+            }
+          });
         }
       }
       cv.toBlob(function(png){ if(png) resolve(png); else reject(new Error('toBlob fail')); },'image/png');
