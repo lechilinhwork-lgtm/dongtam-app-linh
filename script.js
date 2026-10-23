@@ -3650,10 +3650,11 @@ function _ghepNhanLenAnh(blob, ma){
         // cao) để ảnh vuông/ngang/dọc đều ra chữ to đều nhau, tránh ảnh vuông
         // (vd 400x400) bị chữ nhỏ xíu do bề ngang hẹp hơn ảnh ngang dài.
         var ref=Math.sqrt(w*h);
-        logoSize=Math.max(22, Math.round(ref*0.052));
-        pad=Math.round(logoSize*0.32);
-        fontMa=Math.round(logoSize*0.6);
-        fontSub=Math.round(logoSize*0.48);
+        // Zalo nén ảnh nhỏ lại nên chữ phải to: logo/chữ lớn hơn ~55% so với trước.
+        logoSize=Math.max(34, Math.round(ref*0.08));
+        pad=Math.round(logoSize*0.3);
+        fontMa=Math.round(logoSize*0.64);
+        fontSub=Math.round(logoSize*0.56);
         maTxt=String(ma);
         var subParts=[];
         if(tt&&tt.kc) subParts.push('Kích thước: '+tt.kc);
@@ -3666,6 +3667,14 @@ function _ghepNhanLenAnh(blob, ma){
         tmpCtx.font=fontSub+'px Arial, sans-serif';
         var wSub=subTxt?tmpCtx.measureText('  ·  '+subTxt).width:0;
         haiDong=subTxt && (textX+wMa+wSub+12>w);
+        // Ảnh hẹp (vd dọc): dòng 2 vẫn dài quá bề ngang -> thu nhỏ chữ vừa đủ, không để bị cắt.
+        if(haiDong){
+          var maxW=w-textX-10;
+          tmpCtx.font=fontSub+'px Arial, sans-serif';
+          while(fontSub>12 && tmpCtx.measureText(subTxt).width>maxW){ fontSub--; tmpCtx.font=fontSub+'px Arial, sans-serif'; }
+          tmpCtx.font='bold '+fontMa+'px Arial, sans-serif';
+          while(fontMa>14 && tmpCtx.measureText(maTxt).width>maxW){ fontMa--; tmpCtx.font='bold '+fontMa+'px Arial, sans-serif'; }
+        }
         bannerH=haiDong ? (fontMa+fontSub+pad*3) : (logoSize+pad*2);
       }
       // Dải nhãn nằm ở PHẦN THÊM RIÊNG dưới ảnh (mở rộng canvas), không đè
