@@ -3638,17 +3638,13 @@ function layThongTinSP(ma){
   }
   return null;
 }
-// Logo Đồng Tâm dùng để đóng dấu lên ảnh chia sẻ - tải sẵn 1 lần lúc load
-// trang, dùng lại cho mọi lần chia sẻ (khỏi tải lại).
-var _logoDongTam=new Image();
-_logoDongTam.src='logo-dongtam.png';
-var _logoDongTamOk=false;
-_logoDongTam.onload=function(){ _logoDongTamOk=true; };
+// LƯU Ý: ảnh chia sẻ KHÔNG được có Logo/nhãn hiệu/nhận diện thương hiệu Đồng Tâm (Thông báo
+// 60/2026/TB-MKTG/CPĐT ngày 16/10/2026) - chỉ in thông tin sản phẩm (mã, kích thước, giá).
 // DẢI THÔNG TIN Ở ĐÁY ẢNH - nền xám đậm, chữ sáng, tối giản: ảnh mẫu là trọng tâm, giá chỉ
 // là thông tin đi kèm. Thứ bậc bằng độ đậm/màu (không dùng ô màu):
 //   mã (đậm) + kích thước (xám) / Giá niêm yết (xám + số đậm) /
 //   [Đại lý] Nhận kho | Đi giao (số cam nếu đang Sale) / ghi chú nhỏ.
-// Cột phải: nhãn SALE (khung cam, chỉ Đại lý + mẫu Sale) và logo.
+// Cột phải: nhãn SALE (khung cam, chỉ Đại lý + mẫu Sale). Không có logo.
 // Khách lẻ KHÔNG BAO GIỜ có giá đại lý.
 var MAU_DAI={nen:'#2A2A2A', chinh:'#FFFFFF', phu:'#A9A9A9', gia:'#F3E2B3', sale:'#FFB74D', vien:'#3C3C3C'};
 function _soanDaiThongTin(w, h, ma, tt, doiTuong){
@@ -3662,12 +3658,10 @@ function _soanDaiThongTin(w, h, ma, tt, doiTuong){
   var dl=(daily && tt && !tt.sale && tt.dl && (tt.dl.nk>0||tt.dl.gh>0))?tt.dl:null;
   var le=(tt && tt.le>0)?tt.le:0;
 
-  // Cột phải: nhãn SALE + logo
-  var logoH=_logoDongTamOk?Math.round(b*2.6):0;   // cạnh ô vuông chứa logo
-  var logoW=logoH;
+  // Cột phải: nhãn SALE
   var fTag=b*0.8, tagTxt=sale?sale.tag:'';
   var tagW=tagTxt?Math.round(W(tagTxt,fTag,true)+fTag*1.3):0, tagH=tagTxt?Math.round(fTag*1.9):0;
-  var rightW=Math.max(logoW,tagW);
+  var rightW=tagW;
   var availW=w-pad*2-(rightW?rightW+gap:0);
 
   // Thu nhỏ 1 hàng gồm nhiều đoạn chữ cho vừa bề ngang (không bao giờ bị cắt)
@@ -3721,7 +3715,7 @@ function _soanDaiThongTin(w, h, ma, tt, doiTuong){
   }
 
   var hText=rows.reduce(function(s2,r){ return s2+r.h+r.mt; },0);
-  var hPhai=(tagH?tagH+Math.round(gap*0.7):0)+logoH;
+  var hPhai=tagH;
   var height=Math.max(hText, hPhai)+Math.round(pad*1.5);
 
   return {height:height, ve:function(ctx, y0){
@@ -3747,14 +3741,6 @@ function _soanDaiThongTin(w, h, ma, tt, doiTuong){
       ctx.strokeRect(tx, yr, tagW, tagH);
       ctx.font=F(fTag,true); ctx.fillStyle=MAU_DAI.sale; ctx.textAlign='center';
       ctx.fillText(tagTxt, tx+tagW/2, yr+tagH/2+1); ctx.textAlign='left';
-      yr+=tagH+Math.round(gap*0.7);
-    } else { yr=y0+Math.round((height-logoH)/2); }
-    if(logoH){
-      var lx=w-pad-logoW;
-      ctx.fillStyle='#FFFFFF'; ctx.fillRect(lx, yr, logoW, logoH);
-      var sc=Math.min(logoW/_logoDongTam.naturalWidth, logoH/_logoDongTam.naturalHeight)*0.82;
-      var dw=_logoDongTam.naturalWidth*sc, dh=_logoDongTam.naturalHeight*sc;
-      ctx.drawImage(_logoDongTam, lx+(logoW-dw)/2, yr+(logoH-dh)/2, dw, dh);
     }
   }};
 }
