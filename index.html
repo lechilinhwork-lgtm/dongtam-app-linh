@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="DT Sales"/>
 <meta name="theme-color" content="#C0232A"/>
 <title>Đồng Tâm – Sales Tool</title>
-<link rel="stylesheet" href="style.css?v=nav55">
+<link rel="stylesheet" href="style.css?v=nav56">
 </head>
 <body>
 
@@ -745,11 +745,22 @@
       </div>
     </div>
 
+    <!-- Giảm giá (chỉ bản riêng, hiện bằng CSS body.ban-rieng) -->
+    <div id="don-gg-box" style="display:none;background:#FFF8E1;border:1.5px solid #FFC107;border-radius:var(--r8);padding:10px 12px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700">🏷 Giảm giá toàn đơn</span>
+        <input id="don-gg-all" type="text" inputmode="decimal" placeholder="0" oninput="setGgAll(this.value)" style="width:64px;text-align:center;font-size:15px;font-weight:700;padding:5px;border:1.5px solid var(--bd2);border-radius:6px;background:var(--bg1)"/> <b>%</b>
+        <button type="button" onclick="setGgChip(3)" class="gg-chip">3%</button><button type="button" onclick="setGgChip(5)" class="gg-chip">5%</button><button type="button" onclick="setGgChip(7)" class="gg-chip">7%</button><button type="button" onclick="setGgChip(10)" class="gg-chip">10%</button><button type="button" onclick="setGgChip(0)" class="gg-chip">Bỏ</button>
+      </div>
+      <div id="don-gg-sum" style="font-size:13px;display:grid;gap:3px"></div>
+    </div>
+
     <!-- Nút xuất -->
     <div style="display:flex;gap:8px;margin-bottom:8px">
       <button class="export-btn" onclick="xuatPDF()" style="background:#C0232A;color:#fff">
-        📄 Tải PDF báo giá
+        <span class="lbl-thuong">📄 Tải PDF báo giá</span><span class="lbl-rieng" style="display:none">📄 PDF giá niêm yết</span>
       </button>
+      <button class="export-btn" id="btn-pdf-giam" onclick="xuatPDF('giam')" style="display:none;background:#E65100;color:#fff">🏷 PDF giá đã giảm</button>
       <button class="export-btn" onclick="xuatExcel()" style="background:#1B5E20;color:#fff">
         📊 Xuất Excel (gửi khách)
       </button>
@@ -919,7 +930,7 @@
 
 
 
-<script src="script.js?v=nav178" defer></script>
+<script src="script.js?v=nav179" defer></script>
 <script src="dv.js?v=4" defer></script>
 </body>
 </html>

@@ -1432,6 +1432,41 @@ function rutGonGiaRieng(div,p){
   while(tmp.firstChild) cha.insertBefore(tmp.firstChild,dong[0]);
   dong.forEach(function(r){ if(r.parentNode) r.parentNode.removeChild(r); });
 }
+// ===== Giảm giá (bản riêng): % toàn đơn + % từng dòng, đều áp lên giá niêm yết =====
+var donGgAll=0;
+function _ggSo(v){ v=parseVN(v); return Math.min(100,Math.max(0,v)); }
+function ggDong(it){ return _ggSo(it&&it.gg); }
+function giaSauGiam(it){ return Math.round((it.le||0)*(1-ggDong(it)/100)*(1-_ggSo(donGgAll)/100)); }
+function tongGiamGia(){
+  var a=0,b=0;
+  donItems.forEach(function(x){ a+=tienHangTruocVAT(x.le||0,x.qty); b+=tienHangTruocVAT(giaSauGiam(x),x.qty); });
+  return {niemYet:tinhVATvaTongThanhToan(a).tong, sauGiam:tinhVATvaTongThanhToan(b).tong};
+}
+function capNhatTongGiam(){
+  var el=document.getElementById('don-gg-sum'); if(!el||!laBanRieng()) return;
+  var t=tongGiamGia(), giam=t.niemYet-t.sauGiam, f=function(n){ return n.toLocaleString('vi-VN')+'đ'; };
+  el.innerHTML='<div style="display:flex;justify-content:space-between"><span>Tạm tính (giá niêm yết)</span><b>'+f(t.niemYet)+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between;color:#C0232A"><span>Giảm giá</span><b>'+(giam>0?'− '+f(giam):'0đ')+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:15px;margin-top:2px"><span>Thành tiền sau giảm</span><b style="color:#1B5E20">'+f(t.sauGiam)+'</b></div>';
+}
+function setGgAll(v){ donGgAll=_ggSo(v); if(typeof renderDon==='function') renderDon(); capNhatTongGiam(); }
+function setGgChip(v){ var i=document.getElementById('don-gg-all'); if(i) i.value=v||''; setGgAll(v); }
+function thayHopGiaRieng(div,item,unit){
+  var box=div.lastElementChild; if(!box) return;
+  var f=function(n){ return n.toLocaleString('vi-VN')+'đ'; };
+  var sau=giaSauGiam(item);
+  var h='<div style="background:var(--bg2);border-radius:var(--r8);padding:8px 10px;font-size:12px">'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:0.5px solid var(--bd)"><span style="color:var(--t2)">Giá niêm yết</span><span style="font-weight:600">'+(item.le>0?f(item.le)+'/'+unit+' → '+f(tienHangTruocVAT(item.le,item.qty)):'Liên hệ')+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:0.5px solid var(--bd)"><span style="color:#C0232A">Giảm dòng này</span><span><input type="text" inputmode="decimal" data-gg="'+item.ma+'" value="'+(item.gg?item.gg:'')+'" placeholder="0" style="width:56px;text-align:center;font-size:13px;font-weight:700;padding:3px 4px;border:1.5px solid var(--bd2);border-radius:6px;background:var(--bg1)"/> %</span></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:#1B5E20;font-weight:600">Sau giảm</span><span id="ggs-'+item.ma+'" style="font-weight:800;color:#1B5E20">'+(item.le>0?f(sau)+'/'+unit+' → '+f(tienHangTruocVAT(sau,item.qty)):'Liên hệ')+'</span></div>'
+    +'</div>';
+  box.outerHTML=h;
+}
+function capNhatDongGiam(item){
+  var sp=document.getElementById('ggs-'+item.ma); if(!sp) return;
+  var f=function(n){ return n.toLocaleString('vi-VN')+'đ'; }, unit=item.unit||'m²', sau=giaSauGiam(item);
+  sp.textContent=item.le>0?f(sau)+'/'+unit+' → '+f(tienHangTruocVAT(sau,item.qty)):'Liên hệ';
+}
 function laBanRieng(){ var s=checkSession(); if(!s) return false; if(s.rg) return true; try{ return !!(s.dl && sessionStorage.getItem('dt_ban_rieng')==='1'); }catch(e){ return false; } }
 function thamSoBanRieng(){ var s=checkSession(); return (laBanRieng()&&s&&!s.rg)?'&v=da':''; }
 function mergeCTintoDATA(){
@@ -5258,6 +5293,7 @@ function renderDon(){
           +'</div>';
       })()
       +'</div>';
+    if(laBanRieng()) thayHopGiaRieng(div,item,unit);
     el.appendChild(div);
   });
 
@@ -5292,6 +5328,12 @@ function renderDon(){
     }
   };
   el.oninput=function(e){
+    var gi=e.target.closest('[data-gg]');
+    if(gi){
+      var it=donItems.find(function(x){return x.ma===gi.dataset.gg;});
+      if(it){ it.gg=_ggSo(gi.value)||0; saveDonItemsToStorage(); capNhatDongGiam(it); capNhatTongGiam(); }
+      return;
+    }
     var inp=e.target.closest('[data-inp]');
     if(!inp) return;
     var val=parseVN(inp.value);
@@ -5301,6 +5343,7 @@ function renderDon(){
   };
 
   calcAndShowTotals();
+  capNhatTongGiam();
 }
 
 function updateDonQty(ma,d){
@@ -5388,7 +5431,8 @@ function guiDonHang(){
     sdt:sdt,
     diachi:document.getElementById('don-dc').value.trim(),
     ghichu:document.getElementById('don-note').value.trim()+
-      (document.getElementById('don-cty').value.trim()?' | Cty: '+document.getElementById('don-cty').value.trim():''),
+      (document.getElementById('don-cty').value.trim()?' | Cty: '+document.getElementById('don-cty').value.trim():'')+
+      (laBanRieng()&&(donGgAll>0||donItems.some(function(x){return ggDong(x)>0;}))?' | Giảm giá: toàn đơn '+donGgAll+'%'+donItems.filter(function(x){return ggDong(x)>0;}).map(function(x){return '; '+x.ma+' '+ggDong(x)+'%';}).join(''):''),
     ngay:new Date().toLocaleString('vi-VN'),
     nguoi_lap:nguoiLap,
     giao_hang:curGiaoHang==='nhan'?'Nhận tại kho':'Giao tận nơi',
@@ -5402,7 +5446,7 @@ function guiDonHang(){
         unit:c.unit||'m²',
         so_luong:c.qty,
         gia_le:c.le||0,
-        gia_nhan:nhanVal||0,
+        gia_nhan:laBanRieng()?giaSauGiam(c):(nhanVal||0),
         gia_giao:giaoVal||0
       };
     })
@@ -6540,8 +6584,9 @@ function clearDon(){
   ['don-ten','don-cty','don-sdt','don-dc','don-note'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
 }
 
-function xuatPDF(){
+function xuatPDF(che){
   if(donItems.length===0){alert('Chưa có sản phẩm!');return;}
+  var giam=(che==='giam' && laBanRieng());
   var ten  = document.getElementById('don-ten').value.trim()||'Quý khách';
   var cty  = document.getElementById('don-cty').value.trim();
   var sdt  = document.getElementById('don-sdt').value.trim();
@@ -6553,7 +6598,8 @@ function xuatPDF(){
   var nguoiSdt = sess?(sess.sdt||''):'';
   var nguoiKv  = sess?(sess.khoPhuTrach?'Đồng Tâm – '+sess.khoPhuTrach:'Đồng Tâm'):'Đồng Tâm';
   // Tính theo đúng cách hóa đơn VAT (xem giải thích ở hàm tienHangTruocVAT)
-  var totalLe = tinhVATvaTongThanhToan(donItems.reduce(function(s,x){return s+tienHangTruocVAT(x.le||0,x.qty);},0)).tong;
+  var totalLe = tinhVATvaTongThanhToan(donItems.reduce(function(s,x){return s+tienHangTruocVAT(giam?giaSauGiam(x):(x.le||0),x.qty);},0)).tong;
+  var totalNiemYet = giam?tongGiamGia().niemYet:totalLe;
   var totalKgPdf=0, coKgChinhXacPdf=false;
   donItems.forEach(function(x){
     var v=tinhSoVien(x);
@@ -6561,7 +6607,7 @@ function xuatPDF(){
   });
 
   var rows = donItems.map(function(item,i){
-    var leVAT = item.le||0;
+    var leVAT = giam?giaSauGiam(item):(item.le||0);
     var don   = leVAT * (parseFloat(item.qty)||0);
     var loaiLabel = item.loai==='ngoi'?'Ngói':item.loai==='keo'?'Keo':'Gạch';
     var t=tinhThung(item);
@@ -6603,6 +6649,7 @@ function xuatPDF(){
         return '<td class="tc">'+qtyStr+'</td>';
       })()
       +'<td class="tc" style="color:#0D47A1;font-weight:600">'+thungStr+'</td>'
+      +(giam?('<td class="tr" style="color:#888">'+((item.le||0)>0?(item.le).toLocaleString('vi-VN'):'–')+'</td><td class="tc" style="color:#C0232A">'+(function(){var e=(item.le>0)?Math.round((1-leVAT/item.le)*1000)/10:0;return e>0?'−'+e+'%':'–';})()+'</td>'):'')
       +'<td class="tr">'+(leVAT>0?leVAT.toLocaleString('vi-VN'):'Liên hệ')+'</td>'
       +'<td class="tr money">'+(don>0?don.toLocaleString('vi-VN'):'–')+'</td>'
       +'</tr>';
@@ -6680,7 +6727,7 @@ function xuatPDF(){
     +'<div>'
     +'<div class="hdr-logo">🏪 ĐỒNG TÂM GROUP</div>'
     +'<div class="hdr-sub">Gạch – Ngói – Keo xây dựng · Khu vực 23</div>'
-    +'<div class="badge-baogia">BÁO GIÁ</div>'
+    +'<div class="badge-baogia">'+(giam?'BÁO GIÁ ƯU ĐÃI':'BÁO GIÁ')+'</div>'
     +'</div>'
     +'<div class="hdr-right">'
     +'<div class="label">Ngày lập</div>'
@@ -6716,7 +6763,7 @@ function xuatPDF(){
     +'<th class="tc">Kích cỡ</th>'
     +'<th class="tc">Số lượng</th>'
     +'<th class="tc">Số thùng</th>'
-    +'<th class="tr">Đơn giá (đ)</th>'
+    +(giam?'<th class="tr">Giá niêm yết (đ)</th><th class="tc">Giảm</th><th class="tr">Giá sau giảm (đ)</th>':'<th class="tr">Đơn giá (đ)</th>')
     +'<th class="tr">Thành tiền (đ)</th>'
     +'</tr></thead>'
     +'<tbody>'+rows+'</tbody>'
@@ -6726,7 +6773,8 @@ function xuatPDF(){
     /* TOTAL */
     +'<div class="total-wrap">'
     +'<div class="total-row">'
-    +'<div><div class="total-label">TỔNG GIÁ TRỊ BÁO GIÁ</div>'
+    +'<div><div class="total-label">'+(giam?'TỔNG SAU GIẢM GIÁ':'TỔNG GIÁ TRỊ BÁO GIÁ')+'</div>'
+    +(giam?'<div class="total-note" style="margin-top:4px">Giá niêm yết: '+totalNiemYet.toLocaleString('vi-VN')+' đ · Giảm: '+(totalNiemYet-totalLe).toLocaleString('vi-VN')+' đ'+(donGgAll>0?' (giảm toàn đơn '+donGgAll+'%)':'')+'</div>':'')
     +'</div>'
     +'<div class="total-val">'+(totalLe>0?totalLe.toLocaleString('vi-VN')+' đ':'Liên hệ báo giá')+'</div>'
     +'</div>'

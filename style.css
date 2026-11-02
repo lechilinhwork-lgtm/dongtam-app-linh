@@ -1844,3 +1844,9 @@ html{scroll-behavior:smooth}
 /* Bản giới hạn: ẩn giá đại lý / Sale */
 body.ban-rieng #dp-gia-dl-label,body.ban-rieng #dp-panel-gia .pr-grid .pr-box:not(:first-child),body.ban-rieng #dp-sale-section,body.ban-rieng #f-sale,body.ban-rieng #sn-sale{display:none !important}
 body.ban-rieng #dp-panel-gia .pr-grid .pr-box:first-child{grid-column:1/-1}
+body.ban-rieng #don-gg-box{display:block !important}
+body.ban-rieng #btn-pdf-giam{display:block !important}
+body.ban-rieng .lbl-thuong{display:none}
+body.ban-rieng .lbl-rieng{display:inline !important}
+body.ban-rieng #row-total-nhan,body.ban-rieng #row-total-giao-wrap,body.ban-rieng #don-margin-box{display:none !important}
+.gg-chip{border:1px solid #FFC107;background:#fff;color:#5D4037;border-radius:14px;padding:4px 10px;font-size:13px;font-weight:700;cursor:pointer}
