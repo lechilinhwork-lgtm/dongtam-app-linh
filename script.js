@@ -3697,7 +3697,7 @@ function layThongTinSP(ma){
         if(nk>0||gh>0) sale={nk:nk, gh:gh, tag:(p._fromCT==='CT2'?'XẢ KHO T':'SALE T')+String(Number(thangHienTai()))};
       }
       var dl=(arrs[i]===DATA)?{nk:p.nhan||0, gh:p.giao||0}:null;
-      return {kc:p.kc||'', le:p.le||0, sale:sale, dl:dl, cat:(arrs[i]===DATA)?p.cat:''};
+      return {kc:p.kc||'', le:p.le||0, sale:sale, dl:dl, cat:(arrs[i]===DATA)?p.cat:'', th:(arrs[i]===DATA&&laBanRieng())?giaThungRieng(p):0};
     }
   }
   return null;
@@ -3747,7 +3747,8 @@ function _soanDaiThongTin(w, h, ma, tt, doiTuong){
   if(tt && tt.kc) p1.push({t:tt.kc, b:false, k:1, c:MAU_DAI.phu});
   addRow(p1, b, 11);
   // Hàng 2: giá niêm yết
-  if(le>0) addRow([{t:'Giá niêm yết', b:false, k:1, c:MAU_DAI.phu},{t:fmt(le)+'/m²', b:true, k:1, c:MAU_DAI.gia}], b, 11);
+  if(le>0) addRow([{t:(laBanRieng()?'Giá / m²':'Giá niêm yết'), b:false, k:1, c:MAU_DAI.phu},{t:fmt(le)+(laBanRieng()?'':'/m²'), b:true, k:1, c:MAU_DAI.gia}], b, 11);
+  if(laBanRieng() && tt && tt.th>0) addRow([{t:'Giá / thùng', b:false, k:1, c:MAU_DAI.phu},{t:fmt(tt.th), b:true, k:1, c:MAU_DAI.gia}], b, 11);
   // Hàng 3: giá đại lý (Nhận kho | Đi giao) - gộp 1 hàng nếu vừa, không thì mỗi giá 1 hàng
   var gia=null;
   if(sale){
@@ -3858,7 +3859,7 @@ function gacmCopy(){
 // giá Sale nhận kho/đi giao cho mẫu đang Sale). KHÔNG lưu lại giữa các lần mở app để
 // khỏi lỡ gửi giá đại lý cho khách lẻ. Tài khoản khách hàng/đại lý luôn là 'le'.
 var gaDoiTuong='le';
-function gaDuocChonDoiTuong(){ var s=checkSession(); return !!(s && s.role!=='khachhang'); }
+function gaDuocChonDoiTuong(){ var s=checkSession(); return !!(s && s.role!=='khachhang' && !laBanRieng()); }
 function gaDT(){ return (gaDoiTuong==='daily' && gaDuocChonDoiTuong())?'daily':'le'; }
 function datDoiTuongGioAnh(v){
   gaDoiTuong=(v==='daily')?'daily':'le';
