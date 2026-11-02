@@ -1840,3 +1840,7 @@ html{scroll-behavior:smooth}
 #gioanh-btn-gui.gioanh-ready{background:#1B8A3A !important;animation:gioanhNhay 1s ease-in-out infinite}
 @keyframes gioanhNhay{0%,100%{box-shadow:0 0 0 0 rgba(27,138,58,.55)}50%{box-shadow:0 0 0 7px rgba(27,138,58,0)}}
 @media (prefers-reduced-motion:reduce){#gioanh-btn-gui.gioanh-ready{animation:none}}
+
+/* Bản giới hạn: ẩn giá đại lý / Sale */
+body.ban-rieng #dp-gia-dl-label,body.ban-rieng #dp-panel-gia .pr-grid .pr-box:not(:first-child),body.ban-rieng #dp-sale-section,body.ban-rieng #f-sale,body.ban-rieng #sn-sale{display:none !important}
+body.ban-rieng #dp-panel-gia .pr-grid .pr-box:first-child{grid-column:1/-1}

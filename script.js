@@ -137,7 +137,7 @@ function applyGiaGach(res){
   rows.forEach(function(row){ var m=String(row.ma||'').trim(); if(m) liveMa[m]=true; });
   for(var i=DATA.length-1;i>=0;i--){
     var d=DATA[i];
-    if(!d._fromCT && d.ma && !liveMa[d.ma]) DATA.splice(i,1);
+    if((!d._fromCT || laBanRieng()) && d.ma && !liveMa[d.ma]) DATA.splice(i,1);
   }
   rows.forEach(function(row){
     var ma = String(row.ma||'').trim();
@@ -163,6 +163,7 @@ function applyGiaGach(res){
       p.ns=ns;
       p.gs=gs;
       if(row.sap) p.sap=String(row.sap).trim();
+      if(row.m2thung) p.m2t=Number(row.m2thung)||0;
       // Tên hóa đơn (dùng khi xuất PDF/Excel để khớp đúng tên trên hóa đơn VAT)
       if(row.tenHD) p.tenHD=String(row.tenHD).trim();
     } else {
@@ -171,7 +172,7 @@ function applyGiaGach(res){
         ma:ma, sap:String(row.sap||'').trim(), kc:String(row.kc||'').trim().replace(/X/g,'x'), cat:String(row.cat||'').toLowerCase(),
         gio:String(row.gio||''), ten:String(row.ten||ma),
         tenHD:String(row.tenHD||'').trim(),
-        le:le, nhan:nhan, giao:giao, ns:ns, gs:gs
+        le:le, nhan:nhan, giao:giao, ns:ns, gs:gs, m2t:Number(row.m2thung)||0
       });
     }
   });
@@ -1011,7 +1012,7 @@ function timBanner(i){
 }
 function renderTrangChuBanners(){
   var el=document.getElementById('dm-banners'); if(!el) return;
-  if(!TRANG_CHU_BANNERS.length){ el.innerHTML=''; return; }
+  if(!TRANG_CHU_BANNERS.length || laBanRieng()){ el.innerHTML=''; return; }
   var tid='bnt'+Date.now();
   el.innerHTML=
     '<div style="position:relative;overflow:hidden;border-radius:14px;margin-bottom:6px">'
@@ -1413,7 +1414,23 @@ function renderKinhInGach(){
 }
 
 
+// Bản giới hạn: thay các dòng giá đại lý trên thẻ sản phẩm bằng giá /m² và giá /thùng.
+function rutGonGiaRieng(div,p){
+  var nhan={'Giá niêm yết':1,'Nhận kho':1,'Giao hàng':1,'Giá ĐL nhận kho':1,'→ Giá ĐL giao':1};
+  var dong=[];
+  div.querySelectorAll('span').forEach(function(sp){ if(nhan[sp.textContent.trim()] && sp.parentElement) dong.push(sp.parentElement); });
+  if(!dong.length) return;
+  var th=(p.m2t>0&&p.le>0)?Math.round(p.le*p.m2t):0;
+  var h='<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Giá / m²</span><span style="font-size:14px;font-weight:800;color:#C0232A">'+fmt(p.le)+'</span></div>'
+    +(th?'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Giá / thùng</span><span style="font-size:14px;font-weight:800;color:#C0232A">'+fmt(th)+'</span></div>':'');
+  var tmp=document.createElement('div'); tmp.innerHTML=h;
+  var cha=dong[0].parentNode;
+  while(tmp.firstChild) cha.insertBefore(tmp.firstChild,dong[0]);
+  dong.forEach(function(r){ if(r.parentNode) r.parentNode.removeChild(r); });
+}
+function laBanRieng(){ var s=checkSession(); return !!(s&&s.rg); }
 function mergeCTintoDATA(){
+  if(laBanRieng()) return;
   // Mã đã có sẵn trong DATA (catalog gạch thường) nhưng tháng này CŨNG đang
   // Sale/Xả kho → vẫn phải gắn cờ _fromCT + giá sale lên đúng record đó,
   // không được bỏ qua. Trước đây code chỉ thêm mã MỚI, bỏ qua mã đã tồn
@@ -1769,6 +1786,7 @@ function render(){
         +'</div>'
         +htmlGioAnhChk(p.ma, p.ma);
     }
+    if(laBanRieng()) rutGonGiaRieng(div,p);
     div.addEventListener('click',function(){showDP(p.ma);});
     el.appendChild(div);
     registerAutoCycle(div.querySelector('.mk-thumb'), p.ma);
@@ -1821,7 +1839,7 @@ function showDP(ma){
       qcEl.style.display='none';
     }
   }
-  document.getElementById('dp-le').textContent=fmt(p.le);
+  document.getElementById('dp-le').textContent=(laBanRieng()&&p.m2t>0&&p.le>0)?(fmt(p.le)+'/m² · '+fmt(Math.round(p.le*p.m2t))+'/thùng'):fmt(p.le);
   // Ô "Nhận kho"/"Giao hàng" luôn hiện giá THƯỜNG (chưa sale) - giá Sale đã
   // có mục riêng "GIÁ SALE" bên dưới, không trộn vào đây nữa (theo yêu cầu).
   var isSaleItem = p._fromCT==='CT1' || p._fromCT==='CT2';
@@ -4293,7 +4311,7 @@ function saveSession(user){
     token: user.token||'',
     tenCty: user.tenCty||'', mst: user.mst||'', diaChi: user.diaChi||'',
     email: user.email||'', tenKH: user.tenKH||'', khoPhuTrach: user.khoPhuTrach||'', sdt: user.sdt||'',
-    dl: user.dl||''
+    dl: user.dl||'', rg: user.rg||0
   };
   localStorage.setItem(SESSION_KEY, JSON.stringify(obj));
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(obj));
@@ -4337,7 +4355,7 @@ function doLogin(){
     if(s.parentNode) s.parentNode.removeChild(s);
     delete window[cbName];
     if(data && data.status==='ok'){
-      saveSession({u:u, name:data.name, role:data.role, token:data.token||'', tenCty:data.tenCty, mst:data.mst, diaChi:data.diaChi, email:data.email, tenKH:data.tenKH, khoPhuTrach:data.khoPhuTrach, sdt:data.sdt||'', dl:data.duanLabel||''});
+      saveSession({u:u, name:data.name, role:data.role, token:data.token||'', tenCty:data.tenCty, mst:data.mst, diaChi:data.diaChi, email:data.email, tenKH:data.tenKH, khoPhuTrach:data.khoPhuTrach, sdt:data.sdt||'', dl:data.duanLabel||'', rg:data.rieng||0});
       showApp(data.name);
     } else {
       errEl.textContent = '❌ Sai tài khoản hoặc mật khẩu!';
@@ -4372,6 +4390,12 @@ function showApp(name){
   if(canh) canh.textContent = name;
   capNhatAcctAvatar(name);
   capNhatSnAcct();
+  document.body.classList.toggle('ban-rieng', laBanRieng());
+  if(laBanRieng()){
+    // Bản giới hạn: bỏ danh mục dựng sẵn + CT1/CT2 trong code, chỉ dùng dữ liệu server gửi
+    DATA.length=0; CT1_DATA.length=0; CT2_DATA.length=0;
+    if(bnSale) bnSale.style.display='none';
+  }
   if(window.dvInit) dvInit();
   // Chỉ admin mới thấy nút Quản lý tài khoản
   var sessChk=checkSession();

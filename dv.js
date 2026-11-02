@@ -16,9 +16,9 @@
     chip.id='dv-chip'; chip.textContent=nhan;
     chip.setAttribute('role','button');
     chip.style.cssText='display:inline-block;margin-left:8px;padding:2px 10px;border-radius:12px;background:#fff;color:#C0232A;font-size:12px;font-weight:800;font-style:normal;cursor:pointer;vertical-align:middle';
-    chip.onclick=function(e){ e.stopPropagation(); window.dvMo(); };
+    if(!s.rg) chip.onclick=function(e){ e.stopPropagation(); window.dvMo(); };
+    else chip.style.cursor='default';
     t.appendChild(chip);
-    if(s.role==='duan' && !moRoi){ moRoi=true; setTimeout(window.dvMo,300); }
   };
 
   function tai_(cb){
