@@ -4292,7 +4292,8 @@ function saveSession(user){
     role: user.role || 'nv',
     token: user.token||'',
     tenCty: user.tenCty||'', mst: user.mst||'', diaChi: user.diaChi||'',
-    email: user.email||'', tenKH: user.tenKH||'', khoPhuTrach: user.khoPhuTrach||'', sdt: user.sdt||''
+    email: user.email||'', tenKH: user.tenKH||'', khoPhuTrach: user.khoPhuTrach||'', sdt: user.sdt||'',
+    dl: user.dl||''
   };
   localStorage.setItem(SESSION_KEY, JSON.stringify(obj));
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(obj));
@@ -4336,7 +4337,7 @@ function doLogin(){
     if(s.parentNode) s.parentNode.removeChild(s);
     delete window[cbName];
     if(data && data.status==='ok'){
-      saveSession({u:u, name:data.name, role:data.role, token:data.token||'', tenCty:data.tenCty, mst:data.mst, diaChi:data.diaChi, email:data.email, tenKH:data.tenKH, khoPhuTrach:data.khoPhuTrach, sdt:data.sdt||''});
+      saveSession({u:u, name:data.name, role:data.role, token:data.token||'', tenCty:data.tenCty, mst:data.mst, diaChi:data.diaChi, email:data.email, tenKH:data.tenKH, khoPhuTrach:data.khoPhuTrach, sdt:data.sdt||'', dl:data.duanLabel||''});
       showApp(data.name);
     } else {
       errEl.textContent = '❌ Sai tài khoản hoặc mật khẩu!';
@@ -4371,6 +4372,7 @@ function showApp(name){
   if(canh) canh.textContent = name;
   capNhatAcctAvatar(name);
   capNhatSnAcct();
+  if(window.dvInit) dvInit();
   // Chỉ admin mới thấy nút Quản lý tài khoản
   var sessChk=checkSession();
   var btnQLTK=document.getElementById('btn-quanly-taikhoan');
