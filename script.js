@@ -1000,8 +1000,8 @@ function xemChiTietTuVideoFeed(ma){
 
 // ===== BANNER TRANG CHỦ (Danh mục) — sửa mảng này để đổi nội dung banner =====
 var TRANG_CHU_BANNERS=[
-  {icon:'🔥',title:'Sale tháng — giảm đến 25%',sub:'Hàng trăm mã đang giảm giá',grad:'linear-gradient(120deg,#C0232A,#8B1A1A)',tab:'sale'},
-  {icon:'📦',title:'Sale xả kho — giá tốt nhất',sub:'Hàng tồn kho cần đẩy nhanh, số lượng có hạn',grad:'linear-gradient(120deg,#E65100,#BF360C)',tab:'sale',sf2:'ct2'},
+  {icon:'🔥',title:'Sale tháng '+Number(thangHienTai())+' — giảm đến 32%',sub:'Hàng trăm mã đang giảm giá',grad:'linear-gradient(120deg,#C0232A,#8B1A1A)',tab:'sale'},
+  {icon:'📦',title:'Xả kho — giảm đến 42%',sub:'Hàng tồn kho cần đẩy nhanh, số lượng có hạn',grad:'linear-gradient(120deg,#E65100,#BF360C)',tab:'sale',sf2:'ct2'},
   {icon:'🆕',title:'Mẫu mới về kho',sub:'Xem ngay mẫu gạch vừa cập nhật',grad:'linear-gradient(120deg,#3949AB,#1A237E)',tab:'tra'}
 ];
 function timBanner(i){
