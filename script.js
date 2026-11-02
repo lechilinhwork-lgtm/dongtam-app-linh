@@ -7310,6 +7310,7 @@ function chatParseConvert(text, p){
 var NFB_VERSION = 'ai_chat_v2';
 var _nfbTimer = null;
 function maybeShowNewFeatureBanner(){
+  if(AI_TAT) return;
   try{
     if(localStorage.getItem('nfb_seen') === NFB_VERSION) return;
   }catch(e){ return; }
@@ -7329,7 +7330,10 @@ function bannerOpenAIChat(){
   if(!aiPanelOpen) toggleAIChat();
 }
 
+// Trợ lý AI đang TẮT (ẩn toàn bộ giao diện). Muốn bật lại: đổi AI_TAT=false và bỏ rule CSS "Tắt trợ lý AI" trong style.css.
+var AI_TAT=true;
 function toggleAIChat(){
+  if(AI_TAT) return;
   aiPanelOpen = !aiPanelOpen;
   var panel = document.getElementById('ai-panel');
   if(aiPanelOpen){

@@ -1850,3 +1850,6 @@ body.ban-rieng .lbl-thuong{display:none}
 body.ban-rieng .lbl-rieng{display:inline !important}
 body.ban-rieng #row-total-nhan,body.ban-rieng #row-total-giao-wrap,body.ban-rieng #don-margin-box{display:none !important}
 .gg-chip{border:1px solid #FFC107;background:#fff;color:#5D4037;border-radius:14px;padding:4px 10px;font-size:13px;font-weight:700;cursor:pointer}
+
+/* Tắt trợ lý AI */
+#ai-fab,#ai-panel,#new-feature-banner,.sn-item[onclick="toggleAIChat()"]{display:none !important}
