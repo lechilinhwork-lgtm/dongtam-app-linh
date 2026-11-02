@@ -1415,12 +1415,16 @@ function renderKinhInGach(){
 
 
 // Bản giới hạn: thay các dòng giá đại lý trên thẻ sản phẩm bằng giá /m² và giá /thùng.
+function giaThungRieng(p){
+  var k=p.m2t>0?p.m2t:(m2PerThungCuaMa(p.ma)||0);
+  return (k>0&&p.le>0)?Math.round(p.le*k):0;
+}
 function rutGonGiaRieng(div,p){
   var nhan={'Giá niêm yết':1,'Nhận kho':1,'Giao hàng':1,'Giá ĐL nhận kho':1,'→ Giá ĐL giao':1};
   var dong=[];
   div.querySelectorAll('span').forEach(function(sp){ if(nhan[sp.textContent.trim()] && sp.parentElement) dong.push(sp.parentElement); });
   if(!dong.length) return;
-  var th=(p.m2t>0&&p.le>0)?Math.round(p.le*p.m2t):0;
+  var th=giaThungRieng(p);
   var h='<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Giá / m²</span><span style="font-size:14px;font-weight:800;color:#C0232A">'+fmt(p.le)+'</span></div>'
     +(th?'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Giá / thùng</span><span style="font-size:14px;font-weight:800;color:#C0232A">'+fmt(th)+'</span></div>':'');
   var tmp=document.createElement('div'); tmp.innerHTML=h;
@@ -1839,7 +1843,7 @@ function showDP(ma){
       qcEl.style.display='none';
     }
   }
-  document.getElementById('dp-le').textContent=(laBanRieng()&&p.m2t>0&&p.le>0)?(fmt(p.le)+'/m² · '+fmt(Math.round(p.le*p.m2t))+'/thùng'):fmt(p.le);
+  document.getElementById('dp-le').textContent=(laBanRieng()&&giaThungRieng(p)>0)?(fmt(p.le)+'/m² · '+fmt(giaThungRieng(p))+'/thùng'):fmt(p.le);
   // Ô "Nhận kho"/"Giao hàng" luôn hiện giá THƯỜNG (chưa sale) - giá Sale đã
   // có mục riêng "GIÁ SALE" bên dưới, không trộn vào đây nữa (theo yêu cầu).
   var isSaleItem = p._fromCT==='CT1' || p._fromCT==='CT2';
