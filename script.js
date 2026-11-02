@@ -267,7 +267,7 @@ function fetchAllFromSheet(lanThu){
       ]);
       return;
     }
-    try{ applyGiaGach(res.gach); _syncFlags.gach=true; }catch(e){ console.log('Lỗi áp giá gạch (getAll):', e); }
+    try{ applyGiaGach(res.gach); _syncFlags.gach=true; luuGachCache(res.gach); }catch(e){ console.log('Lỗi áp giá gạch (getAll):', e); }
     tryOpenDeepLink();
     try{ applyImagesData(res.images); }catch(e){ console.log('Lỗi áp ảnh (getAll):', e); }
     try{
@@ -1467,6 +1467,11 @@ function capNhatDongGiam(item){
   var f=function(n){ return n.toLocaleString('vi-VN')+'đ'; }, unit=item.unit||'m²', sau=giaSauGiam(item);
   sp.textContent=item.le>0?f(sau)+'/'+unit+' → '+f(tienHangTruocVAT(sau,item.qty)):'Liên hệ';
 }
+// Nhớ danh sách gạch lần tải trước cho từng chế độ xem (đại lý / bản riêng) để
+// khi đổi qua lại hiện NGAY, rồi tải mới ở nền - không bị trống vài giây.
+function gachCacheKey(){ var s=checkSession(); return 'dt_gach_'+(laBanRieng()?'b':'t')+'_'+(s&&s.role?s.role:'g'); }
+function luuGachCache(g){ try{ if(g&&g.data&&g.data.length&&checkSession()) localStorage.setItem(gachCacheKey(),JSON.stringify({data:g.data})); }catch(e){} }
+function napGachCache(){ try{ var c=JSON.parse(localStorage.getItem(gachCacheKey())||'null'); if(c&&c.data&&c.data.length) applyGiaGach(c); }catch(e){} }
 function laBanRieng(){ var s=checkSession(); if(!s) return false; if(s.rg) return true; try{ return !!(s.dl && sessionStorage.getItem('dt_ban_rieng')==='1'); }catch(e){ return false; } }
 function thamSoBanRieng(){ var s=checkSession(); return (laBanRieng()&&s&&!s.rg)?'&v=da':''; }
 function mergeCTintoDATA(){
@@ -4436,6 +4441,7 @@ function showApp(name){
     DATA.length=0; CT1_DATA.length=0; CT2_DATA.length=0;
     if(bnSale) bnSale.style.display='none';
   }
+  napGachCache();
   if(window.dvInit) dvInit();
   // Chỉ admin mới thấy nút Quản lý tài khoản
   var sessChk=checkSession();
@@ -6632,6 +6638,21 @@ function xuatPDF(che){
         thungStr=(tn%1===0?tn.toString():'≈ '+tn.toFixed(2))+' thùng';
       }
     }
+    if(giam){
+      var vG=tinhSoVien(item);
+      var qtyG='<b>'+item.qty+' '+(item.unit||'m²')+'</b>';
+      if(vG&&vG.soVien) qtyG+='<br><span class="sub">'+(aPdf?(aPdf.vienExact?'=':'≈'):(vG.soVienExact?'=':'≈'))+' '+vG.soVien+' viên</span>';
+      if(thungStr) qtyG+='<br><span class="sub" style="color:#0D47A1;font-weight:600">'+thungStr+'</span>';
+      var epG=(item.le>0)?Math.round((1-leVAT/item.le)*1000)/10:0;
+      return '<tr>'
+        +'<td class="tc">'+(i+1)+'</td>'
+        +'<td class="ma">'+(item.ten&&item.ten!==item.ma?item.ten:item.ma)+'<br><span class="sub">'+(item.kc&&item.kc!=='–'?item.kc+' · ':'')+loaiLabel+'</span></td>'
+        +'<td class="tc">'+qtyG+'</td>'
+        +'<td class="tr">'+(leVAT>0?'<div class="gia-moi">'+leVAT.toLocaleString('vi-VN')+'</div>':'Liên hệ')
+          +(epG>0?'<div class="gia-cu"><s>'+(item.le).toLocaleString('vi-VN')+'</s> <span class="giam-tag">−'+epG+'%</span></div>':'')+'</td>'
+        +'<td class="tr money">'+(don>0?don.toLocaleString('vi-VN'):'–')+'</td>'
+        +'</tr>';
+    }
     return '<tr>'
       +'<td class="tc">'+(i+1)+'</td>'
       +'<td><span class="loai-tag loai-'+item.loai+'">'+loaiLabel+'</span></td>'
@@ -6719,6 +6740,18 @@ function xuatPDF(che){
     +'justify-content:space-between;align-items:center}'
     +'.footer-left{font-size:11px;color:#aaa}'
     +'.footer-right{font-size:12px;font-weight:600;color:#C0232A}'
+    +'.gia-moi{font-size:13px;font-weight:800;color:#1B5E20}'
+    +'.gia-cu{font-size:10.5px;color:#999;margin-top:2px}'
+    +'.giam-tag{display:inline-block;background:#FDECEA;color:#C0232A;font-weight:800;padding:0 5px;border-radius:4px;margin-left:3px}'
+    +'.sum-row{display:flex;justify-content:space-between;font-size:13px;color:#555;padding:3px 0}'
+    +'.sum-row.giam{color:#C0232A;font-weight:700;border-bottom:1px dashed #ddd;padding-bottom:8px;margin-bottom:8px}'
+    +'@media (max-width:640px){'
+    +'body{padding:8px}.hdr{padding:18px 16px}.hdr-right{position:static;text-align:left;margin-top:10px}'
+    +'.info-wrap{flex-direction:column}.info-box{padding:14px 16px}.info-box:first-child{border-right:none;border-bottom:1px solid #f0f0f0}'
+    +'.tbl-wrap{padding:0 10px 16px;overflow-x:auto}td{padding:8px 4px;font-size:11.5px}thead th{padding:8px 4px;font-size:9px;letter-spacing:0}'
+    +'.total-wrap{margin:0 10px 16px}.total-val{font-size:18px}.note-wrap{margin:0 10px 16px}.footer{padding:14px 16px;flex-direction:column;gap:6px;align-items:flex-start}'
+    +'}'
+    +'@media print{body{background:#fff;padding:0}.page{box-shadow:none;border-radius:0;max-width:none}tr{page-break-inside:avoid}.total-wrap{page-break-inside:avoid}}'
     +'</style></head><body>'
 
     /* HEADER */
@@ -6757,14 +6790,9 @@ function xuatPDF(che){
     +'<div class="tbl-title">Chi tiết sản phẩm</div>'
     +'<table>'
     +'<thead><tr>'
-    +'<th class="tc">#</th>'
-    +'<th>Loại</th>'
-    +'<th>Mã sản phẩm</th>'
-    +'<th class="tc">Kích cỡ</th>'
-    +'<th class="tc">Số lượng</th>'
-    +'<th class="tc">Số thùng</th>'
-    +(giam?'<th class="tr">Giá niêm yết (đ)</th><th class="tc">Giảm</th><th class="tr">Giá sau giảm (đ)</th>':'<th class="tr">Đơn giá (đ)</th>')
-    +'<th class="tr">Thành tiền (đ)</th>'
+    +(giam
+      ?'<th class="tc">#</th><th>Sản phẩm</th><th class="tc">Số lượng</th><th class="tr">Đơn giá sau giảm (đ)</th><th class="tr">Thành tiền (đ)</th>'
+      :'<th class="tc">#</th><th>Loại</th><th>Mã sản phẩm</th><th class="tc">Kích cỡ</th><th class="tc">Số lượng</th><th class="tc">Số thùng</th><th class="tr">Đơn giá (đ)</th><th class="tr">Thành tiền (đ)</th>')
     +'</tr></thead>'
     +'<tbody>'+rows+'</tbody>'
     +'</table>'
@@ -6772,9 +6800,13 @@ function xuatPDF(che){
 
     /* TOTAL */
     +'<div class="total-wrap">'
+    +(giam?(function(){
+        var gi=totalNiemYet-totalLe, pc=totalNiemYet>0?Math.round(gi/totalNiemYet*1000)/10:0;
+        return '<div class="sum-row"><span>Tạm tính (giá niêm yết)</span><span>'+totalNiemYet.toLocaleString('vi-VN')+' đ</span></div>'
+          +'<div class="sum-row giam"><span>Ưu đãi giảm giá'+(donGgAll>0?' (toàn đơn '+donGgAll+'%)':'')+'</span><span>− '+gi.toLocaleString('vi-VN')+' đ'+(pc>0?' ('+pc+'%)':'')+'</span></div>';
+      })():'')
     +'<div class="total-row">'
-    +'<div><div class="total-label">'+(giam?'TỔNG SAU GIẢM GIÁ':'TỔNG GIÁ TRỊ BÁO GIÁ')+'</div>'
-    +(giam?'<div class="total-note" style="margin-top:4px">Giá niêm yết: '+totalNiemYet.toLocaleString('vi-VN')+' đ · Giảm: '+(totalNiemYet-totalLe).toLocaleString('vi-VN')+' đ'+(donGgAll>0?' (giảm toàn đơn '+donGgAll+'%)':'')+'</div>':'')
+    +'<div><div class="total-label">'+(giam?'TỔNG THANH TOÁN':'TỔNG GIÁ TRỊ BÁO GIÁ')+'</div>'
     +'</div>'
     +'<div class="total-val">'+(totalLe>0?totalLe.toLocaleString('vi-VN')+' đ':'Liên hệ báo giá')+'</div>'
     +'</div>'

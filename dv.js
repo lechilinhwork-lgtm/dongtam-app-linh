@@ -7,6 +7,12 @@
   function vnd(n){ return (n||0).toLocaleString('vi-VN')+'đ'; }
   function phien(){ var s=checkSession(); return (s&&s.dl)?s:null; }
 
+  function manChuyen(txt){
+    var m=document.createElement('div');
+    m.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(192,35,42,.94);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-weight:800;font-size:18px';
+    m.innerHTML='<div style="width:38px;height:38px;border:4px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:dvq .8s linear infinite"></div><div>'+txt+'</div><style>@keyframes dvq{to{transform:rotate(360deg)}}</style>';
+    document.body.appendChild(m);
+  }
   window.dvInit=function(){
     var old=document.getElementById('dv-chip'); if(old) old.remove();
     var s=phien(); if(!s) return;
@@ -19,7 +25,7 @@
     if(!s.rg){
       var bat=laBanRieng();
       if(bat){ chip.textContent='↩ Về kênh đại lý'; chip.style.background='#FFD54F'; chip.style.color='#5D4037'; }
-      chip.onclick=function(e){ e.stopPropagation(); try{ if(bat) sessionStorage.removeItem('dt_ban_rieng'); else sessionStorage.setItem('dt_ban_rieng','1'); }catch(x){} location.reload(); };
+      chip.onclick=function(e){ e.stopPropagation(); try{ if(bat) sessionStorage.removeItem('dt_ban_rieng'); else sessionStorage.setItem('dt_ban_rieng','1'); }catch(x){} manChuyen(bat?'Đang về kênh đại lý…':'Đang chuyển sang '+nhan+'…'); setTimeout(function(){ location.reload(); },60); };
     } else chip.style.cursor='default';
     t.appendChild(chip);
   };
