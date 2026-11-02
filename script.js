@@ -1561,7 +1561,7 @@ function buildFilterSide(){
     h+='<label class="fs-row"><input type="radio" name="fs-gia" '+(curLocGia===o[0]?'checked':'')+' onchange="fsSetGia(\''+o[0]+'\')"/> '+o[1]+'</label>';
   });
   // Chương trình
-  h+='<div class="fs-hdr">Chương trình</div>'
+  if(!laBanRieng()) h+='<div class="fs-hdr">Chương trình</div>'
     +'<label class="fs-row"><input type="checkbox" '+(curLocCT.cl?'checked':'')+' onchange="fsToggleCT(\'cl\')"/> ★ Chiến lược</label>'
     +'<label class="fs-row"><input type="checkbox" '+(curLocCT.sale?'checked':'')+' onchange="fsToggleCT(\'sale\')"/> 🔥 Đang Sale (CT1/CT2)</label>';
   // Thuộc tính (Màu / Công năng / Tính năng / Hoa văn / Men) — dropdown như lọc nâng cao
