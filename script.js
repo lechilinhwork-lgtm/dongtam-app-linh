@@ -302,7 +302,7 @@ function fetchAllFromSheet(lanThu){
   var s=document.createElement('script');
   s.id='_all_script';
   var _tok=authTok();
-  s.src=APPS_URL+'?action=getAll&k='+encodeURIComponent(APP_KEY)+'&t='+encodeURIComponent(_tok)+(_tok?'':'&g=1')+(lanThu?'&r='+lanThu+Date.now():'')+'&callback=_onGetAll';
+  s.src=APPS_URL+'?action=getAll&k='+encodeURIComponent(APP_KEY)+'&t='+encodeURIComponent(_tok)+(_tok?'':'&g=1')+thamSoBanRieng()+(lanThu?'&r='+lanThu+Date.now():'')+'&callback=_onGetAll';
   setTimeout(function(){
     if(_getAllXong) return;
     var cu=document.getElementById('_all_script'); if(cu) cu.remove();
@@ -525,7 +525,7 @@ function fetchGiaFromSheet(loaisOverride){
       s.id='_gia_script_'+loai;
       // g=1: khách lẻ (không token) → server chỉ trả giá lẻ, giấu giá ĐL/sale
       var _tok=authTok();
-      s.src=APPS_URL+'?action=getGia&loai='+loai+'&k='+encodeURIComponent(APP_KEY)+'&t='+encodeURIComponent(_tok)+(_tok?'':'&g=1')+'&callback=_onGia_'+loai;
+      s.src=APPS_URL+'?action=getGia&loai='+loai+'&k='+encodeURIComponent(APP_KEY)+'&t='+encodeURIComponent(_tok)+(_tok?'':'&g=1')+thamSoBanRieng()+'&callback=_onGia_'+loai;
       s.onerror=function(){
         console.log('⚠️ Không tải được giá '+loai+' từ Sheet — dùng giá trong app');
         s.remove();
@@ -1432,7 +1432,8 @@ function rutGonGiaRieng(div,p){
   while(tmp.firstChild) cha.insertBefore(tmp.firstChild,dong[0]);
   dong.forEach(function(r){ if(r.parentNode) r.parentNode.removeChild(r); });
 }
-function laBanRieng(){ var s=checkSession(); return !!(s&&s.rg); }
+function laBanRieng(){ var s=checkSession(); if(!s) return false; if(s.rg) return true; try{ return !!(s.dl && sessionStorage.getItem('dt_ban_rieng')==='1'); }catch(e){ return false; } }
+function thamSoBanRieng(){ var s=checkSession(); return (laBanRieng()&&s&&!s.rg)?'&v=da':''; }
 function mergeCTintoDATA(){
   if(laBanRieng()) return;
   // Mã đã có sẵn trong DATA (catalog gạch thường) nhưng tháng này CŨNG đang
