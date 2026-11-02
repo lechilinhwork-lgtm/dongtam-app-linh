@@ -1101,6 +1101,7 @@ function renderDanhMucGrid(){
     {icon:'🚽', ten:'Thiết bị vệ sinh',  count:(typeof TBVS!=='undefined'&&TBVS.length?TBVS.length+' mã':'…'), tab:'tbvs', grad:'linear-gradient(160deg,#E3F2FD,#BBDEFB)'},
     {icon:'🪣', ten:'Sơn nước',          count:null,         tab:'son',  grad:'var(--bg2)', soon:true}
   ];
+  if(laBanRieng()) items=items.filter(function(it){ return !it.sale; });
   items.forEach(function(it){
     var coDuLieu = !!it.tab;
 

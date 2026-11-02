@@ -13,21 +13,50 @@
     m.innerHTML='<div style="width:38px;height:38px;border:4px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:dvq .8s linear infinite"></div><div>'+txt+'</div><style>@keyframes dvq{to{transform:rotate(360deg)}}</style>';
     document.body.appendChild(m);
   }
+  function doiKenh(bat){
+    try{ if(bat) sessionStorage.removeItem('dt_ban_rieng'); else sessionStorage.setItem('dt_ban_rieng','1'); }catch(x){}
+    manChuyen(bat?'Đang về kênh đại lý…':'Đang chuyển sang '+nhan+'…');
+    setTimeout(function(){ location.reload(); },60);
+  }
   window.dvInit=function(){
-    var old=document.getElementById('dv-chip'); if(old) old.remove();
+    ['dv-chip','dv-bar','dv-menu-item'].forEach(function(id){ var o=document.getElementById(id); if(o) o.remove(); });
     var s=phien(); if(!s) return;
     nhan=s.dl;
     var t=document.querySelector('.topbar-title'); if(!t) return;
+    var bat=laBanRieng(), duocDoi=!s.rg;
+    // 1. Nhãn cạnh tên app (máy tính / điện thoại rộng)
     var chip=document.createElement('span');
-    chip.id='dv-chip'; chip.textContent=nhan;
+    chip.id='dv-chip'; chip.textContent=bat?'↩ Đại lý':nhan;
     chip.setAttribute('role','button');
-    chip.style.cssText='display:inline-block;margin-left:8px;padding:2px 10px;border-radius:12px;background:#fff;color:#C0232A;font-size:12px;font-weight:800;font-style:normal;cursor:pointer;vertical-align:middle';
-    if(!s.rg){
-      var bat=laBanRieng();
-      if(bat){ chip.textContent='↩ Về kênh đại lý'; chip.style.background='#FFD54F'; chip.style.color='#5D4037'; }
-      chip.onclick=function(e){ e.stopPropagation(); try{ if(bat) sessionStorage.removeItem('dt_ban_rieng'); else sessionStorage.setItem('dt_ban_rieng','1'); }catch(x){} manChuyen(bat?'Đang về kênh đại lý…':'Đang chuyển sang '+nhan+'…'); setTimeout(function(){ location.reload(); },60); };
-    } else chip.style.cursor='default';
+    chip.style.cssText='display:inline-block;margin-left:8px;padding:2px 10px;border-radius:12px;background:'+(bat?'#FFD54F':'#fff')+';color:'+(bat?'#5D4037':'#C0232A')+';font-size:12px;font-weight:800;font-style:normal;vertical-align:middle;cursor:'+(duocDoi?'pointer':'default');
+    if(duocDoi) chip.onclick=function(e){ e.stopPropagation(); doiKenh(bat); };
     t.appendChild(chip);
+    if(!duocDoi) return;
+    // 2. Mục trong menu tài khoản (luôn thấy được trên điện thoại)
+    var menu=document.getElementById('menu-taikhoan');
+    if(menu){
+      var it=document.createElement('button');
+      it.type='button'; it.id='dv-menu-item'; it.className='acct-menu-item';
+      it.innerHTML='<span class="acct-menu-icon">'+(bat?'↩':'🔀')+'</span> '+(bat?'Về kênh đại lý':'Chuyển sang '+esc(nhan));
+      it.onclick=function(){ if(window.toggleMenuTaiKhoan) toggleMenuTaiKhoan(); doiKenh(bat); };
+      menu.insertBefore(it,menu.firstChild);
+    }
+    // 3. Dải thông báo khi đang xem kênh riêng: có nút quay về to, rõ
+    if(bat){
+      var tb=document.querySelector('.topbar');
+      if(tb&&tb.parentNode){
+        var bar=document.createElement('div');
+        bar.id='dv-bar';
+        bar.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;background:#FFF3CD;border-bottom:1px solid #FFD54F;padding:7px 12px;font-size:13px;color:#5D4037;font-weight:700';
+        bar.innerHTML='<span>Đang xem kênh '+esc(nhan)+'</span>';
+        var b=document.createElement('button');
+        b.type='button'; b.textContent='↩ Về kênh đại lý';
+        b.style.cssText='background:#C0232A;color:#fff;border:0;border-radius:14px;padding:6px 12px;font-size:13px;font-weight:800;white-space:nowrap';
+        b.onclick=function(){ doiKenh(true); };
+        bar.appendChild(b);
+        tb.parentNode.insertBefore(bar,tb.nextSibling);
+      }
+    }
   };
 
   function tai_(cb){
