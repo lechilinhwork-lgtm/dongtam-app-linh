@@ -3535,6 +3535,8 @@ function copyZaloMsg(msg){
 // khách hỏi cùng lúc nhiều mã, đánh dấu ✓ trên từng thẻ rồi gửi 1 lần qua Zalo,
 // khỏi phải mở từng sản phẩm gửi riêng lẻ.
 var gioAnh=[]; // [{ma, ten, url}]
+var GIO_ANH_MAX=60; // số mã tối đa trong giỏ; khi gửi trên điện thoại tự chia lượt GA_LUOT ảnh
+var GA_LUOT=8;      // ảnh mỗi lượt gửi (điện thoại/Zalo dễ lỗi nếu đính quá nhiều ảnh một lần)
 function timAnhDaiDien(ma){ return timAnh(ma)||''; }
 function trongGioAnh(ma){ return gioAnh.some(function(x){return x.ma===ma;}); }
 function toggleGioAnh(ma, ten){
@@ -3543,7 +3545,7 @@ function toggleGioAnh(ma, ten){
   else {
     var url=timAnhDaiDien(ma);
     if(!url){ showToast('⚠️ Mã '+ma+' chưa có ảnh trong Sheet'); return; }
-    if(gioAnh.length>=CHIA_SE_ANH_MAX){ showToast('⚠️ Giỏ ảnh tối đa '+CHIA_SE_ANH_MAX+' sản phẩm/lượt gửi (Zalo/trình duyệt dễ lỗi hoặc chặn nếu gửi quá nhiều ảnh cùng lúc) — gửi lượt này rồi thêm tiếp'); return; }
+    if(gioAnh.length>=GIO_ANH_MAX){ showToast('⚠️ Giỏ ảnh tối đa '+GIO_ANH_MAX+' sản phẩm — gửi bớt rồi thêm tiếp'); return; }
     gioAnh.push({ma:ma, ten:ten||ma, url:url});
   }
   capNhatGioAnhFab();
@@ -3811,12 +3813,14 @@ function _soanDaiThongTin(w, h, ma, tt, doiTuong){
 }
 // Vẽ lại ảnh kèm dải thông tin ở đáy (mở rộng canvas, không đè lên ảnh), chuyển về PNG -
 // dùng chung cho mọi luồng chia sẻ ảnh trong app. doiTuong: 'le' (mặc định) | 'daily'.
-function _ghepNhanLenAnh(blob, ma, doiTuong){
+// jpg=true: xuất JPEG 92% tối đa 2400px (gửi điện thoại: nét hơn mà vẫn nhẹ);
+// mặc định PNG 1600px (clipboard máy tính cần PNG).
+function _ghepNhanLenAnh(blob, ma, doiTuong, jpg){
   return new Promise(function(resolve,reject){
     var img=new Image();
     img.onload=function(){
     try{
-      var k=Math.min(1, 1600/img.naturalWidth); // giới hạn 1600px cho nhẹ khi gửi Zalo
+      var k=Math.min(1, (jpg?2400:1600)/img.naturalWidth);
       var w=Math.round(img.naturalWidth*k), h=Math.round(img.naturalHeight*k);
       var dai=ma?_soanDaiThongTin(w, h, ma, layThongTinSP(ma), doiTuong):null;
       var cv=document.createElement('canvas');
@@ -3824,7 +3828,7 @@ function _ghepNhanLenAnh(blob, ma, doiTuong){
       var ctx=cv.getContext('2d');
       ctx.drawImage(img,0,0,w,h);
       if(dai) dai.ve(ctx, h);
-      cv.toBlob(function(png){ if(png) resolve(png); else reject(new Error('toBlob fail')); },'image/png');
+      cv.toBlob(function(png){ if(png) resolve(png); else reject(new Error('toBlob fail')); }, jpg?'image/jpeg':'image/png', jpg?0.92:undefined);
     }catch(err){ reject(err); }
     };
     img.onerror=function(){ reject(new Error('load fail')); };
@@ -3891,8 +3895,9 @@ function _gaBtnText(txt, cls){
   b.disabled=(cls==='busy');
 }
 // Đổi giỏ (thêm/bớt/xoá) -> bỏ ảnh đã chuẩn bị, nút về như ban đầu.
+var _gaTienDo=0;   // số ảnh trong giỏ đã chuyển sang Zalo xong (để gửi lượt kế tiếp)
 function huyGioAnhSan(){
-  _gaSan=null; _gaDang++;
+  _gaSan=null; _gaDang++; _gaTienDo=0;
   _gaBtnText('📤 Chia sẻ tất cả qua Zalo','');
 }
 function chiaSeGioAnh(){
@@ -3904,28 +3909,32 @@ function chiaSeGioAnh(){
   _chuanBiAnhGio(items);
 }
 // Bước 1: tải + đóng dấu TUẦN TỰ từng ảnh (tải song song dễ bị Google từ chối)
-function _chuanBiAnhGio(items){
+function _chuanBiAnhGio(tatCa){
   if(!(navigator.share && navigator.canShare)){
     dongGioAnhSheet();
-    items.forEach(function(x){ window.open(convertImgUrl(x.url),'_blank'); });
-    showToast('📷 Đã mở '+items.length+' ảnh ở tab mới — bấm giữ ảnh để lưu, rồi gửi qua Zalo');
+    tatCa.forEach(function(x){ window.open(convertImgUrl(x.url),'_blank'); });
+    showToast('📷 Đã mở '+tatCa.length+' ảnh ở tab mới — bấm giữ ảnh để lưu, rồi gửi qua Zalo');
     return;
   }
+  if(_gaTienDo>=tatCa.length) _gaTienDo=0;
+  var items=tatCa.slice(_gaTienDo, _gaTienDo+GA_LUOT);
+  var nLuot=Math.ceil(tatCa.length/GA_LUOT), soLuot=Math.floor(_gaTienDo/GA_LUOT)+1;
+  var nhanLuot=nLuot>1?' (lượt '+soLuot+'/'+nLuot+')':'';
   var run=++_gaDang, key=_gaKey(), files=[], thieu=[], dt=gaDT();
   function buoc(i){
     if(run!==_gaDang) return; // giỏ đã đổi -> bỏ lượt này
     if(i>=items.length){
       if(!files.length){ _gaBtnText('📤 Chia sẻ tất cả qua Zalo',''); showToast('⚠️ Không tải được ảnh nào — kiểm tra mạng rồi bấm lại'); return; }
-      _gaSan={key:key, files:files, thieu:thieu, tong:items.length};
-      _gaBtnText('✅ Ảnh đã sẵn sàng — BẤM LẠI để gửi '+files.length+' ảnh','ready');
+      _gaSan={key:key, files:files, thieu:thieu, tong:items.length, tongGio:tatCa.length, nhanLuot:nhanLuot, soLuot:soLuot, nLuot:nLuot};
+      _gaBtnText('✅ Ảnh đã sẵn sàng — BẤM LẠI để gửi '+files.length+' ảnh'+nhanLuot,'ready');
       if(thieu.length) showToast('⚠️ Chuẩn bị được '+files.length+'/'+items.length+' ảnh (không tải được: '+thieu.join(', ')+')');
       return;
     }
-    _gaBtnText('⏳ Đang chuẩn bị ảnh '+(i+1)+'/'+items.length+'...','busy');
+    _gaBtnText('⏳ Đang chuẩn bị ảnh '+(i+1)+'/'+items.length+nhanLuot+'...','busy');
     _taiAnhCoThuLai(items[i].url).then(function(blob){
-      return _ghepNhanLenAnh(blob, items[i].ma, dt).catch(function(){ return blob; });
+      return _ghepNhanLenAnh(blob, items[i].ma, dt, true).catch(function(){ return blob; });
     }).then(function(b){
-      files.push(new File([b], (items[i].ma||'anh')+'.png', {type:b.type||'image/png'}));
+      files.push(new File([b], (items[i].ma||'anh')+(b.type==='image/jpeg'?'.jpg':'.png'), {type:b.type||'image/jpeg'}));
     }).catch(function(){
       thieu.push(items[i].ten||items[i].ma);
     }).then(function(){ buoc(i+1); });
@@ -3943,8 +3952,13 @@ function _guiAnhDaSan(){
   }
   navigator.share({files:sp.files}).then(function(){
     forcePaintStrong();
-    showToast('✅ App đã chuyển đủ '+sp.files.length+'/'+sp.tong+' ảnh sang Zalo');
-    huyGioAnhSan(); dongGioAnhSheet();
+    showToast('✅ App đã chuyển '+sp.files.length+'/'+sp.tong+' ảnh sang Zalo'+sp.nhanLuot);
+    _gaTienDo+=sp.tong;
+    if(_gaTienDo<sp.tongGio){
+      // còn ảnh: tự chuẩn bị lượt kế tiếp, giữ bảng giỏ ảnh mở để bấm gửi tiếp
+      _gaSan=null;
+      _chuanBiAnhGio(gioAnh.slice());
+    } else { huyGioAnhSan(); dongGioAnhSheet(); }
   }).catch(function(err){
     forcePaintStrong();
     // Người dùng tự đóng bảng chia sẻ: giữ ảnh đã chuẩn bị để bấm gửi lại được
