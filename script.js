@@ -5834,14 +5834,17 @@ function xoaLocNangCao(tab){
   if(tab==='sale') renderSale(); else render();
 }
 // Badge gọn hiện trên thẻ sản phẩm — 3 chấm màu theo tốc độ giao, không cần bấm vào
+// Chỉ mục mã đã chuẩn hóa, dựng 1 lần cho mỗi lần tải tồn kho (trước đây mỗi
+// mã không có tồn lại quét cả danh sách mỗi lần vẽ → chậm khi lọc/gõ tìm).
+var _tkIdx=null, _tkIdxSrc=null;
 function timTonKho(ma){
   if(!tonKhoChiTiet) return null;
-  var tk=tonKhoChiTiet[normMa(ma)]||tonKhoChiTiet[ma];
-  if(!tk){
-    var k=Object.keys(tonKhoChiTiet).find(function(key){return normMa(key)===normMa(ma);});
-    tk=k?tonKhoChiTiet[k]:null;
+  if(_tkIdxSrc!==tonKhoChiTiet){
+    _tkIdx={};
+    Object.keys(tonKhoChiTiet).forEach(function(key){ _tkIdx[normMa(key)]=tonKhoChiTiet[key]; });
+    _tkIdxSrc=tonKhoChiTiet;
   }
-  return tk;
+  return _tkIdx[normMa(ma)]||tonKhoChiTiet[ma]||null;
 }
 // Nếu tài khoản được gán "Kho phụ trách" (cột trong tab Users, ngăn cách bởi
 // dấu phẩy) → chỉ trả về tồn kho của đúng (các) kho đó, tự tính lại tổng/tier.
