@@ -5633,6 +5633,7 @@ function fetchTonKhoChiTiet(lanThu){
       if(typeof render==='function') render();
       if(typeof renderSale==='function') renderSale();
     }
+    else { tkLoadingBanner(false); bangBaoTai('Chưa tải được tồn kho'+(res&&res.msg?': '+String(res.msg).slice(0,120):'.'), function(){ fetchTonKhoChiTiet(0); }); }
     tonKhoLoaded=true;
     _refreshTonKhoModalIfOpen();
     var s=document.getElementById('_tkct_script');
