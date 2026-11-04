@@ -3180,6 +3180,13 @@ function convertImgUrl(url){
   return url;
 }
 
+// Bản kích thước gốc (=s0) của ảnh Google - chỉ dùng khi tải để CHIA SẺ,
+// không dùng để hiển thị trên thẻ (quá nặng).
+function urlGoc(url){
+  var u=convertImgUrl(url);
+  return (/googleusercontent\.com\/d\//.test(u) && u.indexOf('=s')<0) ? u+'=s0' : u;
+}
+
 function renderDpImg(){
   var img     = document.getElementById('dp-img');
   var prev    = document.getElementById('dp-img-prev');
@@ -3813,22 +3820,26 @@ function _soanDaiThongTin(w, h, ma, tt, doiTuong){
 }
 // Vẽ lại ảnh kèm dải thông tin ở đáy (mở rộng canvas, không đè lên ảnh), chuyển về PNG -
 // dùng chung cho mọi luồng chia sẻ ảnh trong app. doiTuong: 'le' (mặc định) | 'daily'.
-// jpg=true: xuất JPEG 92% tối đa 2400px (gửi điện thoại: nét hơn mà vẫn nhẹ);
-// mặc định PNG 1600px (clipboard máy tính cần PNG).
+// Giữ nguyên kích thước ảnh gốc (không thu nhỏ), vẽ làm mịn mức cao nhất.
+// jpg=true: xuất JPEG chất lượng 100% (gửi điện thoại); mặc định PNG
+// (clipboard máy tính cần PNG). Chỉ thu nhỏ khi vượt ~15 triệu điểm ảnh -
+// quá mức này Safari trên iPhone không vẽ được canvas (ra ảnh trắng/lỗi).
 function _ghepNhanLenAnh(blob, ma, doiTuong, jpg){
   return new Promise(function(resolve,reject){
     var img=new Image();
     img.onload=function(){
     try{
-      var k=Math.min(1, (jpg?2400:1600)/img.naturalWidth);
+      var k=Math.min(1, Math.sqrt(15000000/(img.naturalWidth*img.naturalHeight*1.2)));
       var w=Math.round(img.naturalWidth*k), h=Math.round(img.naturalHeight*k);
       var dai=ma?_soanDaiThongTin(w, h, ma, layThongTinSP(ma), doiTuong):null;
       var cv=document.createElement('canvas');
       cv.width=w; cv.height=h+(dai?dai.height:0);
       var ctx=cv.getContext('2d');
+      ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+      if(jpg){ ctx.fillStyle='#fff'; ctx.fillRect(0,0,cv.width,cv.height); } // JPEG không có nền trong suốt
       ctx.drawImage(img,0,0,w,h);
       if(dai) dai.ve(ctx, h);
-      cv.toBlob(function(png){ if(png) resolve(png); else reject(new Error('toBlob fail')); }, jpg?'image/jpeg':'image/png', jpg?0.92:undefined);
+      cv.toBlob(function(png){ if(png) resolve(png); else reject(new Error('toBlob fail')); }, jpg?'image/jpeg':'image/png', jpg?1:undefined);
     }catch(err){ reject(err); }
     };
     img.onerror=function(){ reject(new Error('load fail')); };
@@ -3840,7 +3851,7 @@ function gacmCopy(){
   var it=_gacm.items[_gacm.idx];
   var statusEl=document.getElementById('gacm-status');
   statusEl.textContent='⏳ Đang copy...';
-  fetch(convertImgUrl(it.url)).then(function(res){
+  fetch(urlGoc(it.url)).then(function(res){
     if(!res.ok) throw new Error('fetch fail');
     return res.blob();
   }).then(function(blob){ return _ghepNhanLenAnh(blob, it.ma, _gacm&&_gacm.dt); }).then(function(pngBlob){
@@ -3976,7 +3987,7 @@ function _guiAnhDaSan(){
 function _taiAnhCoThuLai(url){
   var lanThu=0;
   function lan(){
-    return fetch(convertImgUrl(url)).then(function(res){
+    return fetch(urlGoc(url)).then(function(res){
       if(!res.ok) throw new Error('HTTP '+res.status);
       return res.blob();
     }).catch(function(err){
@@ -3997,13 +4008,13 @@ function _thucHienChiaSeNhieuSP(urls, items, onDone){
   Promise.allSettled(urls.map(_taiAnhCoThuLai)).then(function(results){
     return Promise.all(results.map(function(r,i){
       if(r.status!=='fulfilled') return null;
-      return _ghepNhanLenAnh(r.value, items[i].ma, gaDT()).catch(function(){ return r.value; });
+      return _ghepNhanLenAnh(r.value, items[i].ma, gaDT(), true).catch(function(){ return r.value; });
     }));
   }).then(function(blobs){
     var files=[], okItems=[], okUrls=[], thieu=[];
     blobs.forEach(function(b,i){
       if(b){
-        files.push(new File([b], (items[i].ma||'anh')+'.png', {type:'image/png'}));
+        files.push(new File([b], (items[i].ma||'anh')+(b.type==='image/jpeg'?'.jpg':'.png'), {type:b.type||'image/png'}));
         okItems.push(items[i]); okUrls.push(urls[i]);
       } else { thieu.push(items[i].ten||items[i].ma); }
     });
