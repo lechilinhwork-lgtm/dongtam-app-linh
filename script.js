@@ -3544,6 +3544,8 @@ function copyZaloMsg(msg){
 var gioAnh=[]; // [{ma, ten, url}]
 var GIO_ANH_MAX=60; // số mã tối đa trong giỏ; khi gửi trên điện thoại tự chia lượt GA_LUOT ảnh
 var GA_LUOT=8;      // ảnh mỗi lượt gửi (điện thoại/Zalo dễ lỗi nếu đính quá nhiều ảnh một lần)
+var GA_BYTES=20*1000*1000; // dừng thêm ảnh vào lượt khi tổng đã quá ~20MB (gạch khổ lớn)
+var _gaLuotHT=GA_LUOT;     // số ảnh/lượt đang dùng; tự giảm nếu máy không mở được bảng chia sẻ
 function timAnhDaiDien(ma){ return timAnh(ma)||''; }
 function trongGioAnh(ma){ return gioAnh.some(function(x){return x.ma===ma;}); }
 function toggleGioAnh(ma, ten){
@@ -3928,23 +3930,24 @@ function _chuanBiAnhGio(tatCa){
     return;
   }
   if(_gaTienDo>=tatCa.length) _gaTienDo=0;
-  var items=tatCa.slice(_gaTienDo, _gaTienDo+GA_LUOT);
-  var nLuot=Math.ceil(tatCa.length/GA_LUOT), soLuot=Math.floor(_gaTienDo/GA_LUOT)+1;
-  var nhanLuot=nLuot>1?' (lượt '+soLuot+'/'+nLuot+')':'';
-  var run=++_gaDang, key=_gaKey(), files=[], thieu=[], dt=gaDT();
+  var items=tatCa.slice(_gaTienDo, _gaTienDo+_gaLuotHT);
+  var nhanLuot=tatCa.length>items.length?' (đã gửi '+_gaTienDo+'/'+tatCa.length+')':'';
+  var run=++_gaDang, key=_gaKey(), files=[], thieu=[], dt=gaDT(), tongByte=0;
   function buoc(i){
     if(run!==_gaDang) return; // giỏ đã đổi -> bỏ lượt này
-    if(i>=items.length){
+    // Đủ số ảnh HOẶC đã nặng quá GA_BYTES (gạch khổ lớn: ảnh to, ít ảnh/lượt hơn)
+    if(i>=items.length || tongByte>=GA_BYTES){
       if(!files.length){ _gaBtnText('📤 Chia sẻ tất cả qua Zalo',''); showToast('⚠️ Không tải được ảnh nào — kiểm tra mạng rồi bấm lại'); return; }
-      _gaSan={key:key, files:files, thieu:thieu, tong:items.length, tongGio:tatCa.length, nhanLuot:nhanLuot, soLuot:soLuot, nLuot:nLuot};
+      _gaSan={key:key, files:files, thieu:thieu, tong:i, tongGio:tatCa.length, nhanLuot:nhanLuot};
       _gaBtnText('✅ Ảnh đã sẵn sàng — BẤM LẠI để gửi '+files.length+' ảnh'+nhanLuot,'ready');
-      if(thieu.length) showToast('⚠️ Chuẩn bị được '+files.length+'/'+items.length+' ảnh (không tải được: '+thieu.join(', ')+')');
+      if(thieu.length) showToast('⚠️ Chuẩn bị được '+files.length+'/'+i+' ảnh (không tải được: '+thieu.join(', ')+')');
       return;
     }
     _gaBtnText('⏳ Đang chuẩn bị ảnh '+(i+1)+'/'+items.length+nhanLuot+'...','busy');
     _taiAnhCoThuLai(items[i].url).then(function(blob){
       return _ghepNhanLenAnh(blob, items[i].ma, dt, true).catch(function(){ return blob; });
     }).then(function(b){
+      tongByte+=b.size||0;
       files.push(new File([b], (items[i].ma||'anh')+(b.type==='image/jpeg'?'.jpg':'.png'), {type:b.type||'image/jpeg'}));
     }).catch(function(){
       thieu.push(items[i].ten||items[i].ma);
@@ -3956,11 +3959,20 @@ function _chuanBiAnhGio(tatCa){
 // từ chối khi gửi nhiều ảnh kèm text).
 function _guiAnhDaSan(){
   var sp=_gaSan; if(!sp) return;
-  if(!navigator.canShare({files:sp.files})){
-    huyGioAnhSan(); dongGioAnhSheet();
-    showToast('⚠️ Máy không cho chia sẻ ngần này ảnh cùng lúc — hãy thử gửi ít ảnh hơn');
-    return;
+  // Máy không mở được bảng chia sẻ với ngần này ảnh/dung lượng -> tự giảm một nửa
+  // số ảnh mỗi lượt rồi chuẩn bị lại (nhớ cho các lượt sau), không bắt người dùng tự chọn lại.
+  function giamLuot(){
+    if(sp.files.length<=1){
+      huyGioAnhSan(); dongGioAnhSheet();
+      showToast('⚠️ Ảnh này quá nặng để chia sẻ trên máy — gửi riêng từng ảnh hoặc dùng bản nhỏ hơn');
+      return;
+    }
+    _gaLuotHT=Math.max(1, Math.floor(sp.files.length/2));
+    showToast('ℹ️ Ảnh nặng, tự giảm còn '+_gaLuotHT+' ảnh/lượt — chuẩn bị lại...');
+    _gaSan=null;
+    _chuanBiAnhGio(gioAnh.slice());
   }
+  if(!navigator.canShare({files:sp.files})){ giamLuot(); return; }
   navigator.share({files:sp.files}).then(function(){
     forcePaintStrong();
     showToast('✅ App đã chuyển '+sp.files.length+'/'+sp.tong+' ảnh sang Zalo'+sp.nhanLuot);
@@ -3975,8 +3987,7 @@ function _guiAnhDaSan(){
     // Người dùng tự đóng bảng chia sẻ: giữ ảnh đã chuẩn bị để bấm gửi lại được
     if(err&&err.name==='AbortError') return;
     console.log('Web Share (giỏ ảnh) thất bại:',err);
-    huyGioAnhSan(); dongGioAnhSheet();
-    showToast('⚠️ Không mở được bảng chia sẻ — bấm lại Chia sẻ để thử lần nữa');
+    giamLuot();
   });
 }
 // Giống _thucHienChiaSe nhưng mỗi ảnh là 1 SẢN PHẨM KHÁC NHAU nên đặt tên file
