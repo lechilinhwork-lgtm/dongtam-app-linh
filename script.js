@@ -3707,8 +3707,15 @@ function layThongTinSP(ma){
         var nk=p.ns||(ct?ct.nk:0)||0, gh=p.gs||(ct?ct.gh:0)||0;
         if(nk>0||gh>0) sale={nk:nk, gh:gh, tag:(p._fromCT==='CT2'?'XẢ KHO T':'SALE T')+String(Number(thangHienTai()))};
       }
-      var dl=(arrs[i]===DATA)?{nk:p.nhan||0, gh:p.giao||0}:null;
-      return {kc:p.kc||'', le:p.le||0, sale:sale, dl:dl, cat:(arrs[i]===DATA)?p.cat:'', th:(arrs[i]===DATA&&laBanRieng())?giaThungRieng(p):0};
+      // Mỗi nhóm bán theo ĐƠN VỊ riêng: Gạch theo m², Ngói theo viên, Keo theo bao (hoặc dv trong
+      // Sheet), Kính theo thùng, TBVS theo ĐVT của sản phẩm - ảnh phải ghi đúng đơn vị đó.
+      var dv='m²';
+      if(typeof NGOI!=='undefined' && arrs[i]===NGOI) dv='viên';
+      else if(typeof KEO!=='undefined' && arrs[i]===KEO) dv=p.dv||'bao';
+      else if(typeof KINH!=='undefined' && arrs[i]===KINH) dv='thùng';
+      else if(typeof TBVS!=='undefined' && arrs[i]===TBVS) dv=p.dvt||p.dv||'cái';
+      var dl={nk:p.nhan||0, gh:p.giao||0};
+      return {kc:(p.kc&&p.kc!=='–')?p.kc:'', le:p.le||0, sale:sale, dl:dl, dv:dv, cat:(arrs[i]===DATA)?p.cat:'', th:(arrs[i]===DATA&&laBanRieng())?giaThungRieng(p):0};
     }
   }
   return null;
@@ -3758,7 +3765,8 @@ function _soanDaiThongTin(w, h, ma, tt, doiTuong){
   if(tt && tt.kc) p1.push({t:tt.kc, b:false, k:1, c:MAU_DAI.phu});
   addRow(p1, b, 11);
   // Hàng 2: giá niêm yết
-  if(le>0) addRow([{t:(laBanRieng()?'Giá / m²':'Giá niêm yết'), b:false, k:1, c:MAU_DAI.phu},{t:fmt(le)+(laBanRieng()?'':'/m²'), b:true, k:1, c:MAU_DAI.gia}], b, 11);
+  var dv=(tt&&tt.dv)||'m²';
+  if(le>0) addRow([{t:(laBanRieng()?'Giá / '+dv:'Giá niêm yết'), b:false, k:1, c:MAU_DAI.phu},{t:fmt(le)+(laBanRieng()?'':'/'+dv), b:true, k:1, c:MAU_DAI.gia}], b, 11);
   if(laBanRieng() && tt && tt.th>0) addRow([{t:'Giá / thùng', b:false, k:1, c:MAU_DAI.phu},{t:fmt(tt.th), b:true, k:1, c:MAU_DAI.gia}], b, 11);
   // Hàng 3: giá đại lý (Nhận kho | Đi giao) - gộp 1 hàng nếu vừa, không thì mỗi giá 1 hàng
   var gia=null;
