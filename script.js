@@ -3182,9 +3182,9 @@ function convertImgUrl(url){
 
 // Bản kích thước gốc (=s0) của ảnh Google - chỉ dùng khi tải để CHIA SẺ,
 // không dùng để hiển thị trên thẻ (quá nặng).
-function urlGoc(url){
+function urlGoc(url, size){
   var u=convertImgUrl(url);
-  return (/googleusercontent\.com\/d\//.test(u) && u.indexOf('=s')<0) ? u+'=s0' : u;
+  return (/googleusercontent\.com\/d\//.test(u) && u.indexOf('=s')<0) ? u+(size||'=s0') : u;
 }
 
 function renderDpImg(){
@@ -3542,8 +3542,8 @@ function copyZaloMsg(msg){
 // khách hỏi cùng lúc nhiều mã, đánh dấu ✓ trên từng thẻ rồi gửi 1 lần qua Zalo,
 // khỏi phải mở từng sản phẩm gửi riêng lẻ.
 var gioAnh=[]; // [{ma, ten, url}]
-var GIO_ANH_MAX=60; // số mã tối đa trong giỏ; khi gửi trên điện thoại tự chia lượt GA_LUOT ảnh
-var GA_LUOT=8;      // ảnh mỗi lượt gửi (điện thoại/Zalo dễ lỗi nếu đính quá nhiều ảnh một lần)
+var GIO_ANH_MAX=100; // số mã tối đa trong giỏ; khi gửi trên điện thoại tự chia lượt GA_LUOT ảnh
+var GA_LUOT=10;     // ảnh mỗi lượt gửi (điện thoại/Zalo dễ lỗi nếu đính quá nhiều ảnh một lần)
 var GA_BYTES=20*1000*1000; // dừng thêm ảnh vào lượt khi tổng đã quá ~20MB (gạch khổ lớn)
 var _gaLuotHT=GA_LUOT;     // số ảnh/lượt đang dùng; tự giảm nếu máy không mở được bảng chia sẻ
 function timAnhDaiDien(ma){ return timAnh(ma)||''; }
@@ -3576,6 +3576,7 @@ function capNhatGioAnhFab(){
   if(!fab||!cnt) return;
   cnt.textContent=gioAnh.length;
   fab.classList.toggle('show', gioAnh.length>0);
+  _gaLenLichNen();
 }
 function moGioAnhSheet(){
   renderGioAnhSheet();
@@ -3598,6 +3599,7 @@ function xoaHetGioAnh(){
 function xoaKhoiGioAnh(ma){ toggleGioAnh(ma); renderGioAnhSheet(); }
 function renderGioAnhSheet(){
   renderGaDoiTuong();
+  renderGaChatLuong();
   document.getElementById('gioanh-sheet-count').textContent=gioAnh.length;
   var el=document.getElementById('gioanh-list');
   if(!gioAnh.length){ el.innerHTML='<p style="text-align:center;color:var(--t3);padding:24px 16px;font-size:13px">Chưa chọn sản phẩm nào — bấm ✓ trên thẻ sản phẩm để thêm vào đây.</p>'; return; }
@@ -3834,12 +3836,15 @@ function _soanDaiThongTin(w, h, ma, tt, doiTuong){
 // jpg=true: xuất JPEG chất lượng 100% (gửi điện thoại); mặc định PNG
 // (clipboard máy tính cần PNG). Chỉ thu nhỏ khi vượt ~15 triệu điểm ảnh -
 // quá mức này Safari trên iPhone không vẽ được canvas (ra ảnh trắng/lỗi).
+// jpg có thể là true (JPEG 100%, không giới hạn cạnh dài) hoặc {q:0..1, px:cạnh dài tối đa, 0=giữ nguyên}.
 function _ghepNhanLenAnh(blob, ma, doiTuong, jpg){
+  var tc=(jpg&&typeof jpg==='object')?jpg:{q:1, px:0};
   return new Promise(function(resolve,reject){
     var img=new Image();
     img.onload=function(){
     try{
       var k=Math.min(1, Math.sqrt(15000000/(img.naturalWidth*img.naturalHeight*1.2)));
+      if(tc.px>0) k=Math.min(k, tc.px/Math.max(img.naturalWidth, img.naturalHeight));
       var w=Math.round(img.naturalWidth*k), h=Math.round(img.naturalHeight*k);
       var dai=ma?_soanDaiThongTin(w, h, ma, layThongTinSP(ma), doiTuong):null;
       var cv=document.createElement('canvas');
@@ -3849,7 +3854,7 @@ function _ghepNhanLenAnh(blob, ma, doiTuong, jpg){
       if(jpg){ ctx.fillStyle='#fff'; ctx.fillRect(0,0,cv.width,cv.height); } // JPEG không có nền trong suốt
       ctx.drawImage(img,0,0,w,h);
       if(dai) dai.ve(ctx, h);
-      cv.toBlob(function(png){ if(png) resolve(png); else reject(new Error('toBlob fail')); }, jpg?'image/jpeg':'image/png', jpg?1:undefined);
+      cv.toBlob(function(png){ if(png) resolve(png); else reject(new Error('toBlob fail')); }, jpg?'image/jpeg':'image/png', jpg?tc.q:undefined);
     }catch(err){ reject(err); }
     };
     img.onerror=function(){ reject(new Error('load fail')); };
@@ -3890,6 +3895,7 @@ function datDoiTuongGioAnh(v){
   gaDoiTuong=(v==='daily')?'daily':'le';
   if(typeof huyGioAnhSan==='function') huyGioAnhSan();
   renderGaDoiTuong();
+  _gaLenLichNen();
 }
 function renderGaDoiTuong(){
   var el=document.getElementById('gioanh-doituong'); if(!el) return;
@@ -3905,9 +3911,42 @@ function renderGaDoiTuong(){
     +'<div style="font-size:11px;color:var(--t2);margin-top:5px">'
     +(dt==='daily'?'Ảnh in thêm giá đại lý nhận kho / đi giao (mẫu đang Sale có thêm nhãn SALE). Chỉ gửi cho đại lý.':'Ảnh chỉ in giá niêm yết — an toàn khi gửi khách lẻ.')+'</div>';
 }
-var _gaSan=null;   // {key, files, thieu, tong} khi đã chuẩn bị xong
-var _gaDang=0;     // mã lượt chuẩn bị đang chạy (đổi giỏ -> huỷ lượt cũ)
-function _gaKey(){ return gioAnh.map(function(x){return x.ma;}).join('|'); }
+// ===== GIỎ ẢNH: CHUẨN BỊ ẢNH NGẦM + CHẤT LƯỢNG + GỬI THEO ĐỢT =====
+// Ngay khi chọn ảnh vào giỏ, app tải + đóng dấu sẵn ảnh của ĐỢT KẾ TIẾP (tối đa _gaLuotHT ảnh,
+// chạy 3 ảnh một lúc, nhớ kết quả). Khi anh bấm "Gửi" thì ảnh đã xong -> mở bảng chia sẻ NGAY
+// (không phải bấm 2 lần). Gửi xong một đợt, app tự chuẩn bị đợt sau trong lúc anh ở lại app.
+// Chỉ giữ ảnh của đợt kế tiếp trong bộ nhớ (không tải cả giỏ) để máy không nặng.
+var GA_CL={
+  nhanh:{ten:'Nhanh', mota:'nhẹ, gửi nhanh (≈1600 px)', px:1600, q:0.8, s:'=s1600'},
+  chuan:{ten:'Chuẩn', mota:'nét, cân bằng (≈2400 px)', px:2400, q:0.92, s:'=s2400'},
+  goc:{ten:'Gốc', mota:'nét nhất, giữ kích thước gốc — nặng, chậm hơn', px:0, q:1, s:'=s0'}
+};
+function gaCLKey(){ try{ var k=localStorage.getItem('dt_ga_cl'); if(GA_CL[k]) return k; }catch(e){} return 'chuan'; }
+function gaCL(){ return GA_CL[gaCLKey()]; }
+function datChatLuongGioAnh(k){
+  if(!GA_CL[k]) return;
+  try{ localStorage.setItem('dt_ga_cl',k); }catch(e){}
+  _gaSan=null; _gaDang++;
+  renderGaChatLuong();
+  _gaLenLichNen();
+}
+function renderGaChatLuong(){
+  var el=document.getElementById('gioanh-chatluong'); if(!el) return;
+  if(laMayTinhBan()){ el.style.display='none'; return; }
+  el.style.display='';
+  var cur=gaCLKey();
+  function nut(k){
+    var on=(cur===k);
+    return '<button type="button" onclick="datChatLuongGioAnh(\''+k+'\')" style="flex:1;padding:8px 6px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f);border:1.5px solid '+(on?'var(--red)':'var(--bd2)')+';background:'+(on?'var(--red)':'transparent')+';color:'+(on?'#fff':'var(--t2)')+'">'+GA_CL[k].ten+'</button>';
+  }
+  el.innerHTML='<div style="font-size:11px;color:var(--t2);margin-bottom:5px">Chất lượng ảnh:</div>'
+    +'<div style="display:flex;gap:6px">'+nut('nhanh')+nut('chuan')+nut('goc')+'</div>'
+    +'<div style="font-size:11px;color:var(--t2);margin-top:5px">'+GA_CL[cur].ten+': '+GA_CL[cur].mota+'.</div>';
+}
+var _gaSan=null;   // {files, thieu, tong, tongGio, nhan} khi đợt kế tiếp đã sẵn sàng gửi
+var _gaDang=0;     // mã vòng chuẩn bị đang chạy (đổi giỏ/chất lượng -> huỷ vòng cũ)
+var _gaCache={};   // 'mã|đối tượng|chất lượng' -> {st:'dang'|'xong'|'loi', file}
+var _gaTimer=null;
 function _gaBtn(){ return document.getElementById('gioanh-btn-gui'); }
 function _gaBtnText(txt, cls){
   var b=_gaBtn(); if(!b) return;
@@ -3915,81 +3954,116 @@ function _gaBtnText(txt, cls){
   b.classList.toggle('gioanh-ready', cls==='ready');
   b.disabled=(cls==='busy');
 }
+var _gaTienDo=0;   // số ảnh trong giỏ đã chuyển sang Zalo xong (để gửi đợt kế tiếp)
 // Đổi giỏ (thêm/bớt/xoá) -> bỏ ảnh đã chuẩn bị, nút về như ban đầu.
-var _gaTienDo=0;   // số ảnh trong giỏ đã chuyển sang Zalo xong (để gửi lượt kế tiếp)
 function huyGioAnhSan(){
   _gaSan=null; _gaDang++; _gaTienDo=0;
   _gaBtnText('📤 Chia sẻ tất cả qua Zalo','');
+}
+function _gaCK(x){ return x.ma+'|'+gaDT()+'|'+gaCLKey(); }
+function _gaCuaSo(){ return gioAnh.slice(_gaTienDo, _gaTienDo+_gaLuotHT); }
+function _gaLenLichNen(){
+  if(laMayTinhBan()) return;
+  clearTimeout(_gaTimer);
+  _gaTimer=setTimeout(_gaNen, 350); // chọn liên tiếp nhiều mã thì gom lại 1 lần
+}
+function _gaNen(){
+  if(laMayTinhBan() || gioAnh.length<2 || !(navigator.share && navigator.canShare)){ _gaSan=null; _gaCapNhatNut(); return; }
+  var run=++_gaDang;
+  var cs=_gaCuaSo(), giu={};
+  cs.forEach(function(x){ giu[_gaCK(x)]=1; });
+  Object.keys(_gaCache).forEach(function(k){ if(!giu[k]) delete _gaCache[k]; }); // nhả bộ nhớ
+  var hang=cs.filter(function(x){ var e=_gaCache[_gaCK(x)]; return !e || e.st!=='xong'; });
+  hang.forEach(function(x){ _gaCache[_gaCK(x)]={st:'dang', file:null}; });
+  _gaSan=null; _gaCapNhatNut();
+  var cl=gaCL(), dt=gaDT(), idx=0;
+  function chay(){
+    if(run!==_gaDang || idx>=hang.length) return;
+    var x=hang[idx++], k=_gaCK(x);
+    _taiAnhCoThuLai(x.url, cl.s).then(function(blob){
+      return _ghepNhanLenAnh(blob, x.ma, dt, {q:cl.q, px:cl.px}).catch(function(){ return blob; });
+    }).then(function(b){
+      if(run!==_gaDang) return;
+      _gaCache[k]={st:'xong', file:new File([b], (x.ma||'anh')+(b.type==='image/png'?'.png':'.jpg'), {type:b.type||'image/jpeg'})};
+    }).catch(function(){
+      if(run===_gaDang) _gaCache[k]={st:'loi', file:null, ten:x.ten||x.ma};
+    }).then(function(){
+      if(run!==_gaDang) return;
+      _gaCapNhatNut(); chay();
+    });
+  }
+  for(var i=0;i<3;i++) chay();
+}
+// Cập nhật nút theo tình trạng ảnh đợt kế tiếp; khi đủ ảnh thì dựng sẵn _gaSan.
+function _gaCapNhatNut(){
+  if(laMayTinhBan() || gioAnh.length<2){ return; }
+  var cs=_gaCuaSo();
+  if(!cs.length){ _gaBtnText('📤 Chia sẻ tất cả qua Zalo',''); return; }
+  var xong=0, dang=0;
+  cs.forEach(function(x){ var e=_gaCache[_gaCK(x)]; if(!e||e.st==='dang') dang++; else xong++; });
+  var nhan=(_gaTienDo>0||gioAnh.length>cs.length)?' (đã gửi '+_gaTienDo+'/'+gioAnh.length+')':'';
+  if(dang>0){
+    _gaSan=null;
+    _gaBtnText('⏳ Đang chuẩn bị '+(_gaTienDo>0?'đợt tiếp theo':'ảnh')+': '+xong+'/'+cs.length+nhan,'busy');
+    return;
+  }
+  // đủ: gom ảnh vào đợt, dừng khi đã nặng quá GA_BYTES (gạch khổ lớn: ít ảnh hơn)
+  var files=[], thieu=[], byte=0, daXuLy=0;
+  for(var i=0;i<cs.length;i++){
+    var e=_gaCache[_gaCK(cs[i])];
+    daXuLy=i+1;
+    if(e&&e.st==='xong'){ files.push(e.file); byte+=e.file.size||0; }
+    else thieu.push(cs[i].ten||cs[i].ma);
+    if(byte>=GA_BYTES) break;
+  }
+  if(!files.length){
+    _gaSan=null;
+    _gaBtnText('⚠️ Không tải được ảnh — bấm để thử lại','');
+    return;
+  }
+  _gaSan={files:files, thieu:thieu, tong:daXuLy, tongGio:gioAnh.length, nhan:nhan};
+  _gaBtnText('📤 Gửi '+files.length+' ảnh qua Zalo'+nhan,'ready');
+  if(thieu.length) showToast('⚠️ Không tải được: '+thieu.join(', ')+' — các ảnh còn lại vẫn gửi được');
 }
 function chiaSeGioAnh(){
   if(!gioAnh.length) return;
   var items=gioAnh.slice();
   if(laMayTinhBan()){ dongGioAnhSheet(); moCopyPasteZalo(items, items.length===1, gaDT()); return; }
   if(items.length===1){ dongGioAnhSheet(); _thucHienChiaSeNhieuSP([items[0].url], items, null); return; }
-  if(_gaSan && _gaSan.key===_gaKey()) { _guiAnhDaSan(); return; }
-  _chuanBiAnhGio(items);
-}
-// Bước 1: tải + đóng dấu TUẦN TỰ từng ảnh (tải song song dễ bị Google từ chối)
-function _chuanBiAnhGio(tatCa){
   if(!(navigator.share && navigator.canShare)){
     dongGioAnhSheet();
-    tatCa.forEach(function(x){ window.open(convertImgUrl(x.url),'_blank'); });
-    showToast('📷 Đã mở '+tatCa.length+' ảnh ở tab mới — bấm giữ ảnh để lưu, rồi gửi qua Zalo');
+    items.forEach(function(x){ window.open(convertImgUrl(x.url),'_blank'); });
+    showToast('📷 Đã mở '+items.length+' ảnh ở tab mới — bấm giữ ảnh để lưu, rồi gửi qua Zalo');
     return;
   }
-  if(_gaTienDo>=tatCa.length) _gaTienDo=0;
-  var items=tatCa.slice(_gaTienDo, _gaTienDo+_gaLuotHT);
-  var nhanLuot=tatCa.length>items.length?' (đã gửi '+_gaTienDo+'/'+tatCa.length+')':'';
-  var run=++_gaDang, key=_gaKey(), files=[], thieu=[], dt=gaDT(), tongByte=0;
-  function buoc(i){
-    if(run!==_gaDang) return; // giỏ đã đổi -> bỏ lượt này
-    // Đủ số ảnh HOẶC đã nặng quá GA_BYTES (gạch khổ lớn: ảnh to, ít ảnh/lượt hơn)
-    if(i>=items.length || tongByte>=GA_BYTES){
-      if(!files.length){ _gaBtnText('📤 Chia sẻ tất cả qua Zalo',''); showToast('⚠️ Không tải được ảnh nào — kiểm tra mạng rồi bấm lại'); return; }
-      _gaSan={key:key, files:files, thieu:thieu, tong:i, tongGio:tatCa.length, nhanLuot:nhanLuot};
-      _gaBtnText('✅ Ảnh đã sẵn sàng — BẤM LẠI để gửi '+files.length+' ảnh'+nhanLuot,'ready');
-      if(thieu.length) showToast('⚠️ Chuẩn bị được '+files.length+'/'+i+' ảnh (không tải được: '+thieu.join(', ')+')');
-      return;
-    }
-    _gaBtnText('⏳ Đang chuẩn bị ảnh '+(i+1)+'/'+items.length+nhanLuot+'...','busy');
-    _taiAnhCoThuLai(items[i].url).then(function(blob){
-      return _ghepNhanLenAnh(blob, items[i].ma, dt, true).catch(function(){ return blob; });
-    }).then(function(b){
-      tongByte+=b.size||0;
-      files.push(new File([b], (items[i].ma||'anh')+(b.type==='image/jpeg'?'.jpg':'.png'), {type:b.type||'image/jpeg'}));
-    }).catch(function(){
-      thieu.push(items[i].ten||items[i].ma);
-    }).then(function(){ buoc(i+1); });
-  }
-  buoc(0);
+  if(_gaSan){ _guiAnhDaSan(); return; }   // ảnh đã chuẩn bị ngầm: mở bảng chia sẻ ngay
+  _gaNen();                                // chưa có: chuẩn bị rồi nút tự đổi sang "Gửi"
 }
-// Bước 2: mở bảng chia sẻ NGAY (chỉ ảnh, không kèm chữ - nhiều app bỏ chữ hoặc
+// Mở bảng chia sẻ NGAY trong lúc chạm (chỉ ảnh, không kèm chữ - nhiều app bỏ chữ hoặc
 // từ chối khi gửi nhiều ảnh kèm text).
 function _guiAnhDaSan(){
   var sp=_gaSan; if(!sp) return;
   // Máy không mở được bảng chia sẻ với ngần này ảnh/dung lượng -> tự giảm một nửa
-  // số ảnh mỗi lượt rồi chuẩn bị lại (nhớ cho các lượt sau), không bắt người dùng tự chọn lại.
+  // số ảnh mỗi đợt rồi chuẩn bị lại (nhớ cho các đợt sau).
   function giamLuot(){
     if(sp.files.length<=1){
       huyGioAnhSan(); dongGioAnhSheet();
-      showToast('⚠️ Ảnh này quá nặng để chia sẻ trên máy — gửi riêng từng ảnh hoặc dùng bản nhỏ hơn');
+      showToast('⚠️ Ảnh này quá nặng để chia sẻ trên máy — chọn mức chất lượng "Nhanh" hoặc "Chuẩn" rồi thử lại');
       return;
     }
     _gaLuotHT=Math.max(1, Math.floor(sp.files.length/2));
-    showToast('ℹ️ Ảnh nặng, tự giảm còn '+_gaLuotHT+' ảnh/lượt — chuẩn bị lại...');
-    _gaSan=null;
-    _chuanBiAnhGio(gioAnh.slice());
+    showToast('ℹ️ Ảnh nặng, tự giảm còn '+_gaLuotHT+' ảnh/đợt — chuẩn bị lại...');
+    _gaNen();
   }
   if(!navigator.canShare({files:sp.files})){ giamLuot(); return; }
   navigator.share({files:sp.files}).then(function(){
     forcePaintStrong();
-    showToast('✅ App đã chuyển '+sp.files.length+'/'+sp.tong+' ảnh sang Zalo'+sp.nhanLuot);
+    showToast('✅ App đã chuyển '+sp.files.length+' ảnh sang Zalo'+sp.nhan);
+    _gaCuaSo().slice(0,sp.tong).forEach(function(x){ delete _gaCache[_gaCK(x)]; }); // nhả bộ nhớ
     _gaTienDo+=sp.tong;
-    if(_gaTienDo<sp.tongGio){
-      // còn ảnh: tự chuẩn bị lượt kế tiếp, giữ bảng giỏ ảnh mở để bấm gửi tiếp
-      _gaSan=null;
-      _chuanBiAnhGio(gioAnh.slice());
-    } else { huyGioAnhSan(); dongGioAnhSheet(); }
+    _gaSan=null;
+    if(_gaTienDo<gioAnh.length){ _gaNen(); }          // còn mẫu: chuẩn bị đợt kế tiếp
+    else { _gaCache={}; huyGioAnhSan(); dongGioAnhSheet(); }
   }).catch(function(err){
     forcePaintStrong();
     // Người dùng tự đóng bảng chia sẻ: giữ ảnh đã chuẩn bị để bấm gửi lại được
@@ -4003,10 +4077,10 @@ function _guiAnhDaSan(){
 // Tải 1 ảnh, tự thử lại tối đa 3 lần (chờ 0,5s rồi 1s) nếu lỗi mạng hoặc bị
 // Google Drive chặn tạm (429/5xx khi tải nhiều ảnh cùng lúc). Trước đây ảnh
 // lỗi bị bỏ qua im lặng làm chia sẻ thiếu ảnh (VD chọn 10 chỉ gửi được 9).
-function _taiAnhCoThuLai(url){
+function _taiAnhCoThuLai(url, size){
   var lanThu=0;
   function lan(){
-    return fetch(urlGoc(url)).then(function(res){
+    return fetch(urlGoc(url, size)).then(function(res){
       if(!res.ok) throw new Error('HTTP '+res.status);
       return res.blob();
     }).catch(function(err){
@@ -4024,10 +4098,11 @@ function _thucHienChiaSeNhieuSP(urls, items, onDone){
     if(onDone) onDone();
   }
   if(!(navigator.share && navigator.canShare)){ moTabDuPhong(); return; }
-  Promise.allSettled(urls.map(_taiAnhCoThuLai)).then(function(results){
+  var clM=gaCL();
+  Promise.allSettled(urls.map(function(u){ return _taiAnhCoThuLai(u, clM.s); })).then(function(results){
     return Promise.all(results.map(function(r,i){
       if(r.status!=='fulfilled') return null;
-      return _ghepNhanLenAnh(r.value, items[i].ma, gaDT(), true).catch(function(){ return r.value; });
+      return _ghepNhanLenAnh(r.value, items[i].ma, gaDT(), {q:clM.q, px:clM.px}).catch(function(){ return r.value; });
     }));
   }).then(function(blobs){
     var files=[], okItems=[], okUrls=[], thieu=[];
