@@ -10,6 +10,11 @@ function hoDuocDung(){
   var s=checkSession();
   return !!(s && (s.role==='admin'||s.role==='nv') && !(typeof laBanRieng==='function'&&laBanRieng()));
 }
+// Khách hàng (tài khoản đại lý) chỉ ĐIỀN thông tin hàng mình ôm + xem/sửa bài của chính mình.
+// Họ KHÔNG thấy hàng ôm của ai khác, không thấy dòng "Đại lý ôm" trên danh sách - việc kết nối
+// giữa các đại lý chỉ nhân viên làm. (Máy chủ cũng chỉ trả bài của chính họ.)
+function hoLaKhach(){ var s=checkSession(); return !!(s && s.role==='khachhang'); }
+function hoDuocGhi(){ return hoDuocDung()||hoLaKhach(); }
 function hoEsc(s){ return String(s===null||s===undefined?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function hoGoi(params, cb){
   var name='_ho'+Date.now()+Math.floor(Math.random()*1000), xong=false, s=document.createElement('script');
@@ -22,7 +27,7 @@ function hoGoi(params, cb){
   setTimeout(function(){ ket({status:'error', msg:'Máy chủ phản hồi quá lâu, thử lại sau'}); }, 30000);
 }
 function hoTai(cb){
-  if(!hoDuocDung()){ if(cb) cb(); return; }
+  if(!hoDuocGhi()){ if(cb) cb(); return; }
   hoGoi({action:'getHangOm'}, function(r){
     if(r && r.status==='ok'){
       var doi=JSON.stringify(r.data)!==JSON.stringify(HO.rows);
@@ -40,7 +45,7 @@ function hoTaiDanhMuc(cb){
     cb(HO.dm);
   });
 }
-function hoKhoiDong(){ if(hoDuocDung()) hoTai(); }
+function hoKhoiDong(){ if(hoDuocGhi()) hoTai(); }
 
 // ----- Dữ liệu theo mã -----
 function hoNorm(m){ return String(m||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,''); }
@@ -89,6 +94,7 @@ function htmlHangOmBlock(ma){
 }
 function hoCapNhatNutDP(ma){
   var b=document.getElementById('dp-ho-btn'); if(!b) return;
+  if(hoLaKhach()){ b.style.display=''; b.textContent='📮 Báo hàng đại lý đang ôm'; return; }
   if(!hoDuocDung()){ b.style.display='none'; return; }
   var t=hoTong(ma);
   b.style.display='';
@@ -146,6 +152,7 @@ function hoKhung(tieuDe, noiDung){
   document.body.appendChild(m);
 }
 function moHangOm(ma){
+  if(hoLaKhach()) return moHangOmKhach(ma);
   if(!hoDuocDung()) return;
   _hoMa=ma;
   var n=hoNorm(ma);
@@ -160,16 +167,29 @@ function moHangOm(ma){
     +(HO.admin?'':'<p style="font-size:11px;color:#888;margin:8px 0 0;text-align:center">Bài đăng của anh/chị hiện sau khi admin duyệt.</p>'));
 }
 
+// Khách hàng: chỉ thấy bài của chính mình cho mã này + nút báo hàng ôm
+function moHangOmKhach(ma){
+  _hoMa=ma;
+  var n=hoNorm(ma);
+  var rows=HO.rows.filter(function(r){ return hoNorm(r.ma)===n; });
+  hoKhung('📮 Báo hàng đại lý đang ôm — '+hoEsc(ma),
+    '<p style="font-size:12px;color:#666;margin:0 0 10px;line-height:1.5">Anh/chị đang còn hàng mã này chưa bán ra được? Điền thông tin để nhân viên Đồng Tâm hỗ trợ kết nối. Thông tin chỉ <b>nhân viên Đồng Tâm</b> xem được, sau khi được duyệt.</p>'
+    +(rows.length?'<div style="font-size:12px;font-weight:700;margin:0 0 6px">Bài anh/chị đã gửi</div>'+rows.map(hoDongHtml).join(''):'')
+    +'<button type="button" onclick="hoMoForm()" style="width:100%;margin-top:4px;padding:11px;border:none;border-radius:10px;background:#6A1B9A;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">➕ Báo hàng đang ôm</button>');
+}
+
 // ----- Form đăng / sửa -----
 function hoMoForm(id){
-  if(!hoDuocDung()) return;
+  if(!hoDuocGhi()) return;
+  var kh=hoLaKhach();
   var r=null; if(id){ r=HO.rows.filter(function(x){ return x.id===id; })[0]||null; }
   _hoSua=r;
   var ma=r?r.ma:_hoMa;
   _hoMa=ma;
-  hoTaiDanhMuc(function(dm){
+  // Khách hàng: không tải danh mục đại lý/sale (máy chủ không trả cho khách), không thấy lô Đồng Tâm
+  (kh?function(cb){ cb({daiLy:[],sale:[]}); }:hoTaiDanhMuc)(function(dm){
     var s=checkSession()||{};
-    var tk=(typeof timTonKho==='function')?timTonKho(ma):null;
+    var tk=(!kh&&typeof timTonKho==='function')?timTonKho(ma):null;
     var dsLo=(tk&&typeof gomLoTheoMa==='function')?gomLoTheoMa(tk):[];
     var pct0=r?hoPct(r.giam):0;
     var giamRieng0=r?String(r.giam||'').replace(/Giảm\s*[\d.,]+\s*%\s*giá lẻ\s*·?\s*/i,'').trim():'';
@@ -186,16 +206,18 @@ function hoMoForm(id){
         +'<option value="__khac"'+(loHienTai&&!loTrongDS?' selected':'')+'>Khác — nhập số lô khác</option></select>'
         +'<input id="ho-lo" placeholder="Nhập số lô" value="'+(loHienTai&&!loTrongDS?hoEsc(loHienTai):'')+'" style="'+inp+';margin-top:6px;display:'+(loHienTai&&!loTrongDS?'block':'none')+'">';
     } else {
-      loHtml=lb('Số lô <span style="font-weight:400;color:#888">(Đồng Tâm hết lô này, nhập tay)</span>')
+      loHtml=lb('Số lô <span style="font-weight:400;color:#888">('+(kh?'nếu có, in trên thùng hàng':'Đồng Tâm hết lô này, nhập tay')+')</span>')
         +'<input id="ho-lo" placeholder="Nhập số lô" value="'+hoEsc(loHienTai)+'" style="'+inp+'">';
     }
-    hoKhung((r?'✏️ Sửa hàng ôm':'➕ Đăng hàng đại lý ôm')+' — '+hoEsc(ma),
-      lb('Đại lý đang ôm *')
-      +'<input id="ho-dl" list="ho-dl-list" placeholder="Chọn hoặc gõ tên đại lý" oninput="hoChonDL()" value="'+hoEsc(r?r.daiLy:'')+'" style="'+inp+'">'
-      +'<datalist id="ho-dl-list">'+(dm.daiLy||[]).map(function(d){ return '<option value="'+hoEsc(d.ten)+'">'; }).join('')+'</datalist>'
-      +lb('Sale phụ trách')
-      +'<input id="ho-sale" list="ho-sale-list" placeholder="Chọn hoặc gõ tên sale" value="'+hoEsc(r?r.sale:'')+'" style="'+inp+'">'
-      +'<datalist id="ho-sale-list">'+(dm.sale||[]).map(function(n){ return '<option value="'+hoEsc(n)+'">'; }).join('')+'</datalist>'
+    hoKhung((kh?(r?'✏️ Sửa bài báo hàng ôm':'📮 Báo hàng đang ôm'):(r?'✏️ Sửa hàng ôm':'➕ Đăng hàng đại lý ôm'))+' — '+hoEsc(ma),
+      (kh
+        ?'<div style="font-size:12px;color:#666;background:#6A1B9A0d;border-radius:8px;padding:8px 10px">Bài được gửi dưới tên <b>tài khoản đại lý của anh/chị</b> và chỉ nhân viên Đồng Tâm xem được sau khi duyệt.</div>'
+        :lb('Đại lý đang ôm *')
+          +'<input id="ho-dl" list="ho-dl-list" placeholder="Chọn hoặc gõ tên đại lý" oninput="hoChonDL()" value="'+hoEsc(r?r.daiLy:'')+'" style="'+inp+'">'
+          +'<datalist id="ho-dl-list">'+(dm.daiLy||[]).map(function(d){ return '<option value="'+hoEsc(d.ten)+'">'; }).join('')+'</datalist>'
+          +lb('Sale phụ trách')
+          +'<input id="ho-sale" list="ho-sale-list" placeholder="Chọn hoặc gõ tên sale" value="'+hoEsc(r?r.sale:'')+'" style="'+inp+'">'
+          +'<datalist id="ho-sale-list">'+(dm.sale||[]).map(function(n){ return '<option value="'+hoEsc(n)+'">'; }).join('')+'</datalist>')
       +'<div style="display:flex;gap:8px"><div style="flex:1">'+lb('Số thùng')+'<input id="ho-thung" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="'+(r&&r.thung?r.thung:'')+'" style="'+inp+'"></div>'
       +'<div style="flex:1">'+lb('Viên lẻ')+'<input id="ho-vien" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="'+(r&&r.vien?r.vien:'')+'" style="'+inp+'"></div></div>'
       +loHtml
@@ -241,12 +263,12 @@ function hoLuu(){
   if(pct<0||pct>=100){ loi.textContent='% giảm phải từ 0 đến dưới 100.'; return; }
   var giam=(pct>0?'Giảm '+pct+'% giá lẻ':'')+((pct>0&&g('ho-giam'))?' · ':'')+g('ho-giam');
   var d={id:_hoSua?_hoSua.id:'', ma:_hoSua?_hoSua.ma:_hoMa, daiLy:g('ho-dl'), sale:g('ho-sale'), thung:g('ho-thung'), vien:g('ho-vien'), lo:lo, giam:giam.substring(0,80), lienHe:g('ho-lh'), ghiChu:g('ho-gc')};
-  if(!d.daiLy){ loi.textContent='Chưa chọn đại lý đang ôm hàng.'; return; }
+  if(!d.daiLy && !hoLaKhach()){ loi.textContent='Chưa chọn đại lý đang ôm hàng.'; return; }
   if(!(Number(d.thung)>0)&&!(Number(d.vien)>0)){ loi.textContent='Nhập số thùng hoặc số viên lẻ.'; return; }
   loi.textContent=''; btn.disabled=true; btn.textContent='Đang gửi...';
   hoGoi({action:'luuHangOm', data:JSON.stringify(d)}, function(r){
     if(r&&r.status==='ok'){
-      showToast(r.tt==='Chờ duyệt'?'✅ Đã gửi — chờ admin duyệt mới hiện cho mọi người':'✅ Đã lưu');
+      showToast(r.tt==='Chờ duyệt'?(hoLaKhach()?'✅ Đã gửi — nhân viên Đồng Tâm sẽ xem và liên hệ lại':'✅ Đã gửi — chờ admin duyệt mới hiện cho mọi người'):'✅ Đã lưu');
       hoTai(function(){ moHangOm(d.ma); });
     } else { btn.disabled=false; btn.textContent=HO.admin?'Lưu':'Gửi duyệt'; loi.textContent=(r&&r.msg)||'Không lưu được, thử lại.'; }
   });
