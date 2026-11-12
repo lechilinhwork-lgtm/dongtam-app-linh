@@ -104,11 +104,21 @@ function hoCapNhatNutDP(ma){
 // ----- Cửa sổ danh sách -----
 var HO_TT_MAU={'Chờ duyệt':'#E65100','Đã duyệt':'#2E7D32','Từ chối':'#C62828','Đã bán hết':'#757575'};
 function hoNgay(iso){ var d=new Date(iso); return isNaN(d)?'':d.toLocaleDateString('vi-VN'); }
+// Cột "Liên hệ" trong Sheet lưu chung 1 ô dạng "Tên · SĐT" -> tách ra tên + số điện thoại dạng 0xxxxxxxxx
+function hoTachLH(t){
+  var m=String(t||'').match(/(?:\+?84|0)[\d .\-]{8,12}\d/);
+  if(!m) return {ten:String(t||'').trim(), sdt:''};
+  var d=m[0].replace(/\D/g,''); if(d.indexOf('84')===0) d='0'+d.slice(2);
+  var ten=String(t).replace(m[0],'').replace(/^[\s·|,;\-–]+|[\s·|,;\-–]+$/g,'').trim();
+  return {ten:ten, sdt:d};
+}
+function hoSdtDep(d){ return String(d).replace(/^(\d{4})(\d{3})(\d+)$/,'$1 $2 $3'); }
+// Số điện thoại là nút bấm: mở thẳng chat Zalo (zalo.me/<số>), kèm nút gọi thường
 function hoLienHe(t){
-  var m=String(t||'').match(/0[\d .]{8,12}\d/);
-  if(!m) return hoEsc(t);
-  var so=m[0].replace(/\D/g,'');
-  return hoEsc(t).replace(hoEsc(m[0]), '<a href="tel:'+so+'" style="color:#1565C0;font-weight:700">'+hoEsc(m[0])+'</a>');
+  var x=hoTachLH(t); if(!x.sdt) return hoEsc(t);
+  return (x.ten?'<b>'+hoEsc(x.ten)+'</b>':'')+'<br>'
+    +'<a href="https://zalo.me/'+x.sdt+'" target="_blank" rel="noopener" style="display:inline-block;margin:4px 8px 2px 0;background:#0068FF;color:#fff;font-weight:700;font-size:14px;padding:9px 16px;border-radius:10px;text-decoration:none">💬 Zalo '+hoSdtDep(x.sdt)+'</a>'
+    +'<a href="tel:'+x.sdt+'" style="display:inline-block;margin:4px 0 2px;border:1.5px solid #1565C0;color:#1565C0;font-weight:700;font-size:14px;padding:8px 14px;border-radius:10px;text-decoration:none">📞 Gọi</a>';
 }
 function hoDongHtml(r){
   var mau=HO_TT_MAU[r.tt]||'#555';
@@ -194,6 +204,7 @@ function hoMoForm(id){
   (kh?function(cb){ cb({daiLy:[],sale:[]}); }:hoTaiDanhMuc)(function(dm){
     var tk=(!kh&&typeof timTonKho==='function')?timTonKho(ma):null;
     var dsLo=(tk&&typeof gomLoTheoMa==='function')?gomLoTheoMa(tk):[];
+    var tach0=r?hoTachLH(r.lienHe):{ten:'',sdt:''};
     var pct0=r?hoPct(r.giam):0;
     var giamRieng0=r?String(r.giam||'').replace(/Giảm\s*[\d.,]+\s*%\s*giá lẻ\s*·?\s*/i,'').trim():'';
     if(pct0 && giamRieng0 && hoPct(giamRieng0)===pct0) giamRieng0=''; // tránh lặp khi sửa bài cũ ghi tay
@@ -243,8 +254,10 @@ function hoMoForm(id){
       +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input id="ho-pct" type="number" inputmode="decimal" min="0" max="95" step="any" placeholder="VD: 40" oninput="hoXemGia()" value="'+(pct0||'')+'" style="'+inp+';width:100px">'
       +[10,15,20,30,40].map(function(v){ return '<button type="button" onclick="document.getElementById(\'ho-pct\').value='+v+';hoXemGia()" style="border:1.5px solid #6A1B9A;color:#6A1B9A;background:#fff;border-radius:999px;padding:0 14px;min-height:44px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">'+v+'%</button>'; }).join('')+'</div>'
       +'<div id="ho-xemgia"></div>'
-      +lb('Thông tin liên hệ'+nho('(tên + số điện thoại)'))
-      +'<input id="ho-lh" type="text" inputmode="tel" maxlength="120" value="'+hoEsc(r?r.lienHe:'')+'" style="'+inp+'">'
+      +lb('Số điện thoại liên hệ'+(kh?' *':'')+nho('(sau này bấm vào số sẽ mở Zalo)'))
+      +'<input id="ho-sdt" type="tel" inputmode="tel" maxlength="16" placeholder="VD: 0901 234 567" value="'+hoEsc(tach0.sdt)+'" style="'+inp+'">'
+      +lb('Tên người liên hệ'+nho('(không bắt buộc)'))
+      +'<input id="ho-lh" type="text" maxlength="60" placeholder="VD: Anh A" value="'+hoEsc(tach0.ten)+'" style="'+inp+'">'
       +'<details'+(coThem?' open':'')+' style="margin-top:16px"><summary style="font-size:13px;font-weight:700;color:#6A1B9A;cursor:pointer;padding:8px 0">＋ Thêm giá khác, ghi chú (không bắt buộc)</summary>'
       +lb('Giá khác / ghi chú giá'+nho('(VD: giá chốt 180.000đ/m²)'))
       +'<input id="ho-giam" maxlength="60" value="'+hoEsc(giamRieng0)+'" style="'+inp+'">'
@@ -270,9 +283,9 @@ function hoDoiChon(idc){
   if(idc==='ho-dl'){
     var v=sel?sel.value:'', d=((HO.dm&&HO.dm.daiLy)||[]).filter(function(x){ return x.ten===v; })[0];
     if(!d) return;
-    var ss=document.getElementById('ho-sale-sel'), lh=document.getElementById('ho-lh');
+    var ss=document.getElementById('ho-sale-sel'), lh=document.getElementById('ho-sdt');
     if(ss&&!ss.value&&d.sale&&[].some.call(ss.options,function(o){ return o.value===d.sale; })) ss.value=d.sale;
-    if(lh&&!lh.value&&d.sdt) lh.value=d.sdt;
+    if(lh&&!lh.value&&d.sdt){ var t0=hoTachLH(d.sdt); lh.value=t0.sdt||d.sdt; }
   }
 }
 function hoGiaTriChon(idc){
@@ -297,7 +310,15 @@ function hoLuu(){
   var pct=parseFloat(g('ho-pct').replace(',','.'))||0;
   if(pct<0||pct>=100){ loi.textContent='% giảm phải từ 0 đến dưới 100.'; return; }
   var giam=(pct>0?'Giảm '+pct+'% giá lẻ':'')+((pct>0&&g('ho-giam'))?' · ':'')+g('ho-giam');
-  var d={id:_hoSua?_hoSua.id:'', ma:_hoSua?_hoSua.ma:_hoMa, daiLy:hoGiaTriChon('ho-dl'), sale:hoGiaTriChon('ho-sale'), thung:g('ho-thung'), vien:g('ho-vien'), lo:lo, giam:giam.substring(0,80), lienHe:g('ho-lh'), ghiChu:g('ho-gc')};
+  // Số điện thoại tách riêng (để bấm mở Zalo): chuẩn hóa về 0xxxxxxxxx; khách hàng bắt buộc nhập
+  var sdtRaw=g('ho-sdt'), sdt='';
+  if(sdtRaw){
+    var dd=sdtRaw.replace(/[^\d+]/g,'').replace(/^\+?84/,'0');
+    if(!/^0\d{9,10}$/.test(dd)){ loi.textContent='Số điện thoại chưa đúng (VD: 0901234567).'; return; }
+    sdt=dd;
+  } else if(hoLaKhach()){ loi.textContent='Nhập số điện thoại để nhân viên liên hệ lại.'; return; }
+  var lienHe=(g('ho-lh')?g('ho-lh')+' · ':'')+sdt;
+  var d={id:_hoSua?_hoSua.id:'', ma:_hoSua?_hoSua.ma:_hoMa, daiLy:hoGiaTriChon('ho-dl'), sale:hoGiaTriChon('ho-sale'), thung:g('ho-thung'), vien:g('ho-vien'), lo:lo, giam:giam.substring(0,80), lienHe:lienHe, ghiChu:g('ho-gc')};
   if(!d.daiLy && !hoLaKhach()){ loi.textContent='Chưa chọn đại lý đang ôm hàng.'; return; }
   if(!(Number(d.thung)>0)&&!(Number(d.vien)>0)){ loi.textContent='Nhập số thùng hoặc số viên lẻ.'; return; }
   loi.textContent=''; btn.disabled=true; btn.textContent='Đang gửi...';
