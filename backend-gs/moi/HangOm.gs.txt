@@ -1,0 +1,169 @@
+// ============================================================
+// HÀNG ĐẠI LÝ ÔM (hàng Đồng Tâm đã bán cho đại lý / sale nhưng chưa bán ra được)
+// - Chỉ nhân viên + admin (role 'nv' | 'admin') xem/ghi. Khách hàng, dự án, người chưa
+//   đăng nhập KHÔNG nhận được dòng nào (kiểm tra ở máy chủ, không tin trình duyệt).
+// - Sale đăng -> trạng thái "Chờ duyệt"; admin duyệt mới hiện cho nhân viên khác.
+//   Admin đăng thì tự "Đã duyệt".
+// - Tự ẩn sau HANG_OM_HAN_NGAY ngày không cập nhật (người đăng thấy nhắc, bấm Gia hạn).
+// - Danh sách đại lý + Sale phụ trách lấy từ Sheet "Quản lý mẫu và tồn kho đại lý"
+//   (tab Agencies: cột A Tên đại lý, B Mã, C Quản lý = Sale phụ trách, D SĐT, F Trạng thái;
+//   tab NguoiDung: CHỈ đọc cột C Họ tên + D Vai trò, KHÔNG đọc mật khẩu/token).
+// ============================================================
+var TAB_HANG_OM = 'HangDaiLyOm';
+var SHEET_ID_QLMAU = '1pPXvPulXoQSt6NFucG6ccpNZ83NLpYFM5cGGmPtocw0';
+var HANG_OM_HAN_NGAY = 30;
+var HANG_OM_COT = ['ID', 'Mã', 'Đại lý', 'Sale phụ trách', 'SL thùng', 'SL viên lẻ', 'Số lô', 'Giảm giá', 'Liên hệ', 'Ghi chú', 'Trạng thái', 'Người đăng', 'Ngày đăng', 'Ngày cập nhật', 'Người duyệt', 'Ngày duyệt'];
+var HANG_OM_TT = ['Chờ duyệt', 'Đã duyệt', 'Từ chối', 'Đã bán hết'];
+
+function _laNhanVien(e) { var ti = tokInfo(e); return !!(ti && (ti.role === 'admin' || ti.role === 'nv')); }
+
+function _hangOmTab() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName(TAB_HANG_OM);
+  if (!sh) {
+    sh = ss.insertSheet(TAB_HANG_OM);
+    sh.getRange(1, 1, 1, HANG_OM_COT.length).setValues([HANG_OM_COT]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+// Chặn công thức bị chèn qua ô nhập (=, +, -, @ ở đầu) + cắt độ dài
+function _hoText(v, max) {
+  var s = String(v === null || v === undefined ? '' : v).replace(/[\r\n\t]+/g, ' ').trim();
+  if (s.length > max) s = s.substring(0, max);
+  if (/^[=+\-@]/.test(s)) s = "'" + s;
+  return s;
+}
+function _hoSo(v) {
+  var n = Math.floor(Number(String(v === null || v === undefined ? '' : v).replace(',', '.')));
+  return (isFinite(n) && n > 0) ? Math.min(n, 1000000) : 0;
+}
+function _hoMs(s) { var t = Date.parse(String(s || '')); return isNaN(t) ? 0 : t; }
+
+function _hoRow(r, ti, now) {
+  var capNhat = _hoMs(r[13]);
+  return {
+    id: String(r[0]), ma: String(r[1]), daiLy: String(r[2]), sale: String(r[3]),
+    thung: Number(r[4]) || 0, vien: Number(r[5]) || 0, lo: String(r[6] || ''),
+    giam: String(r[7] || ''), lienHe: String(r[8] || ''), ghiChu: String(r[9] || ''),
+    tt: String(r[10] || ''), nguoi: String(r[11] || ''),
+    ngayDang: String(r[12] || ''), ngayCN: String(r[13] || ''),
+    hetHan: capNhat ? (now - capNhat) > HANG_OM_HAN_NGAY * 86400000 : false,
+    own: String(r[11] || '').toLowerCase() === ti.username
+  };
+}
+
+// Admin: mọi dòng. Nhân viên: dòng "Đã duyệt" còn hạn của mọi người + MỌI dòng của chính mình.
+function getHangOm(e) {
+  var ti = tokInfo(e), now = Date.now(), admin = ti.role === 'admin';
+  var rows = _hangOmTab().getDataRange().getValues();
+  var out = [];
+  for (var i = 1; i < rows.length; i++) {
+    if (!rows[i][0]) continue;
+    var o = _hoRow(rows[i], ti, now);
+    var hienChung = (o.tt === 'Đã duyệt' && !o.hetHan);
+    if (admin || hienChung || o.own) out.push(o);
+  }
+  return { status: 'ok', admin: admin, hanNgay: HANG_OM_HAN_NGAY, count: out.length, data: out };
+}
+
+// e.parameter.data = JSON {id?, ma, daiLy, sale, thung, vien, lo, giam, lienHe, ghiChu}
+function luuHangOm(e) {
+  var ti = tokInfo(e), admin = ti.role === 'admin', d;
+  try { d = JSON.parse(String(e.parameter.data || '{}')); } catch (x) { return { status: 'error', msg: 'Dữ liệu không đọc được' }; }
+  var ma = _hoText(d.ma, 40), daiLy = _hoText(d.daiLy, 120);
+  var thung = _hoSo(d.thung), vien = _hoSo(d.vien);
+  if (!ma) return { status: 'error', msg: 'Thiếu mã sản phẩm' };
+  if (!daiLy) return { status: 'error', msg: 'Chưa chọn đại lý đang ôm hàng' };
+  if (!thung && !vien) return { status: 'error', msg: 'Nhập số thùng hoặc số viên lẻ' };
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sh = _hangOmTab(), now = new Date().toISOString();
+    var vals = [ma, daiLy, _hoText(d.sale, 80), thung, vien, _hoText(d.lo, 60), _hoText(d.giam, 80), _hoText(d.lienHe, 120), _hoText(d.ghiChu, 300)];
+    var id = String(d.id || '').trim();
+    if (id) {
+      var rows = sh.getDataRange().getValues();
+      for (var i = 1; i < rows.length; i++) {
+        if (String(rows[i][0]) !== id) continue;
+        var own = String(rows[i][11] || '').toLowerCase() === ti.username;
+        if (!admin && !own) return { status: 'error', msg: 'Chỉ người đăng hoặc admin được sửa' };
+        var tt = admin ? (String(rows[i][10]) || 'Đã duyệt') : 'Chờ duyệt'; // nhân viên sửa -> duyệt lại
+        if (admin && HANG_OM_TT.indexOf(tt) < 0) tt = 'Đã duyệt';
+        sh.getRange(i + 1, 2, 1, 9).setValues([vals]);
+        sh.getRange(i + 1, 11).setValue(tt);
+        sh.getRange(i + 1, 14).setValue(now);
+        return { status: 'ok', id: id, tt: tt };
+      }
+      return { status: 'error', msg: 'Không tìm thấy dòng cần sửa' };
+    }
+    id = 'HO' + Utilities.getUuid().replace(/-/g, '').substring(0, 10);
+    var tt2 = admin ? 'Đã duyệt' : 'Chờ duyệt';
+    sh.appendRow([id].concat(vals, [tt2, ti.username, now, now, admin ? ti.username : '', admin ? now : '']));
+    return { status: 'ok', id: id, tt: tt2 };
+  } finally { lock.releaseLock(); }
+}
+
+// hanh: 'duyet' | 'tuchoi' (admin) · 'banhet' | 'giahan' | 'xoa' (người đăng hoặc admin)
+function doiTrangThaiHangOm(e) {
+  var ti = tokInfo(e), admin = ti.role === 'admin';
+  var id = String(e.parameter.id || '').trim(), hanh = String(e.parameter.hanh || '');
+  if (!id) return { status: 'error', msg: 'Thiếu mã dòng' };
+  if ((hanh === 'duyet' || hanh === 'tuchoi') && !admin) return { status: 'error', msg: 'Chỉ admin được duyệt' };
+  if (['duyet', 'tuchoi', 'banhet', 'giahan', 'xoa'].indexOf(hanh) < 0) return { status: 'error', msg: 'Thao tác không hợp lệ' };
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sh = _hangOmTab(), rows = sh.getDataRange().getValues(), now = new Date().toISOString();
+    for (var i = 1; i < rows.length; i++) {
+      if (String(rows[i][0]) !== id) continue;
+      var own = String(rows[i][11] || '').toLowerCase() === ti.username;
+      if (!admin && !own) return { status: 'error', msg: 'Chỉ người đăng hoặc admin được thao tác' };
+      var r = i + 1;
+      if (hanh === 'duyet') { sh.getRange(r, 11).setValue('Đã duyệt'); sh.getRange(r, 15).setValue(ti.username); sh.getRange(r, 16).setValue(now); sh.getRange(r, 14).setValue(now); }
+      else if (hanh === 'tuchoi') { sh.getRange(r, 11).setValue('Từ chối'); sh.getRange(r, 15).setValue(ti.username); sh.getRange(r, 16).setValue(now); }
+      else if (hanh === 'banhet') { sh.getRange(r, 11).setValue('Đã bán hết'); sh.getRange(r, 14).setValue(now); }
+      else if (hanh === 'giahan') { sh.getRange(r, 14).setValue(now); }
+      else if (hanh === 'xoa') { sh.deleteRow(r); }
+      return { status: 'ok', id: id, hanh: hanh };
+    }
+    return { status: 'error', msg: 'Không tìm thấy dòng' };
+  } finally { lock.releaseLock(); }
+}
+
+// Danh mục đại lý + Sale phụ trách (đọc từ Sheet "Quản lý mẫu và tồn kho đại lý", nhớ 10 phút).
+function getDanhMucDaiLy() {
+  var cache = CacheService.getScriptCache(), key = 'dm_dl_v1';
+  var c = cache.get(key);
+  if (c) { try { return JSON.parse(c); } catch (x) {} }
+  var ss = SpreadsheetApp.openById(SHEET_ID_QLMAU), daiLy = [], sale = [], seen = {};
+  var ag = ss.getSheetByName('Agencies');
+  if (ag) {
+    var rows = ag.getDataRange().getValues();
+    for (var i = 1; i < rows.length; i++) {
+      var ten = String(rows[i][0] || '').trim();
+      if (!ten) continue;
+      var tt = String(rows[i][5] || 'Active').trim();
+      if (tt && tt.toLowerCase() !== 'active') continue;
+      var sl = String(rows[i][2] || '').trim();
+      daiLy.push({ ten: ten, ma: String(rows[i][1] || ''), sale: sl, sdt: String(rows[i][3] || '') });
+      if (sl && !seen[sl.toLowerCase()]) { seen[sl.toLowerCase()] = 1; sale.push(sl); }
+    }
+  }
+  var nd = ss.getSheetByName('NguoiDung');
+  if (nd) {
+    // Chỉ lấy cột C (Họ tên) + D (Vai trò). TUYỆT ĐỐI không đọc/trả cột mật khẩu hay token.
+    var n = nd.getLastRow();
+    if (n > 1) {
+      var ten2 = nd.getRange(2, 3, n - 1, 2).getValues();
+      for (var j = 0; j < ten2.length; j++) {
+        var hoTen = String(ten2[j][0] || '').trim();
+        if (hoTen && !seen[hoTen.toLowerCase()]) { seen[hoTen.toLowerCase()] = 1; sale.push(hoTen); }
+      }
+    }
+  }
+  sale.sort();
+  var res = { status: 'ok', daiLy: daiLy, sale: sale };
+  try { cache.put(key, JSON.stringify(res), 600); } catch (x) {}
+  return res;
+}

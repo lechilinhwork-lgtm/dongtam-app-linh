@@ -1785,6 +1785,7 @@ function render(){
         +'</div>'
         +'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Giao hàng</span><span style="font-size:13px;font-weight:700;color:#1565C0">'+giaGiao+'</span></div>'
         +(tkText?'<div style="font-size:11px;font-weight:600;color:'+tkColor+';margin-top:2px">'+tkText+'</div>':'')
+        +(typeof htmlHangOm==='function'?htmlHangOm(p.ma,11):'')
         +'</div>'
         +htmlGioAnhChk(p.ma, p.ma);
     } else {
@@ -1829,6 +1830,7 @@ function render(){
         +'</div>'
         +'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:10px;color:#999">→ Giá ĐL giao</span><span style="font-size:11px;font-weight:700;color:#1565C0">'+mGiaGiao+'</span></div>'
         +(mTkText?'<div style="font-size:10px;font-weight:600;color:'+mTkColor+';margin-top:1px">'+mTkText+'</div>':'')
+        +(typeof htmlHangOm==='function'?htmlHangOm(p.ma,10):'')
         +'</div>'
         +htmlGioAnhChk(p.ma, p.ma);
     }
@@ -1872,6 +1874,7 @@ function render(){
 function showDP(ma){
   var p=DATA.find(function(x){return x.ma===ma;}); if(!p) return;
   curP_ma=ma;
+  if(typeof hoCapNhatNutDP==='function') hoCapNhatNutDP(ma);
   document.getElementById('dp-ma').textContent=p.ma;
   document.getElementById('dp-kc').textContent='Kích cỡ: '+p.kc+(p.gio?' · '+p.gio+(p.gio==='★'?' Chiến lược':' Chủ lực'):'');
   // Quy cách: số viên/thùng, kg/thùng
@@ -2116,6 +2119,7 @@ function renderSale(){
         +'<span style="font-size:14px;font-weight:800;color:#C0232A">'+nkFmt+'</span></span></div>'
         +'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;color:#999">Giao hàng</span><span style="font-size:12px;font-weight:700;color:#1565C0">'+ghFmt+'</span></div>'
         +(tkText?'<div style="font-size:10px;font-weight:600;color:'+tkColor+'">'+tkText+'</div>':'')
+        +(typeof htmlHangOm==='function'?htmlHangOm(p.ma,10):'')
         +'<div style="display:flex;gap:5px;margin-top:4px">'
         +'<button onclick="event.stopPropagation();chiaSeAnhSanPham(\''+p.ma+'\')" style="padding:6px 8px;font-size:11px;border:1px solid var(--bd);border-radius:8px;background:var(--bg1);cursor:pointer">📤</button>'
         +'<button onclick="event.stopPropagation();shareZaloSale(window.__salePTmp_'+p.ma.replace(/[^a-z0-9]/gi,'_')+')" style="padding:6px 8px;font-size:11px;border:none;border-radius:8px;background:#0068FF;color:#fff;font-weight:700;cursor:pointer">Zalo ↗</button>'
@@ -2208,7 +2212,7 @@ function renderSale(){
       +'<div><p style="font-size:12px;font-weight:700;margin-bottom:1px">'+p.ma+'</p>'
       +'<p style="font-size:10px;color:var(--t2)">'+p.kc+badgeCT+'</p></div>'
       +(save>0?'<span class="sale-badge">-'+save+'%</span>':'')+'</div>'
-      +priceHtml+tkMHtml;
+      +priceHtml+tkMHtml+(typeof htmlHangOm==='function'?htmlHangOm(p.ma,10.5):'');
     card.appendChild(info);
 
     var btnRow=document.createElement('div');
@@ -4672,6 +4676,7 @@ function showApp(name){
   // làm GAS xử lý chậm chồng chéo (ảnh hưởng tới tốc độ hiển thị giá).
   setTimeout(function(){ fetchKhachHangFromSheet(); }, 600);
   setTimeout(function(){ fetchTonKhoChiTiet(); }, 900);
+  setTimeout(function(){ if(typeof hoKhoiDong==='function') hoKhoiDong(); }, 1500); // hàng đại lý ôm (chỉ nhân viên/admin)
   // Trọng lượng vẫn đi kèm trong response getAll (res.trongLuong) - Sheet
   // backend chưa tách riêng, KHÔNG tự gọi thêm ở đây kẻo tải 2 lần trùng.
   setTimeout(function(){ gasWarmUp(); }, 1200);
@@ -6444,6 +6449,7 @@ function moTonKho(ma, tenSP){
     +'<button onclick="_tkModalMa=null;document.getElementById(\'modal-ton-kho\').remove()" style="border:none;background:none;font-size:20px;cursor:pointer;line-height:1">×</button>'
     +'</div>'
     +ghiChu
+    +((typeof htmlHangOmBlock==='function'&&!khachHang)?htmlHangOmBlock(ma):'')
     +body
     +'</div>';
   document.body.appendChild(modal);
