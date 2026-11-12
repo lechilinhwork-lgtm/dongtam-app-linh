@@ -139,16 +139,20 @@ function hoDongHtml(r){
     +'</div>';
 }
 function hoDongModal(){ var m=document.getElementById('modal-hang-om'); if(m) m.remove(); }
-function hoKhung(tieuDe, noiDung){
+function hoKhung(tieuDe, noiDung, chan){
   hoDongModal();
+  var phone=((window.innerWidth||0)<600), full=phone&&!!chan;
   var m=document.createElement('div'); m.id='modal-hang-om';
-  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
-  m.innerHTML='<div style="background:var(--bg1,#fff);border-radius:14px;max-width:480px;width:100%;max-height:92vh;overflow:auto;padding:16px">'
-    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
-    +'<p style="font-size:15px;font-weight:700;margin:0">'+tieuDe+'</p>'
-    +'<button onclick="hoDongModal()" style="border:none;background:none;font-size:22px;cursor:pointer;line-height:1">×</button></div>'
-    +noiDung+'</div>';
-  m.addEventListener('click',function(e){ if(e.target===m) hoDongModal(); });
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:'+(full?'stretch':'center')+';justify-content:center;padding:'+(full?'0':'16px');
+  var box='background:var(--bg1,#fff);display:flex;flex-direction:column;width:100%;'+(full?'height:100%':'max-width:480px;max-height:92vh;border-radius:14px');
+  m.innerHTML='<div style="'+box+'">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px 10px;border-bottom:1px solid var(--bd,#eee)">'
+    +'<p style="font-size:15px;font-weight:700;margin:0;line-height:1.3">'+tieuDe+'</p>'
+    +'<button onclick="hoDongModal()" aria-label="Đóng" style="border:none;background:none;font-size:26px;cursor:pointer;line-height:1;padding:0 4px">×</button></div>'
+    +'<div id="ho-cuon" style="flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:6px 16px 14px">'+noiDung+'</div>'
+    +(chan?'<div style="padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--bd,#eee);background:var(--bg1,#fff)">'+chan+'</div>':'')
+    +'</div>';
+  m.addEventListener('click',function(e){ if(e.target===m && !full) hoDongModal(); });
   document.body.appendChild(m);
 }
 function moHangOm(ma){
@@ -188,7 +192,6 @@ function hoMoForm(id){
   _hoMa=ma;
   // Khách hàng: không tải danh mục đại lý/sale (máy chủ không trả cho khách), không thấy lô Đồng Tâm
   (kh?function(cb){ cb({daiLy:[],sale:[]}); }:hoTaiDanhMuc)(function(dm){
-    var s=checkSession()||{};
     var tk=(!kh&&typeof timTonKho==='function')?timTonKho(ma):null;
     var dsLo=(tk&&typeof gomLoTheoMa==='function')?gomLoTheoMa(tk):[];
     var pct0=r?hoPct(r.giam):0;
@@ -196,46 +199,86 @@ function hoMoForm(id){
     if(pct0 && giamRieng0 && hoPct(giamRieng0)===pct0) giamRieng0=''; // tránh lặp khi sửa bài cũ ghi tay
     var loHienTai=r?r.lo:'';
     var loTrongDS=dsLo.some(function(x){ return String(x.so_lo)===loHienTai; });
-    var inp='width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid var(--bd2,#ccc);border-radius:8px;font-size:14px;font-family:inherit';
-    var lb=function(t){ return '<label style="display:block;font-size:12px;font-weight:700;margin:10px 0 4px">'+t+'</label>'; };
+    // Chữ 16px: dưới 16px thì iPhone tự phóng to khi chạm vào ô, rất khó dùng
+    var inp='width:100%;box-sizing:border-box;padding:11px 12px;min-height:48px;border:1.5px solid var(--bd2,#ccc);border-radius:10px;font-size:16px;font-family:inherit;background:#fff;color:inherit';
+    var lb=function(t){ return '<label style="display:block;font-size:13px;font-weight:700;margin:16px 0 6px">'+t+'</label>'; };
+    var nho=function(t){ return ' <span style="font-weight:400;color:#888">'+t+'</span>'; };
+    // Ô chọn trong danh sách + "Khác - gõ tên" (ô chọn dùng tốt trên điện thoại hơn ô gõ-gợi ý)
+    function chon(idc, ds, cur, trong0){
+      if(!ds.length) return '<input id="'+idc+'" placeholder="Gõ tên" value="'+hoEsc(cur)+'" style="'+inp+'">';
+      var coTrong=ds.indexOf(cur)>=0, khac=!!cur&&!coTrong;
+      return '<select id="'+idc+'-sel" onchange="hoDoiChon(\''+idc+'\')" style="'+inp+'"><option value="">'+trong0+'</option>'
+        +ds.map(function(x){ return '<option value="'+hoEsc(x)+'"'+(x===cur?' selected':'')+'>'+hoEsc(x)+'</option>'; }).join('')
+        +'<option value="__khac"'+(khac?' selected':'')+'>Khác — gõ tên</option></select>'
+        +'<input id="'+idc+'" placeholder="Gõ tên" value="'+(khac?hoEsc(cur):'')+'" style="'+inp+';margin-top:8px;display:'+(khac?'block':'none')+'">';
+    }
+    function buoc(idb, nhan, val){
+      var bt='width:52px;flex-shrink:0;border:1.5px solid #6A1B9A;color:#6A1B9A;background:#fff;font-size:24px;font-weight:700;cursor:pointer;font-family:inherit;min-height:48px;';
+      return '<div style="flex:1;min-width:0">'+lb(nhan)
+        +'<div style="display:flex"><button type="button" onclick="hoBuoc(\''+idb+'\',-1)" aria-label="Giảm" style="'+bt+'border-radius:10px 0 0 10px">−</button>'
+        +'<input id="'+idb+'" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="'+val+'" style="'+inp+';text-align:center;border-radius:0;border-left:none;border-right:none;min-width:0">'
+        +'<button type="button" onclick="hoBuoc(\''+idb+'\',1)" aria-label="Tăng" style="'+bt+'border-radius:0 10px 10px 0">+</button></div></div>';
+    }
     var loHtml;
     if(dsLo.length){
-      loHtml=lb('Số lô <span style="font-weight:400;color:#888">(lô Đồng Tâm đang còn, hoặc nhập tay nếu đã hết)</span>')
+      loHtml=lb('Số lô'+nho('(lô Đồng Tâm đang còn, hoặc nhập tay)'))
         +'<select id="ho-lo-sel" onchange="hoDoiLo()" style="'+inp+'"><option value="">— Không rõ số lô —</option>'
         +dsLo.map(function(x){ return '<option value="'+hoEsc(x.so_lo)+'"'+(loTrongDS&&String(x.so_lo)===loHienTai?' selected':'')+'>Lô '+hoEsc(x.so_lo||'–')+(x.mau?' · màu '+hoEsc(x.mau):'')+' (Đồng Tâm còn '+Math.round(x.tong)+')</option>'; }).join('')
         +'<option value="__khac"'+(loHienTai&&!loTrongDS?' selected':'')+'>Khác — nhập số lô khác</option></select>'
-        +'<input id="ho-lo" placeholder="Nhập số lô" value="'+(loHienTai&&!loTrongDS?hoEsc(loHienTai):'')+'" style="'+inp+';margin-top:6px;display:'+(loHienTai&&!loTrongDS?'block':'none')+'">';
+        +'<input id="ho-lo" placeholder="Nhập số lô" value="'+(loHienTai&&!loTrongDS?hoEsc(loHienTai):'')+'" style="'+inp+';margin-top:8px;display:'+(loHienTai&&!loTrongDS?'block':'none')+'">';
     } else {
-      loHtml=lb('Số lô <span style="font-weight:400;color:#888">('+(kh?'nếu có, in trên thùng hàng':'Đồng Tâm hết lô này, nhập tay')+')</span>')
+      loHtml=lb('Số lô'+nho(kh?'(nếu có, in trên thùng hàng)':'(Đồng Tâm hết lô này, nhập tay)'))
         +'<input id="ho-lo" placeholder="Nhập số lô" value="'+hoEsc(loHienTai)+'" style="'+inp+'">';
     }
-    hoKhung((kh?(r?'✏️ Sửa bài báo hàng ôm':'📮 Báo hàng đang ôm'):(r?'✏️ Sửa hàng ôm':'➕ Đăng hàng đại lý ôm'))+' — '+hoEsc(ma),
+    var coThem=!!(giamRieng0||(r&&r.ghiChu));
+    var daiLyDS=(dm.daiLy||[]).map(function(d){ return d.ten; }), saleDS=dm.sale||[];
+    var noiDung=
       (kh
-        ?'<div style="font-size:12px;color:#666;background:#6A1B9A0d;border-radius:8px;padding:8px 10px">Bài được gửi dưới tên <b>tài khoản đại lý của anh/chị</b> và chỉ nhân viên Đồng Tâm xem được sau khi duyệt.</div>'
-        :lb('Đại lý đang ôm *')
-          +'<input id="ho-dl" list="ho-dl-list" placeholder="Chọn hoặc gõ tên đại lý" oninput="hoChonDL()" value="'+hoEsc(r?r.daiLy:'')+'" style="'+inp+'">'
-          +'<datalist id="ho-dl-list">'+(dm.daiLy||[]).map(function(d){ return '<option value="'+hoEsc(d.ten)+'">'; }).join('')+'</datalist>'
-          +lb('Sale phụ trách')
-          +'<input id="ho-sale" list="ho-sale-list" placeholder="Chọn hoặc gõ tên sale" value="'+hoEsc(r?r.sale:'')+'" style="'+inp+'">'
-          +'<datalist id="ho-sale-list">'+(dm.sale||[]).map(function(n){ return '<option value="'+hoEsc(n)+'">'; }).join('')+'</datalist>')
-      +'<div style="display:flex;gap:8px"><div style="flex:1">'+lb('Số thùng')+'<input id="ho-thung" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="'+(r&&r.thung?r.thung:'')+'" style="'+inp+'"></div>'
-      +'<div style="flex:1">'+lb('Viên lẻ')+'<input id="ho-vien" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="'+(r&&r.vien?r.vien:'')+'" style="'+inp+'"></div></div>'
+        ?'<div style="font-size:13px;color:#555;background:#6A1B9A0d;border-radius:10px;padding:10px 12px;margin-top:8px;line-height:1.5">Bài được gửi dưới tên <b>tài khoản đại lý của anh/chị</b> và chỉ nhân viên Đồng Tâm xem được sau khi duyệt.</div>'
+        :lb('Đại lý đang ôm *')+chon('ho-dl', daiLyDS, r?r.daiLy:'', '— Chọn đại lý —')
+          +lb('Sale phụ trách')+chon('ho-sale', saleDS, r?r.sale:'', '— Chọn sale —'))
+      +'<div style="display:flex;gap:10px">'+buoc('ho-thung','Số thùng',(r&&r.thung?r.thung:''))+buoc('ho-vien','Viên lẻ',(r&&r.vien?r.vien:''))+'</div>'
       +loHtml
-      +lb('Giảm bao nhiêu % trên giá lẻ <span style="font-weight:400;color:#888">(app tự tính giá bán)</span>')
-      +'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input id="ho-pct" type="number" inputmode="decimal" min="0" max="95" step="any" placeholder="VD: 40" oninput="hoXemGia()" value="'+(pct0||'')+'" style="'+inp+';width:90px">'
-      +[10,15,20,30,40].map(function(v){ return '<button type="button" onclick="document.getElementById(\'ho-pct\').value='+v+';hoXemGia()" style="border:1px solid #6A1B9A;color:#6A1B9A;background:#fff;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">'+v+'%</button>'; }).join('')+'</div>'
+      +lb('Giảm bao nhiêu % trên giá lẻ'+nho('(app tự tính giá bán)'))
+      +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input id="ho-pct" type="number" inputmode="decimal" min="0" max="95" step="any" placeholder="VD: 40" oninput="hoXemGia()" value="'+(pct0||'')+'" style="'+inp+';width:100px">'
+      +[10,15,20,30,40].map(function(v){ return '<button type="button" onclick="document.getElementById(\'ho-pct\').value='+v+';hoXemGia()" style="border:1.5px solid #6A1B9A;color:#6A1B9A;background:#fff;border-radius:999px;padding:0 14px;min-height:44px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">'+v+'%</button>'; }).join('')+'</div>'
       +'<div id="ho-xemgia"></div>'
-      +lb('Giá khác / ghi chú giá <span style="font-weight:400;color:#888">(không bắt buộc, VD: giá chốt 180.000đ/m²)</span>')
+      +lb('Thông tin liên hệ'+nho('(tên + số điện thoại)'))
+      +'<input id="ho-lh" type="text" inputmode="tel" maxlength="120" value="'+hoEsc(r?r.lienHe:'')+'" style="'+inp+'">'
+      +'<details'+(coThem?' open':'')+' style="margin-top:16px"><summary style="font-size:13px;font-weight:700;color:#6A1B9A;cursor:pointer;padding:8px 0">＋ Thêm giá khác, ghi chú (không bắt buộc)</summary>'
+      +lb('Giá khác / ghi chú giá'+nho('(VD: giá chốt 180.000đ/m²)'))
       +'<input id="ho-giam" maxlength="60" value="'+hoEsc(giamRieng0)+'" style="'+inp+'">'
-      +lb('Thông tin liên hệ <span style="font-weight:400;color:#888">(tên + số điện thoại)</span>')
-      +'<input id="ho-lh" maxlength="120" value="'+hoEsc(r?r.lienHe:'')+'" style="'+inp+'">'
       +lb('Ghi chú')
-      +'<textarea id="ho-gc" maxlength="300" rows="2" style="'+inp+'">'+hoEsc(r?r.ghiChu:'')+'</textarea>'
-      +'<div id="ho-loi" style="color:#C62828;font-size:12px;margin-top:8px;min-height:16px"></div>'
-      +'<div style="display:flex;gap:8px;margin-top:6px">'
-      +'<button type="button" onclick="moHangOm(_hoMa)" style="flex:1;padding:11px;border:1.5px solid var(--bd2,#ccc);border-radius:10px;background:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Quay lại</button>'
-      +'<button type="button" id="ho-luu" onclick="hoLuu()" style="flex:2;padding:11px;border:none;border-radius:10px;background:#6A1B9A;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">'+(HO.admin?'Lưu':'Gửi duyệt')+'</button></div>');
+      +'<textarea id="ho-gc" maxlength="300" rows="3" style="'+inp+'">'+hoEsc(r?r.ghiChu:'')+'</textarea></details>'
+      +'<div id="ho-loi" style="color:#C62828;font-size:13px;margin-top:10px;min-height:18px"></div>';
+    var chan='<div style="display:flex;gap:10px">'
+      +'<button type="button" onclick="moHangOm(_hoMa)" style="flex:1;min-height:50px;border:1.5px solid var(--bd2,#ccc);border-radius:12px;background:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Quay lại</button>'
+      +'<button type="button" id="ho-luu" onclick="hoLuu()" style="flex:2;min-height:50px;border:none;border-radius:12px;background:#6A1B9A;color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit">'+(HO.admin?'Lưu':'Gửi duyệt')+'</button></div>';
+    hoKhung((kh?(r?'✏️ Sửa bài báo hàng ôm':'📮 Báo hàng đang ôm'):(r?'✏️ Sửa hàng ôm':'➕ Đăng hàng đại lý ôm'))+' — '+hoEsc(ma), noiDung, chan);
+    hoXemGia();
   });
+}
+// +/- cho số thùng, viên lẻ (gõ số trên điện thoại hay bị lỗi, bấm dễ hơn)
+function hoBuoc(idb, d){
+  var e=document.getElementById(idb); if(!e) return;
+  var v=Math.max(0,(parseInt(e.value,10)||0)+d); e.value=v?v:'';
+}
+// Ô chọn đại lý/sale: chọn "Khác" thì hiện ô gõ tên; chọn đại lý thì tự điền sale + liên hệ nếu đang trống
+function hoDoiChon(idc){
+  var sel=document.getElementById(idc+'-sel'), inp=document.getElementById(idc);
+  if(sel&&inp) inp.style.display=(sel.value==='__khac')?'block':'none';
+  if(idc==='ho-dl'){
+    var v=sel?sel.value:'', d=((HO.dm&&HO.dm.daiLy)||[]).filter(function(x){ return x.ten===v; })[0];
+    if(!d) return;
+    var ss=document.getElementById('ho-sale-sel'), lh=document.getElementById('ho-lh');
+    if(ss&&!ss.value&&d.sale&&[].some.call(ss.options,function(o){ return o.value===d.sale; })) ss.value=d.sale;
+    if(lh&&!lh.value&&d.sdt) lh.value=d.sdt;
+  }
+}
+function hoGiaTriChon(idc){
+  var sel=document.getElementById(idc+'-sel'), inp=document.getElementById(idc);
+  if(sel && sel.value!=='__khac') return sel.value;
+  return inp?inp.value.trim():'';
 }
 function hoXemGia(){
   var e=document.getElementById('ho-xemgia'); if(!e) return;
@@ -246,14 +289,6 @@ function hoDoiLo(){
   var sel=document.getElementById('ho-lo-sel'), inp=document.getElementById('ho-lo');
   if(sel&&inp) inp.style.display=(sel.value==='__khac')?'block':'none';
 }
-// Chọn đại lý trong danh mục -> tự điền Sale phụ trách + liên hệ nếu đang trống
-function hoChonDL(){
-  var v=(document.getElementById('ho-dl')||{}).value, d=((HO.dm&&HO.dm.daiLy)||[]).filter(function(x){ return x.ten===v; })[0];
-  if(!d) return;
-  var sl=document.getElementById('ho-sale'), lh=document.getElementById('ho-lh');
-  if(sl&&!sl.value&&d.sale) sl.value=d.sale;
-  if(lh&&!lh.value&&d.sdt) lh.value=d.sdt;
-}
 function hoLuu(){
   var g=function(id){ var e=document.getElementById(id); return e?e.value.trim():''; };
   var loi=document.getElementById('ho-loi'), btn=document.getElementById('ho-luu');
@@ -262,7 +297,7 @@ function hoLuu(){
   var pct=parseFloat(g('ho-pct').replace(',','.'))||0;
   if(pct<0||pct>=100){ loi.textContent='% giảm phải từ 0 đến dưới 100.'; return; }
   var giam=(pct>0?'Giảm '+pct+'% giá lẻ':'')+((pct>0&&g('ho-giam'))?' · ':'')+g('ho-giam');
-  var d={id:_hoSua?_hoSua.id:'', ma:_hoSua?_hoSua.ma:_hoMa, daiLy:g('ho-dl'), sale:g('ho-sale'), thung:g('ho-thung'), vien:g('ho-vien'), lo:lo, giam:giam.substring(0,80), lienHe:g('ho-lh'), ghiChu:g('ho-gc')};
+  var d={id:_hoSua?_hoSua.id:'', ma:_hoSua?_hoSua.ma:_hoMa, daiLy:hoGiaTriChon('ho-dl'), sale:hoGiaTriChon('ho-sale'), thung:g('ho-thung'), vien:g('ho-vien'), lo:lo, giam:giam.substring(0,80), lienHe:g('ho-lh'), ghiChu:g('ho-gc')};
   if(!d.daiLy && !hoLaKhach()){ loi.textContent='Chưa chọn đại lý đang ôm hàng.'; return; }
   if(!(Number(d.thung)>0)&&!(Number(d.vien)>0)){ loi.textContent='Nhập số thùng hoặc số viên lẻ.'; return; }
   loi.textContent=''; btn.disabled=true; btn.textContent='Đang gửi...';
