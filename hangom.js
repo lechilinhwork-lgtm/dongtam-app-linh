@@ -54,6 +54,23 @@ function hoSL(thung, vien){
   var p=[]; if(thung>0) p.push(Math.round(thung).toLocaleString('vi-VN')+' thùng'); if(vien>0) p.push(Math.round(vien).toLocaleString('vi-VN')+' viên lẻ');
   return p.join(' + ')||'0';
 }
+// ----- Tính giá bán từ % giảm trên giá lẻ -----
+function hoPct(txt){ var m=String(txt||'').match(/(\d+(?:[.,]\d+)?)\s*%/); return m?parseFloat(m[1].replace(',','.')):0; }
+function hoGiaBan(ma, pct){
+  var p=(typeof DATA!=='undefined')?DATA.filter(function(x){ return x&&hoNorm(x.ma)===hoNorm(ma); })[0]:null;
+  if(!p||!(p.le>0)||!(pct>0)||pct>=100) return null;
+  var m2=p.le*(1-pct/100), qc=(typeof getQuyCach==='function')?getQuyCach(p.kc,p.cat):null;
+  var o={le:p.le, pct:pct, m2:Math.round(m2)};
+  if(qc&&qc.m2>0){ o.thung=Math.round(m2*qc.m2); if(qc.vien>0) o.vien=Math.round(m2*qc.m2/qc.vien); }
+  return o;
+}
+function hoFmt(n){ return Math.round(n).toLocaleString('vi-VN')+'đ'; }
+function hoHtmlGia(ma, giamTxt){
+  var g=hoGiaBan(ma, hoPct(giamTxt)); if(!g) return '';
+  return '<div style="background:#2E7D3212;border:1px solid #2E7D3244;border-radius:8px;padding:7px 10px;margin:6px 0;font-size:13px;color:#1B5E20;line-height:1.55">'
+    +'💰 Giá bán (giảm '+g.pct+'% giá lẻ): <b>'+hoFmt(g.m2)+'/m²</b>'+(g.thung?' · <b>'+hoFmt(g.thung)+'/thùng</b>':'')+(g.vien?' · '+hoFmt(g.vien)+'/viên':'')
+    +'<br><span style="font-size:11px;color:#558B2F">Giá lẻ trên app: '+hoFmt(g.le)+'/m²</span></div>';
+}
 // Dòng nhỏ hiện dưới số tồn kho Đồng Tâm trên thẻ sản phẩm
 function htmlHangOm(ma, px){
   if(!hoDuocDung()) return '';
@@ -107,6 +124,8 @@ function hoDongHtml(r){
     +(r.sale?'Sale phụ trách: <b>'+hoEsc(r.sale)+'</b><br>':'')
     +(r.lo?'Số lô: <b>'+hoEsc(r.lo)+'</b><br>':'')
     +(r.giam?'Giá/giảm: <b>'+hoEsc(r.giam)+'</b><br>':'')
+    +'</div>'+hoHtmlGia(r.ma, r.giam)
+    +'<div style="font-size:12px;color:var(--t2,#666);line-height:1.6">'
     +(r.lienHe?'Liên hệ: '+hoLienHe(r.lienHe)+'<br>':'')
     +(r.ghiChu?'Ghi chú: '+hoEsc(r.ghiChu)+'<br>':'')
     +'<span style="color:#999">Đăng bởi '+hoEsc(r.nguoi)+' · cập nhật '+hoNgay(r.ngayCN)+'</span></div>'
@@ -152,6 +171,9 @@ function hoMoForm(id){
     var s=checkSession()||{};
     var tk=(typeof timTonKho==='function')?timTonKho(ma):null;
     var dsLo=(tk&&typeof gomLoTheoMa==='function')?gomLoTheoMa(tk):[];
+    var pct0=r?hoPct(r.giam):0;
+    var giamRieng0=r?String(r.giam||'').replace(/Giảm\s*[\d.,]+\s*%\s*giá lẻ\s*·?\s*/i,'').trim():'';
+    if(pct0 && giamRieng0 && hoPct(giamRieng0)===pct0) giamRieng0=''; // tránh lặp khi sửa bài cũ ghi tay
     var loHienTai=r?r.lo:'';
     var loTrongDS=dsLo.some(function(x){ return String(x.so_lo)===loHienTai; });
     var inp='width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid var(--bd2,#ccc);border-radius:8px;font-size:14px;font-family:inherit';
@@ -177,8 +199,12 @@ function hoMoForm(id){
       +'<div style="display:flex;gap:8px"><div style="flex:1">'+lb('Số thùng')+'<input id="ho-thung" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="'+(r&&r.thung?r.thung:'')+'" style="'+inp+'"></div>'
       +'<div style="flex:1">'+lb('Viên lẻ')+'<input id="ho-vien" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="'+(r&&r.vien?r.vien:'')+'" style="'+inp+'"></div></div>'
       +loHtml
-      +lb('Giá bán / mức giảm <span style="font-weight:400;color:#888">(VD: giảm 15% so với giá niêm yết)</span>')
-      +'<input id="ho-giam" maxlength="80" value="'+hoEsc(r?r.giam:'')+'" style="'+inp+'">'
+      +lb('Giảm bao nhiêu % trên giá lẻ <span style="font-weight:400;color:#888">(app tự tính giá bán)</span>')
+      +'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input id="ho-pct" type="number" inputmode="decimal" min="0" max="95" step="any" placeholder="VD: 40" oninput="hoXemGia()" value="'+(pct0||'')+'" style="'+inp+';width:90px">'
+      +[10,15,20,30,40].map(function(v){ return '<button type="button" onclick="document.getElementById(\'ho-pct\').value='+v+';hoXemGia()" style="border:1px solid #6A1B9A;color:#6A1B9A;background:#fff;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">'+v+'%</button>'; }).join('')+'</div>'
+      +'<div id="ho-xemgia"></div>'
+      +lb('Giá khác / ghi chú giá <span style="font-weight:400;color:#888">(không bắt buộc, VD: giá chốt 180.000đ/m²)</span>')
+      +'<input id="ho-giam" maxlength="60" value="'+hoEsc(giamRieng0)+'" style="'+inp+'">'
       +lb('Thông tin liên hệ <span style="font-weight:400;color:#888">(tên + số điện thoại)</span>')
       +'<input id="ho-lh" maxlength="120" value="'+hoEsc(r?r.lienHe:'')+'" style="'+inp+'">'
       +lb('Ghi chú')
@@ -188,6 +214,11 @@ function hoMoForm(id){
       +'<button type="button" onclick="moHangOm(_hoMa)" style="flex:1;padding:11px;border:1.5px solid var(--bd2,#ccc);border-radius:10px;background:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Quay lại</button>'
       +'<button type="button" id="ho-luu" onclick="hoLuu()" style="flex:2;padding:11px;border:none;border-radius:10px;background:#6A1B9A;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">'+(HO.admin?'Lưu':'Gửi duyệt')+'</button></div>');
   });
+}
+function hoXemGia(){
+  var e=document.getElementById('ho-xemgia'); if(!e) return;
+  var p=parseFloat(String((document.getElementById('ho-pct')||{}).value||'').replace(',','.'));
+  e.innerHTML=(p>0)?(hoHtmlGia(_hoMa, 'Giảm '+p+'% giá lẻ')||'<div style="font-size:11px;color:#E65100;margin-top:4px">Mã này chưa có giá lẻ nên chưa tính được giá bán.</div>'):'';
 }
 function hoDoiLo(){
   var sel=document.getElementById('ho-lo-sel'), inp=document.getElementById('ho-lo');
@@ -206,7 +237,10 @@ function hoLuu(){
   var loi=document.getElementById('ho-loi'), btn=document.getElementById('ho-luu');
   var sel=document.getElementById('ho-lo-sel'), lo;
   if(sel) lo=(sel.value==='__khac')?g('ho-lo'):sel.value; else lo=g('ho-lo');
-  var d={id:_hoSua?_hoSua.id:'', ma:_hoSua?_hoSua.ma:_hoMa, daiLy:g('ho-dl'), sale:g('ho-sale'), thung:g('ho-thung'), vien:g('ho-vien'), lo:lo, giam:g('ho-giam'), lienHe:g('ho-lh'), ghiChu:g('ho-gc')};
+  var pct=parseFloat(g('ho-pct').replace(',','.'))||0;
+  if(pct<0||pct>=100){ loi.textContent='% giảm phải từ 0 đến dưới 100.'; return; }
+  var giam=(pct>0?'Giảm '+pct+'% giá lẻ':'')+((pct>0&&g('ho-giam'))?' · ':'')+g('ho-giam');
+  var d={id:_hoSua?_hoSua.id:'', ma:_hoSua?_hoSua.ma:_hoMa, daiLy:g('ho-dl'), sale:g('ho-sale'), thung:g('ho-thung'), vien:g('ho-vien'), lo:lo, giam:giam.substring(0,80), lienHe:g('ho-lh'), ghiChu:g('ho-gc')};
   if(!d.daiLy){ loi.textContent='Chưa chọn đại lý đang ôm hàng.'; return; }
   if(!(Number(d.thung)>0)&&!(Number(d.vien)>0)){ loi.textContent='Nhập số thùng hoặc số viên lẻ.'; return; }
   loi.textContent=''; btn.disabled=true; btn.textContent='Đang gửi...';
