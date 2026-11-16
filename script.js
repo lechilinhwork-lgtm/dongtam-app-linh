@@ -772,7 +772,7 @@ function chiaSeVideoSanPham(ma){
   var lines=['🎥 *Video tham khảo sản phẩm:*','*'+ten+'*','Mã: '+ma];
   if(ex.tiktok)   lines.push('▶ TikTok: '+ex.tiktok);
   if(ex.youtube)  lines.push('▶ YouTube: '+ex.youtube);
-  lines.push('','📍 Đồng Tâm KV23 – Lê Chí Linh');
+  lines.push('','📍 Đồng Tâm – Lê Chí Linh');
   var msg=lines.join('\n');
   var firstUrl=ex.tiktok||ex.youtube;
   // Mobile: dùng Web Share API để mở sheet Zalo
@@ -3088,7 +3088,7 @@ function themTBVSVaoDon(){
 }
 function shareZaloTBVS(ma){
   var p=TBVS.find(function(x){return x.ma===ma;}); if(!p) return;
-  var lines=['ĐỒNG TÂM KV23 – THIẾT BỊ VỆ SINH'];
+  var lines=['ĐỒNG TÂM – THIẾT BỊ VỆ SINH'];
   lines.push('📌 '+tenDepTBVS(p));
   if(p.ten) lines.push('Mã: '+p.ten);
   lines.push('━━━━━━━━━━━━━━');
@@ -3418,7 +3418,7 @@ function layNoiDungBaoGia(ma){
   // % giảm luôn tính so với Giá niêm yết (không phải so với giá ĐL gốc)
   var pct = function(sale){ return (le>0 && sale>0) ? Math.round((le-sale)/le*100) : 0; };
 
-  var lines = ['GẠCH ĐỒNG TÂM KV23'+(isSale?(isCT2?' – XẢ KHO THÁNG '+thangHienTai():' – SALE THÁNG '+thangHienTai()):'')];
+  var lines = ['GẠCH ĐỒNG TÂM'+(isSale?(isCT2?' – XẢ KHO THÁNG '+thangHienTai():' – SALE THÁNG '+thangHienTai()):'')];
   lines.push('📌 Mã: '+p.ma);
   lines.push('📐 Kích cỡ: '+p.kc);
   try{
@@ -3510,7 +3510,7 @@ function shareZaloSale(p){
   var f=function(n){ return n>0?n.toLocaleString('vi-VN')+'đ/m²':'–'; };
   // % giảm luôn tính so với Giá niêm yết (không phải so với giá ĐL gốc)
   var pct=function(sale){ return (p.le>0 && sale>0) ? Math.round((p.le-sale)/p.le*100) : 0; };
-  var lines=['GẠCH ĐỒNG TÂM KV23'+(isCT2?' – XẢ KHO THÁNG '+thangHienTai():' – SALE THÁNG '+thangHienTai())];
+  var lines=['GẠCH ĐỒNG TÂM'+(isCT2?' – XẢ KHO THÁNG '+thangHienTai():' – SALE THÁNG '+thangHienTai())];
   lines.push('📌 Mã: '+p.ma);
   lines.push('📐 Kích cỡ: '+(p.kc||''));
   try{
@@ -4378,6 +4378,7 @@ function shareZaloKinh(ma){
   var lines=['💎 GẠCH KÍNH ĐỒNG TÂM'];
   lines.push('📌 Mã: '+p.ten);
   lines.push('📐 Kích cỡ: '+p.kc+'cm · '+p.dong_goi);
+  lines.push('📏 Độ dày: 9.5cm');
   lines.push('━━━━━━━━━━━━━━');
   if(p.le>0){ lines.push('1. Giá niêm yết: '+f(p.le)); lines.push(''); }
   lines.push('2. Giá đại lý lấy hàng dưới 20 thùng:');
@@ -7550,7 +7551,7 @@ function toggleAIChat(){
 
 function aiShowWelcome(){
   aiAppendBubble('bot',
-    'Xin chào! Mình là trợ lý hỗ trợ Đồng Tâm KV23. 👋\n'
+    'Xin chào! Mình là trợ lý hỗ trợ Đồng Tâm. 👋\n'
     + 'Gõ đúng mã sản phẩm (VD: DTD6060...), mình báo ngay giá + tồn kho.\n\n'
     + 'Ngoài ra mình còn giúp:\n'
     + '• Chương trình đang áp dụng (Sale/Xả kho)\n'
