@@ -1256,6 +1256,59 @@ function goPage(p){
   var plist=document.getElementById('plist');
   if(plist) plist.scrollIntoView({behavior:'smooth',block:'start'});
 }
+// ===== Gạch kính: giá theo VIÊN (bán theo thùng 6 viên, đại lý hay chia ra từng viên) =====
+function kinhSoVien(p){
+  var m=String((p&&p.dong_goi)||'').match(/(\d+)\s*(?:v|viên)/i);
+  var n=m?parseInt(m[1],10):6;
+  return n>0?n:6;
+}
+// Giá 1 viên = giá thùng chia số viên, LÀM TRÒN đến hàng trăm đồng
+function kinhGiaVien(thung, p){ return thung>0 ? Math.round(thung/kinhSoVien(p)/100)*100 : 0; }
+function kinhVienTxt(thung, p){ var v=kinhGiaVien(thung,p); return v>0?' (≈ '+v.toLocaleString('vi-VN')+'đ/viên)':''; }
+function kinhDong(n){ return Math.round(n).toLocaleString('vi-VN')+'đ'; }
+// Ô tính giá bán lẻ cho đại lý: chọn mức giá nhập + % lãi -> giá bán lẻ đề xuất mỗi viên / thùng
+function kinhTinhLai(ma){
+  var p=KINH.find(function(x){return x.ma===ma;}); if(!p) return;
+  var g=function(id){ return document.getElementById(id+'-'+ma); };
+  var sel=g('kl-sel'), nhap=g('kl-nhap'), pctEl=g('kl-pct'), out=g('kl-out'); if(!sel||!out) return;
+  var n=kinhSoVien(p);
+  nhap.style.display=(sel.value==='tay')?'block':'none';
+  var nhapVien;
+  if(sel.value==='tay') nhapVien=parseFloat(String(nhap.value||'').replace(/\./g,'').replace(',','.'))||0;
+  else nhapVien=(Number(sel.value)||0)/n;
+  var pct=parseFloat(String(pctEl.value||'').replace(',','.'));
+  if(!(nhapVien>0)||!(pct>=0)){ out.innerHTML=''; return; }
+  var nv=Math.round(nhapVien/100)*100;
+  var ban=Math.round(nhapVien*(1+pct/100)/100)*100;
+  var leVien=kinhGiaVien(p.le,p);
+  out.innerHTML='<div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:10px;padding:9px 12px;font-size:12px;line-height:1.6;color:#1B5E20;margin-top:8px">'
+    +'Giá nhập: <b>'+kinhDong(nv)+'/viên</b> · '+kinhDong(nv*n)+'/thùng<br>'
+    +'Giá bán lẻ đề xuất (lãi '+pct+'%): <b style="font-size:14px">'+kinhDong(ban)+'/viên</b> · '+kinhDong(ban*n)+'/thùng<br>'
+    +'Lãi ≈ <b>'+kinhDong(ban-nv)+'/viên</b> · '+kinhDong((ban-nv)*n)+'/thùng'
+    +(leVien>0?'<br><span style="color:'+(ban>leVien?'#C62828':'#558B2F')+'">Giá niêm yết: '+kinhDong(leVien)+'/viên'+(ban>leVien?' — giá đề xuất đang CAO hơn niêm yết':'')+'</span>':'')
+    +'</div>';
+}
+function kinhHtmlTinhLai(p){
+  if(!(p.nhan>0)) return ''; // chỉ nhân viên + đại lý đã đăng nhập mới có giá nhập
+  var ma=p.ma, n=kinhSoVien(p);
+  var op=function(v,t){ return v>0?'<option value="'+v+'">'+t+' — '+kinhDong(v)+'/thùng (≈ '+kinhDong(kinhGiaVien(v,p))+'/viên)</option>':''; };
+  var inp='width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid var(--bd2,#ccc);border-radius:8px;font-size:16px;font-family:inherit;background:#fff;color:inherit';
+  return '<details style="border:1.5px solid #C5CAE9;border-radius:10px;padding:0 12px;margin-bottom:12px"><summary style="font-size:12px;font-weight:700;color:#3949AB;cursor:pointer;padding:10px 0">🧮 Tính giá bán lẻ cho đại lý (giá nhập mỗi viên + % lãi)</summary>'
+    +'<div style="padding-bottom:12px">'
+    +'<div style="font-size:11px;color:var(--t2);margin:2px 0 4px">Mức giá nhập</div>'
+    +'<select id="kl-sel-'+ma+'" onchange="kinhTinhLai(\''+ma+'\')" style="'+inp+'">'
+    +op(p.nhan,'≤ 20 thùng, nhận kho')+op(p.giao,'≤ 20 thùng, đi giao')
+    +op(p.nhan2,'21–49 thùng, nhận kho')+op(p.giao2,'21–49 thùng, đi giao')
+    +op(p.nhan3,'≥ 50 thùng, nhận kho')+op(p.giao3,'≥ 50 thùng, đi giao')
+    +'<option value="tay">Tự nhập giá nhập mỗi viên…</option></select>'
+    +'<input id="kl-nhap-'+ma+'" type="text" inputmode="numeric" placeholder="Giá nhập mỗi viên (VD: 90000)" oninput="kinhTinhLai(\''+ma+'\')" style="'+inp+';margin-top:6px;display:none">'
+    +'<div style="font-size:11px;color:var(--t2);margin:10px 0 4px">Lãi mong muốn (%)</div>'
+    +'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input id="kl-pct-'+ma+'" type="number" inputmode="decimal" min="0" step="any" placeholder="VD: 20" oninput="kinhTinhLai(\''+ma+'\')" style="'+inp+';width:90px">'
+    +[10,15,20,25,30].map(function(v){ return '<button type="button" onclick="document.getElementById(\'kl-pct-'+ma+'\').value='+v+';kinhTinhLai(\''+ma+'\')" style="border:1.5px solid #3949AB;color:#3949AB;background:#fff;border-radius:999px;padding:0 12px;min-height:40px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">'+v+'%</button>'; }).join('')+'</div>'
+    +'<div id="kl-out-'+ma+'"></div>'
+    +'</div></details>';
+}
+
 function renderKinhInGach(){
   var el=document.getElementById('plist'); el.innerHTML='';
   document.getElementById('pcount').textContent='3 mã gạch kính';
@@ -1273,7 +1326,7 @@ function renderKinhInGach(){
       +'<div>'
       +'<div style="font-size:14px;font-weight:700;color:var(--t1)">'+p.ten+'</div>'
       +'<div style="font-size:11px;color:var(--t2);margin-top:2px">'+p.kc+' cm &middot; 6 viên/thùng</div>'
-      +'<div style="font-size:11px;color:#E65100;margin-top:2px;font-weight:600">Giá niêm yết: '+p.le.toLocaleString('vi-VN')+'đ/thùng</div>'
+      +'<div style="font-size:11px;color:#E65100;margin-top:2px;font-weight:600">Giá niêm yết: '+p.le.toLocaleString('vi-VN')+'đ/thùng'+kinhVienTxt(p.le,p)+'</div>'
       +'</div>'
       +'</div>';
 
@@ -1293,6 +1346,7 @@ function renderKinhInGach(){
       +'<div style="text-align:right">'
       +'<div style="font-size:13px;font-weight:800;color:#1565C0">'+p.nhan.toLocaleString('vi-VN')+'đ</div>'
       +'<div style="font-size:10px;color:var(--t2)">→ giao: '+p.giao.toLocaleString('vi-VN')+'đ</div>'
+      +(p.nhan>0?'<div style="font-size:10px;color:#1565C0;font-weight:600">≈ '+kinhGiaVien(p.nhan,p).toLocaleString('vi-VN')+'đ/viên · giao ≈ '+kinhGiaVien(p.giao,p).toLocaleString('vi-VN')+'đ/viên</div>':'')
       +'</div>'
       +'</div>';
 
@@ -1304,6 +1358,7 @@ function renderKinhInGach(){
       +'<div style="text-align:right">'
       +'<div style="font-size:13px;font-weight:800;color:#1565C0">'+(p.nhan2||p.nhan).toLocaleString('vi-VN')+'đ</div>'
       +'<div style="font-size:10px;color:var(--t2)">→ giao: '+(p.giao2||p.giao).toLocaleString('vi-VN')+'đ</div>'
+      +(p.nhan2||p.nhan>0?'<div style="font-size:10px;color:#1565C0;font-weight:600">≈ '+kinhGiaVien(p.nhan2||p.nhan,p).toLocaleString('vi-VN')+'đ/viên · giao ≈ '+kinhGiaVien(p.giao2||p.giao,p).toLocaleString('vi-VN')+'đ/viên</div>':'')
       +'</div>'
       +'</div>';
 
@@ -1316,10 +1371,12 @@ function renderKinhInGach(){
       +'<div style="text-align:right">'
       +'<div style="font-size:13px;font-weight:800;color:#2E7D32">'+(p.nhan3||p.nhan).toLocaleString('vi-VN')+'đ</div>'
       +'<div style="font-size:10px;color:#2E7D32">→ giao: '+(p.giao3||p.giao).toLocaleString('vi-VN')+'đ</div>'
+      +(p.nhan3||p.nhan>0?'<div style="font-size:10px;color:#2E7D32;font-weight:600">≈ '+kinhGiaVien(p.nhan3||p.nhan,p).toLocaleString('vi-VN')+'đ/viên · giao ≈ '+kinhGiaVien(p.giao3||p.giao,p).toLocaleString('vi-VN')+'đ/viên</div>':'')
       +'</div>'
       +'</div>';
 
     html+='</div>';
+    html+=kinhHtmlTinhLai(p);
 
     // === Mô tả + Video (nếu Sheet có dữ liệu cho mã này) ===
     var _sap=maToSap[p.ma];
@@ -2718,7 +2775,7 @@ function renderKinh(){
       +'</div>'
       +'<div style="text-align:right">'
       +'<p style="font-size:14px;font-weight:700;color:#C0232A">'+p.le.toLocaleString('vi-VN')+'đ</p>'
-      +'<p style="font-size:10px;color:var(--t2)">/thùng (lẻ)</p>'
+      +'<p style="font-size:10px;color:var(--t2)">/thùng (lẻ)'+kinhVienTxt(p.le,p)+'</p>'
       +'</div></div>'
       // Bảng giá 3 mức ĐL
       +'<div style="background:var(--bg2);border-radius:var(--r8);padding:10px;font-size:11px">'
@@ -4374,7 +4431,7 @@ function shareZaloKeo(ma){
 
 function shareZaloKinh(ma){
   var p=KINH.find(function(x){return x.ma===ma;}); if(!p) return;
-  var f=function(n){ return n>0?n.toLocaleString('vi-VN')+'đ/thùng':'–'; };
+  var f=function(n){ return n>0?n.toLocaleString('vi-VN')+'đ/thùng'+kinhVienTxt(n,p):'–'; };
   var lines=['💎 GẠCH KÍNH ĐỒNG TÂM'];
   lines.push('📌 Mã: '+p.ten);
   lines.push('📐 Kích cỡ: '+p.kc+'cm · '+p.dong_goi);
