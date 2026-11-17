@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="DT Sales"/>
 <meta name="theme-color" content="#C0232A"/>
 <title>Đồng Tâm – Sales Tool</title>
-<link rel="stylesheet" href="style.css?v=nav57">
+<link rel="stylesheet" href="style.css?v=nav58">
 </head>
 <body>
 
@@ -799,15 +799,15 @@
 <div id="gioanh-sheet">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--bd)">
     <span style="font-size:14px;font-weight:700">🖼️ Giỏ ảnh đã chọn (<span id="gioanh-sheet-count">0</span>)</span>
-    <button onclick="dongGioAnhSheet()" style="border:none;background:none;font-size:20px;cursor:pointer;color:var(--t2)">×</button>
+    <button onclick="dongGioAnhSheet()" aria-label="Đóng" style="border:none;background:none;font-size:26px;line-height:1;cursor:pointer;color:var(--t2);min-width:44px;min-height:44px;margin:-8px -10px -8px 0">×</button>
   </div>
-  <p id="gioanh-note" style="font-size:11px;color:var(--t2);padding:0 16px 8px;margin:0">ℹ️ Chọn bao nhiêu mẫu cũng được. Khi gửi, app tự chia thành từng đợt <b>tối đa 10 ảnh</b> qua Zalo và chuẩn bị sẵn đợt kế tiếp.</p>
-  <div id="gioanh-doituong" style="padding:0 16px 8px"></div>
-  <div id="gioanh-chatluong" style="padding:0 16px 8px"></div>
+  <p id="gioanh-note" style="font-size:12px;color:var(--t2);padding:8px 16px 6px;margin:0"></p>
+  <div id="gioanh-doituong" style="padding:0 16px 6px"></div>
+  <div id="gioanh-chatluong" style="padding:0 16px 10px;border-bottom:1px solid var(--bd)"></div>
   <div id="gioanh-list" style="overflow-y:auto;flex:1"></div>
   <div style="padding:12px 16px 18px;border-top:1px solid var(--bd);display:flex;gap:8px">
-    <button onclick="xoaHetGioAnh()" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--bd2);background:transparent;color:var(--t2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">Xóa hết</button>
-    <button id="gioanh-btn-gui" onclick="chiaSeGioAnh()" style="flex:2;padding:11px;border-radius:10px;border:none;background:var(--red);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">📤 Chia sẻ tất cả qua Zalo</button>
+    <button onclick="xoaHetGioAnh()" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--bd2);background:transparent;color:var(--t2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f);min-height:46px">Xóa hết</button>
+    <button id="gioanh-btn-gui" onclick="chiaSeGioAnh()" style="flex:2;padding:11px;border-radius:10px;border:none;background:var(--red);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--f);min-height:46px">📤 Chia sẻ tất cả qua Zalo</button>
   </div>
 </div>
 <!-- ===== Copy ảnh để dán vào Zalo (dùng trên máy tính, Zalo Desktop không nhận Web Share) ===== -->
@@ -932,7 +932,7 @@
 
 
 
-<script src="script.js?v=nav196" defer></script>
+<script src="script.js?v=nav197" defer></script>
 <script src="dv.js?v=7" defer></script>
 <script src="hangom.js?v=5" defer></script>
 </body>

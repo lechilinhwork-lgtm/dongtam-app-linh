@@ -3649,6 +3649,8 @@ function dongGioAnhSheet(){
   document.getElementById('gioanh-sheet-bg').classList.remove('on');
 }
 function xoaHetGioAnh(){
+  // Giỏ lớn: hỏi lại cho chắc (lỡ chạm nhầm là mất công chọn cả chục mẫu)
+  if(gioAnh.length>3 && !confirm('Xóa hết '+gioAnh.length+' mẫu khỏi giỏ ảnh?')) return;
   gioAnh.forEach(function(x){
     var btn=document.querySelector('.gioanh-chk[data-ma="'+CSS.escape(x.ma)+'"]');
     if(btn){ btn.classList.remove('on'); btn.textContent=''; }
@@ -3661,14 +3663,17 @@ function xoaKhoiGioAnh(ma){ toggleGioAnh(ma); renderGioAnhSheet(); }
 function renderGioAnhSheet(){
   renderGaDoiTuong();
   renderGaChatLuong();
+  capNhatGhiChuGio();
   document.getElementById('gioanh-sheet-count').textContent=gioAnh.length;
   var el=document.getElementById('gioanh-list');
   if(!gioAnh.length){ el.innerHTML='<p style="text-align:center;color:var(--t3);padding:24px 16px;font-size:13px">Chưa chọn sản phẩm nào — bấm ✓ trên thẻ sản phẩm để thêm vào đây.</p>'; return; }
   el.innerHTML=gioAnh.map(function(x){
+    var tt=layThongTinSP(x.ma), sub=(tt&&tt.kc)?tt.kc:'';
     return '<div class="gioanh-item">'
       +'<img src="'+convertImgUrl(x.url)+'" onerror="this.style.visibility=\'hidden\'">'
-      +'<span style="flex:1;min-width:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+x.ten+'</span>'
-      +'<button class="gioanh-item-x" onclick="xoaKhoiGioAnh(\''+x.ma+'\')">✕</button>'
+      +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+x.ten+'</div>'
+      +(sub?'<div style="font-size:11px;color:var(--t2);margin-top:1px">'+sub+'</div>':'')+'</div>'
+      +'<button class="gioanh-item-x" aria-label="Bỏ khỏi giỏ" onclick="xoaKhoiGioAnh(\''+x.ma+'\')">✕</button>'
       +'</div>';
   }).join('');
 }
@@ -3965,12 +3970,12 @@ function renderGaDoiTuong(){
   var dt=gaDT();
   function nut(v,txt){
     var on=(dt===v);
-    return '<button type="button" onclick="datDoiTuongGioAnh(\''+v+'\')" style="flex:1;padding:8px 6px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f);border:1.5px solid '+(on?'var(--red)':'var(--bd2)')+';background:'+(on?'var(--red)':'transparent')+';color:'+(on?'#fff':'var(--t2)')+'">'+txt+'</button>';
+    return '<button type="button" onclick="datDoiTuongGioAnh(\''+v+'\')" style="flex:1;min-height:38px;padding:6px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f);border:1.5px solid '+(on?'var(--red)':'var(--bd2)')+';background:'+(on?'var(--red)':'transparent')+';color:'+(on?'#fff':'var(--t2)')+'">'+txt+'</button>';
   }
-  el.innerHTML='<div style="font-size:11px;color:var(--t2);margin-bottom:5px">Gửi cho:</div>'
-    +'<div style="display:flex;gap:6px">'+nut('le','Khách lẻ')+nut('daily','Đại lý')+'</div>'
-    +'<div style="font-size:11px;color:var(--t2);margin-top:5px">'
-    +(dt==='daily'?'Ảnh in thêm giá đại lý nhận kho / đi giao (mẫu đang Sale có thêm nhãn SALE). Chỉ gửi cho đại lý.':'Ảnh chỉ in giá niêm yết — an toàn khi gửi khách lẻ.')+'</div>';
+  // 1 dòng gọn: nhãn bên trái + 2 nút; lời giải thích chỉ hiện khi gửi Đại lý (có giá đại lý trên ảnh -> cần nhắc)
+  el.innerHTML='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;color:var(--t2);width:74px;flex-shrink:0">Gửi cho</span>'
+    +'<div style="display:flex;gap:6px;flex:1">'+nut('le','Khách lẻ')+nut('daily','Đại lý')+'</div></div>'
+    +(dt==='daily'?'<div style="font-size:11px;color:#C0232A;margin-top:4px;padding-left:82px">Ảnh có thêm giá đại lý — chỉ gửi cho đại lý.</div>':'');
 }
 // ===== GIỎ ẢNH: CHUẨN BỊ ẢNH NGẦM + CHẤT LƯỢNG + GỬI THEO ĐỢT =====
 // Ngay khi chọn ảnh vào giỏ, app tải + đóng dấu sẵn ảnh của ĐỢT KẾ TIẾP (tối đa _gaLuotHT ảnh,
@@ -3998,11 +4003,11 @@ function renderGaChatLuong(){
   var cur=gaCLKey();
   function nut(k){
     var on=(cur===k);
-    return '<button type="button" onclick="datChatLuongGioAnh(\''+k+'\')" style="flex:1;padding:8px 6px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f);border:1.5px solid '+(on?'var(--red)':'var(--bd2)')+';background:'+(on?'var(--red)':'transparent')+';color:'+(on?'#fff':'var(--t2)')+'">'+GA_CL[k].ten+'</button>';
+    return '<button type="button" onclick="datChatLuongGioAnh(\''+k+'\')" style="flex:1;min-height:38px;padding:6px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f);border:1.5px solid '+(on?'var(--red)':'var(--bd2)')+';background:'+(on?'var(--red)':'transparent')+';color:'+(on?'#fff':'var(--t2)')+'">'+GA_CL[k].ten+'</button>';
   }
-  el.innerHTML='<div style="font-size:11px;color:var(--t2);margin-bottom:5px">Chất lượng ảnh:</div>'
-    +'<div style="display:flex;gap:6px">'+nut('nhanh')+nut('chuan')+nut('goc')+'</div>'
-    +'<div style="font-size:11px;color:var(--t2);margin-top:5px">'+GA_CL[cur].ten+': '+GA_CL[cur].mota+'.</div>';
+  el.innerHTML='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;color:var(--t2);width:74px;flex-shrink:0">Chất lượng</span>'
+    +'<div style="display:flex;gap:6px;flex:1">'+nut('nhanh')+nut('chuan')+nut('goc')+'</div></div>'
+    +'<div style="font-size:11px;color:var(--t3,#999);margin-top:4px;padding-left:82px">'+GA_CL[cur].mota+'</div>';
 }
 var _gaSan=null;   // {files, thieu, tong, tongGio, nhan} khi đợt kế tiếp đã sẵn sàng gửi
 var _gaDang=0;     // mã vòng chuẩn bị đang chạy (đổi giỏ/chất lượng -> huỷ vòng cũ)
@@ -4062,10 +4067,12 @@ function _gaCapNhatNut(){
   if(!cs.length){ _gaBtnText('📤 Chia sẻ tất cả qua Zalo',''); return; }
   var xong=0, dang=0;
   cs.forEach(function(x){ var e=_gaCache[_gaCK(x)]; if(!e||e.st==='dang') dang++; else xong++; });
-  var nhan=(_gaTienDo>0||gioAnh.length>cs.length)?' (đã gửi '+_gaTienDo+'/'+gioAnh.length+')':'';
+  var nhan='';   // tiến độ "đã gửi x/y" nằm ở dòng ghi chú trên danh sách, nút giữ ngắn gọn
   if(dang>0){
     _gaSan=null;
-    _gaBtnText('⏳ Đang chuẩn bị '+(_gaTienDo>0?'đợt tiếp theo':'ảnh')+': '+xong+'/'+cs.length+nhan,'busy');
+    var bt=_gaBtn(); if(bt) bt.style.setProperty('--p', Math.round(xong/cs.length*100)+'%'); // thanh tiến độ chạy trong nút
+    _gaBtnText('⏳ Đang chuẩn bị '+xong+'/'+cs.length+'…','busy');
+    capNhatGhiChuGio();
     return;
   }
   // đủ: gom ảnh vào đợt, dừng khi đã nặng quá GA_BYTES (gạch khổ lớn: ít ảnh hơn)
@@ -4083,8 +4090,16 @@ function _gaCapNhatNut(){
     return;
   }
   _gaSan={files:files, thieu:thieu, tong:daXuLy, tongGio:gioAnh.length, nhan:nhan};
-  _gaBtnText('📤 Gửi '+files.length+' ảnh qua Zalo'+nhan,'ready');
+  _gaBtnText('📤 Gửi '+files.length+' ảnh qua Zalo','ready');
+  capNhatGhiChuGio();
   if(thieu.length) showToast('⚠️ Không tải được: '+thieu.join(', ')+' — các ảnh còn lại vẫn gửi được');
+}
+// Dòng ghi chú gọn trên danh sách: "14 mẫu · sẽ gửi 2 đợt" + tiến độ khi đã gửi một phần
+function capNhatGhiChuGio(){
+  var el=document.getElementById('gioanh-note'); if(!el) return;
+  var n=gioAnh.length, dot=Math.ceil(n/Math.max(1,_gaLuotHT));
+  if(laMayTinhBan()||n<2){ el.innerHTML=n+' mẫu — gửi từng ảnh bằng copy rồi dán (Ctrl+V) vào Zalo.'; return; }
+  el.innerHTML='<b>'+n+' mẫu</b> · gửi '+dot+' đợt (tối đa '+_gaLuotHT+' ảnh/đợt)'+(_gaTienDo>0?' · <b style="color:#1B8A3A">đã gửi '+Math.min(_gaTienDo,n)+'/'+n+'</b>':'');
 }
 function chiaSeGioAnh(){
   if(!gioAnh.length) return;
