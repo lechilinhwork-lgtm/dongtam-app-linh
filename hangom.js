@@ -81,7 +81,7 @@ function htmlHangOm(ma, px){
   if(!hoDuocDung()) return '';
   var t=hoTong(ma); if(!t.n) return '';
   return '<div onclick="event.stopPropagation();moHangOm(\''+String(ma).replace(/'/g,"\\'")+'\')" title="Hàng đại lý đang ôm, chưa bán ra" '
-    +'style="font-size:'+(px||11)+'px;font-weight:700;color:#6A1B9A;margin-top:2px;cursor:pointer">🏬 Đại lý ôm: '+hoSL(t.thung,t.vien)+(t.n>1?' · '+t.n+' nơi':'')+'</div>';
+    +'style="display:block;width:fit-content;max-width:100%;font-size:'+(px||11)+'px;font-weight:700;color:#6A1B9A;background:#F3E5F5;border-radius:8px;padding:3px 9px;margin-top:5px;line-height:1.4;cursor:pointer">🏬 Đại lý ôm: <span style="white-space:nowrap">'+hoSL(t.thung,t.vien)+'</span>'+(t.n>1?' <span style="white-space:nowrap">· '+t.n+' nơi</span>':'')+'</div>';
 }
 // Khối trong cửa sổ "Tồn kho theo kho/lô" (cạnh tồn kho Đồng Tâm)
 function htmlHangOmBlock(ma){

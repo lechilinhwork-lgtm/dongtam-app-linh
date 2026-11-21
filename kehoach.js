@@ -58,16 +58,18 @@ function htmlKeHoach(p, px){
   var ds=khCacDot(sap); if(!ds.length) return '';
   var r=khDotChinh(ds), tt=khTrangThai(r);
   var hetHang=(typeof tonKhoLoaded!=='undefined'&&tonKhoLoaded&&typeof tonKhoTongCuaMa==='function'&&tonKhoTongCuaMa(p.ma)<=0);
-  var txt, mau;
+  var txt, mau, nen;
+  var ngay='<span style="white-space:nowrap">'+khKhoang(r)+'</span>';   // khoảng ngày luôn nằm trọn 1 dòng, không bị tách "– 24/11"
   if(KH.nv){
     var sl=(r.sl>0?khSo(r.sl)+' thùng · ':'');
-    txt=(hetHang?'Hết hàng — sắp về ':(tt==='dang'?'Đang nhập kho ':(tt==='quahan'?'Đã qua dự kiến nhập ':'Sắp về ')))+sl+khKhoang(r);
+    txt=(hetHang?'Hết hàng — sắp về ':(tt==='dang'?'Đang nhập kho ':(tt==='quahan'?'Đã qua dự kiến nhập ':'Sắp về ')))+sl+ngay;
   } else {
-    txt=(hetHang?'Hết hàng — dự kiến có hàng ':'Dự kiến nhập kho ')+khKhoang(r);
+    txt=(hetHang?'Hết hàng — dự kiến có hàng ':'Dự kiến nhập kho ')+ngay;
   }
-  if(ds.length>1) txt+=' · +'+(ds.length-1)+' đợt';
-  mau=hetHang?'#E65100':(tt==='quahan'?'#999':'#1565C0');
-  return '<div style="font-size:'+(px||11)+'px;font-weight:700;color:'+mau+';margin-top:2px;line-height:1.35">🚚 '+txt+'</div>';
+  if(ds.length>1) txt+=' <span style="white-space:nowrap">· +'+(ds.length-1)+' đợt</span>';
+  if(hetHang){ mau='#BF4A00'; nen='#FFF3E0'; } else if(tt==='quahan'){ mau='#6B6B6B'; nen='#F1F1F1'; } else { mau='#0D47A1'; nen='#E3F2FD'; }
+  // dạng "viên thuốc" có nền nhạt: tách rõ khỏi dòng tồn kho và dòng đại lý ôm
+  return '<div style="display:block;width:fit-content;max-width:100%;font-size:'+(px||11)+'px;font-weight:700;color:'+mau+';background:'+nen+';border-radius:8px;padding:3px 9px;margin-top:5px;line-height:1.4">🚚 '+txt+'</div>';
 }
 
 // Khối chi tiết trong cửa sổ "Tồn kho theo kho/lô"
