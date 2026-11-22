@@ -177,7 +177,7 @@ b{font-weight:800}
     <div class="qr-khoi">
       <div class="qr js-qr"></div>
       <div class="ct"><b>Quét mã bằng camera điện thoại</b>
-        <ul><li>Chọn gạch, ngói theo số tiền bạn có</li><li>Tính sẵn keo dán, bột chà ron cần mua</li><li>Gọi, Zalo, chỉ đường tới cửa hàng</li></ul>
+        <ul><li>Xem gạch, ngói, keo Đồng Tâm và giá niêm yết</li><li>Chọn mẫu theo số tiền bạn có</li><li>Tìm đại lý gần công trình, chỉ đường tới nơi</li></ul>
       </div>
     </div>
     <div class="hl">Hỗ trợ kỹ thuật & báo giá công trình: <b class="js-hotline"></b></div>
@@ -192,8 +192,8 @@ b{font-weight:800}
     </div>
     <div class="anh"></div>
     <div class="chu">
-      <div class="nho">Dành cho công trình đang thi công</div>
-      <h1>GIẢI PHÁP GẠCH ỐP LÁT CAO CẤP CHO NGÔI NHÀ CỦA BẠN</h1>
+      <div class="nho">Gạch ốp lát · Ngói · Keo dán gạch</div>
+      <h1>GIẢI PHÁP GẠCH, NGÓI CAO CẤP CHO NGÔI NHÀ CỦA BẠN</h1>
       <ul>
         <li>Xương Porcelain chịu lực, phẳng đều</li>
         <li>Men Nano kháng khuẩn đến 99%</li>
@@ -261,7 +261,7 @@ b{font-weight:800}
     <div class="b"><div class="so">2</div><div><b>Chọn phòng hoặc mái nhà, nhập diện tích</b><p>Phòng khách, phòng ngủ, bếp, nhà vệ sinh, sân, ban công, mái ngói.</p></div></div>
     <div class="b"><div class="so">3</div><div><b>Xem mẫu hợp ngân sách</b><p>Có hình ảnh, giá niêm yết, tổng tiền dự kiến và số bao keo, bột chà ron cần mua.</p></div></div>
     <div class="muc"><span>Tiết kiệm</span><span>Phổ thông</span><span>Cao cấp</span></div>
-    <div class="b"><div class="so">4</div><div><b>Ghé đại lý xem mẫu thật</b><p>Nhận báo giá chính xác và chiết khấu theo công trình.</p></div></div>
+    <div class="b"><div class="so">4</div><div><b>Chọn đại lý gần công trình</b><p>Xem mẫu thật, nhận báo giá chính xác và chiết khấu theo công trình.</p></div></div>
     <div class="qr-khoi" style="margin-top:auto">
       <div class="qr js-qr"></div>
       <div class="ct"><b>Quét để bắt đầu</b><p>Giá luôn cập nhật mới nhất trên điện thoại của bạn.</p></div>
@@ -277,7 +277,7 @@ b{font-weight:800}
   var qs=new URLSearchParams(location.search);
   var sel=document.getElementById('chon-dl'), goc=document.getElementById('goc');
   sel.innerHTML='<option value="">— Chung (không gắn đại lý) —</option>'+DAI_LY.map(function(d){ return '<option value="'+d.ma+'">'+d.ten+' ('+d.ma+')</option>'; }).join('');
-  sel.value=qs.has('dl') ? qs.get('dl') : DAI_LY[0].ma;
+  sel.value=qs.get('dl')||'';   // mặc định: tờ rơi chung, khách tự chọn đại lý gần công trình
   goc.value=qs.get('goc')||GOC_MAC_DINH;
 
   function set(cls, html){ Array.prototype.forEach.call(document.querySelectorAll('.'+cls),function(e){ e.innerHTML=html; }); }
@@ -304,7 +304,13 @@ b{font-weight:800}
     } else {
       set('js-dl-ten', DAI_LY.length+' đại lý hợp tác gần bạn');
       set('js-dl-day', 'Quét mã QR để tìm cửa hàng gần công trình nhất');
-      set('js-chs', '<div class="c" style="text-align:center">Thiên Lộc Home · Đặng Ngọc Anh · Tân Hùng Anh · Hoàng Lam · Thanh Nhàn · Đức Truyền · Việt Mỹ · Tiến Phát · Khang Anh · Nhật Nam và các đại lý khác khu vực phía Đông TP.HCM</div>');
+      var khu={}, thuTu=[];
+      DAI_LY.forEach(function(dl){ dl.cuaHang.forEach(function(c){
+        var p=c.diaChi.split(','), k=(p[p.length-2]||'').trim();
+        if(!khu[k]){ khu[k]=[]; thuTu.push(k); }
+        if(khu[k].indexOf(dl.ten)<0) khu[k].push(dl.ten);
+      }); });
+      set('js-chs', thuTu.map(function(k){ return '<div class="c"><b style="font-size:8.4pt;color:var(--do2)">📍 '+esc(k)+'</b><br>'+khu[k].map(esc).join(' · ')+'</div>'; }).join(''));
       set('js-dl-dc', 'Quét mã để xem đại lý gần nhất');
     }
     document.title='To roi A4 - '+(d?d.ten:'Chung');
