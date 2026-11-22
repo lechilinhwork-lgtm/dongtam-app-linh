@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Tờ rơi A4 – Đại lý Đồng Tâm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+/* ===== Tờ rơi A4 ngang, gấp 3 (2 mặt) =====
+   Mặt 1 (ngoài): [Cẩm nang | Đại lý + QR | Bìa]
+   Mặt 2 (trong): [Nano kháng khuẩn | Vì sao Đồng Tâm | Chọn theo ngân sách + QR] */
+@page{size:297mm 210mm;margin:0}
+:root{--do:#D7141A;--do2:#9E0E13;--vang:#F2B01E;--chu:#1E1919;--phu:#5A5252;--nen:#F6F2F0;--vien:#E7DEDC;--xanh:#0E8A5F}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#9A9090}
+body{font-family:"Be Vietnam Pro",Arial,sans-serif;color:var(--chu);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.trang{width:297mm;height:210mm;background:#fff;margin:10mm auto;display:grid;grid-template-columns:99mm 99mm 99mm;position:relative;overflow:hidden;box-shadow:0 4px 30px rgba(0,0,0,.3)}
+.pn{position:relative;height:210mm;overflow:hidden;padding:9mm 8mm 8mm}
+.pn + .pn{border-left:.2mm dashed transparent}
+@media screen{ .pn + .pn{border-left-color:#E4D9D7} }
+h2{font-size:15pt;line-height:1.12;font-weight:900;color:var(--do);letter-spacing:-.2pt}
+h2 small{display:block;font-size:8.5pt;font-weight:700;color:var(--phu);letter-spacing:.6pt;text-transform:uppercase;margin-bottom:1.5mm}
+p,li{font-size:8.6pt;line-height:1.42}
+b{font-weight:800}
+
+/* ---- Bìa ---- */
+.bia{padding:0;display:flex;flex-direction:column;background:var(--do)}
+.bia .tren{background:#fff;padding:7mm 8mm 0;display:flex;align-items:center;gap:2.5mm}
+.bia .tren img{height:11mm}
+.bia .tren .ten{font-weight:900;color:var(--do);font-size:17pt;letter-spacing:-.5pt;line-height:1}
+.bia .tren .ten small{display:block;font-size:7pt;font-weight:600;font-style:italic;color:var(--phu);letter-spacing:0}
+.khien{margin-left:auto;width:17mm;height:20mm;background:var(--do);color:#fff;clip-path:polygon(50% 0,100% 14%,100% 60%,50% 100%,0 60%,0 14%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:900;line-height:1;padding-bottom:3mm}
+.khien b{font-size:10pt;letter-spacing:.5pt}
+.khien span{font-size:5.4pt;font-weight:700;margin-top:.8mm}
+.bia .anh{flex:1;background:#fff url(anh/hero.jpg) center 38%/cover no-repeat;position:relative;clip-path:polygon(0 0,100% 0,100% 88%,0 100%)}
+.bia .chu{padding:5mm 8mm 0;color:#fff;margin-top:-3mm}
+.bia .chu .nho{font-size:8pt;font-weight:700;letter-spacing:.8pt;text-transform:uppercase;opacity:.9}
+.bia h1{font-size:19.5pt;line-height:1.08;font-weight:900;margin-top:1.5mm;letter-spacing:-.3pt}
+.bia ul{list-style:none;margin-top:3.5mm;display:grid;gap:1.6mm}
+.bia li{font-size:8.8pt;font-weight:700;display:flex;align-items:center;gap:2mm}
+.bia li::before{content:"";flex:0 0 3.2mm;height:3.2mm;border-radius:50%;background:var(--vang);box-shadow:inset 0 0 0 .9mm var(--do)}
+.bia .day{margin:5mm 0 0;background:var(--do2);color:#fff;padding:3.2mm 8mm;font-size:8.6pt;font-weight:700;display:flex;align-items:center;gap:2mm}
+.bia .day b{color:var(--vang)}
+
+/* ---- Mặt sau: đại lý + QR ---- */
+.sau{display:flex;flex-direction:column;background:var(--nen)}
+.moi{background:linear-gradient(135deg,var(--vang),#E39A0C);color:#2A1A00;border-radius:3mm;padding:3.5mm 4mm;font-weight:900;font-size:10.5pt;line-height:1.2;text-align:center;letter-spacing:-.1pt}
+.dl-ten{margin-top:4mm;text-align:center}
+.dl-ten small{display:block;font-size:7.5pt;font-weight:700;color:var(--phu);letter-spacing:.6pt;text-transform:uppercase}
+.dl-ten b{display:block;font-size:15pt;color:var(--do);line-height:1.15;margin-top:.8mm}
+.dl-ten span{display:block;font-size:7.6pt;color:var(--phu);margin-top:.5mm}
+.chs{margin-top:3mm;display:grid;gap:1.8mm}
+.chs .c{background:#fff;border:.25mm solid var(--vien);border-radius:2.5mm;padding:2.2mm 3mm;font-size:8.2pt;line-height:1.35}
+.chs .c b{font-size:9.6pt;color:var(--chu)}
+.qr-khoi{margin-top:auto;background:#fff;border-radius:3.5mm;border:.4mm solid var(--do);padding:3.5mm;display:flex;gap:3.5mm;align-items:center}
+.qr{flex:0 0 31mm;height:31mm}
+.qr svg{width:100%;height:100%;display:block}
+.qr-khoi .ct b{display:block;font-size:10pt;color:var(--do);line-height:1.15}
+.qr-khoi .ct ul{margin:1.5mm 0 0 3.5mm}
+.qr-khoi .ct li{font-size:7.6pt;line-height:1.35}
+.hl{margin-top:3mm;text-align:center;font-size:8pt;color:var(--phu)}
+.hl b{color:var(--chu);font-size:9.5pt}
+
+/* ---- Cẩm nang ---- */
+.cn{display:flex;flex-direction:column}
+.cn h2{margin-bottom:3mm}
+.cn .anh-ke{margin-top:auto;height:24mm;border-radius:2.5mm;background:url(anh/van1.jpg) center/cover no-repeat;position:relative;overflow:hidden}
+.cn .anh-ke span{position:absolute;left:0;right:0;bottom:0;padding:1.5mm 3mm;background:linear-gradient(transparent,rgba(0,0,0,.65));color:#fff;font-size:7.4pt;font-weight:700}
+.cn .r{display:grid;grid-template-columns:9mm 1fr;gap:2.5mm;padding:2.2mm 0;border-bottom:.25mm solid var(--vien)}
+.cn .r:last-of-type{border-bottom:none}
+.cn .ic{width:9mm;height:9mm;border-radius:2.2mm;background:#FCE8E8;display:flex;align-items:center;justify-content:center;font-size:12pt}
+.cn .r b{display:block;font-size:9pt;color:var(--do2)}
+.cn .r p{font-size:8pt;line-height:1.38}
+.meo{margin-top:2.5mm;background:var(--chu);color:#fff;border-radius:2.5mm;padding:3mm 3.5mm}
+.meo b{color:var(--vang);font-size:8.6pt}
+.meo ul{margin:1mm 0 0 3.5mm}
+.meo li{font-size:7.8pt;line-height:1.4}
+
+/* ---- Nano ---- */
+.nano-dau{display:flex;gap:3mm;align-items:center}
+.nano-dau .khien{margin:0;flex:0 0 15mm;height:18mm}
+.nano .anh{height:40mm;border-radius:3mm;margin:3.5mm 0;background:url(anh/ke-nano.jpg) center 30%/cover no-repeat}
+.thanh-kq{margin-top:2.5mm;display:grid;gap:2.2mm}
+.tk .nhan{display:flex;justify-content:space-between;font-size:7.8pt}
+.tk .nhan i{font-weight:700}
+.tk .nhan b{color:var(--xanh)}
+.tk .ong{height:2.6mm;border-radius:2mm;background:#E8F2EE;margin-top:.8mm;overflow:hidden}
+.tk .ong span{display:block;height:100%;background:linear-gradient(90deg,#16A574,var(--xanh));border-radius:2mm}
+.nguon{font-size:6.8pt;color:var(--phu);margin-top:1.8mm;font-style:italic}
+.nano ul{margin:2.5mm 0 0 3.8mm;display:grid;gap:1mm}
+.kem{margin-top:2.5mm;border:.35mm dashed var(--do);border-radius:2.5mm;padding:2.2mm 3mm;font-size:7.8pt;line-height:1.4;background:#FFF7F7}
+
+/* ---- Vì sao ---- */
+.ss{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin-top:3mm}
+.ss .o{border-radius:2.5mm;padding:2.6mm 3mm;background:var(--nen)}
+.ss .o b{display:block;font-size:8.8pt;color:var(--do2);margin-bottom:.6mm}
+.ss .o p{font-size:7.6pt;line-height:1.38}
+.vat{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5mm;margin-top:3mm}
+.vat div{height:15mm;border-radius:2mm;background:center/cover no-repeat}
+.tn{display:grid;grid-template-columns:1fr 1fr;gap:1.2mm 3mm;margin-top:3mm}
+.tn span{font-size:7.6pt;font-weight:600;display:flex;align-items:center;gap:1.5mm}
+.tn span::before{content:"✓";color:#fff;background:var(--do);width:3.4mm;height:3.4mm;border-radius:50%;font-size:6pt;display:flex;align-items:center;justify-content:center;flex:0 0 3.4mm}
+.kt{margin-top:3mm;font-size:7.4pt;color:var(--phu);line-height:1.45}
+.kt b{color:var(--chu)}
+.tho{margin-top:3mm;background:var(--chu);color:#fff;border-radius:2.5mm;padding:3mm 3.5mm}
+.tho b{color:var(--vang);font-size:9pt}
+.tho p{font-size:7.8pt;margin-top:.8mm;opacity:.95}
+
+/* ---- Chọn theo ngân sách ---- */
+.ns{background:var(--do);color:#fff;display:flex;flex-direction:column}
+.ns h2{color:#fff}
+.ns h2 small{color:#FFD6D6}
+.ns .b{display:grid;grid-template-columns:8mm 1fr;gap:2.5mm;align-items:start;margin-top:3.2mm}
+.ns .so{width:8mm;height:8mm;border-radius:50%;background:var(--vang);color:#2A1A00;font-weight:900;font-size:11pt;display:flex;align-items:center;justify-content:center}
+.ns .b b{display:block;font-size:9.2pt}
+.ns .b p{font-size:7.8pt;opacity:.92}
+.muc{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5mm;margin-top:3.5mm}
+.muc span{background:rgba(255,255,255,.14);border:.25mm solid rgba(255,255,255,.35);border-radius:2mm;text-align:center;padding:1.8mm 0;font-size:7.8pt;font-weight:800}
+.ns .qr-khoi{border-color:#fff}
+.ns .qr-khoi .ct b{color:var(--do)}
+.ns .qr-khoi .ct p{color:var(--chu);font-size:7.6pt;margin-top:1mm}
+.ns .dl-cuoi{margin-top:3mm;font-size:7.8pt;line-height:1.4;text-align:center;opacity:.95}
+.ns .dl-cuoi b{font-size:9pt;color:var(--vang)}
+
+/* ---- Thanh điều khiển (chỉ trên màn hình) ---- */
+.dk{position:sticky;top:0;z-index:10;background:#1E1919;color:#fff;padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font:14px "Be Vietnam Pro",Arial,sans-serif}
+.dk select,.dk input{font:inherit;padding:6px 8px;border-radius:6px;border:none}
+.dk input{width:min(420px,60vw)}
+.dk button{font:inherit;font-weight:700;padding:7px 14px;border-radius:6px;border:none;background:#D7141A;color:#fff;cursor:pointer}
+.dk .gc{font-size:12px;opacity:.75;flex-basis:100%}
+@media print{ html,body{background:#fff} .dk{display:none} .trang{margin:0;box-shadow:none;page-break-after:always;break-after:page} }
+</style>
+</head>
+<body>
+
+<div class="dk">
+  <b>Tờ rơi đại lý</b>
+  <label>Đại lý: <select id="chon-dl"></select></label>
+  <label>Link QR gốc: <input id="goc"></label>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+  <span class="gc">In: khổ A4, hướng ngang, lề "Không", bật "Đồ hoạ nền", in 2 mặt lật theo cạnh ngắn. Link QR: <span id="link-qr"></span></span>
+</div>
+
+<!-- ============ MẶT 1 (NGOÀI) ============ -->
+<section class="trang">
+  <!-- Cẩm nang (vạt gấp trong) -->
+  <div class="pn cn">
+    <h2><small>Cẩm nang cho chủ nhà</small>Chọn đúng gạch cho từng không gian</h2>
+    <div class="r"><div class="ic">🛋️</div><div><b>Phòng khách</b><p>Porcelain khổ lớn 60x60, 80x80, 60x120. Ít đường ron, nhìn rộng và sang.</p></div></div>
+    <div class="r"><div class="ic">🛏️</div><div><b>Phòng ngủ</b><p>Gạch vân gỗ hoặc men mờ tông ấm. Mát chân, ấm cúng, dễ lau.</p></div></div>
+    <div class="r"><div class="ic">🍳</div><div><b>Bếp</b><p>Bề mặt mờ mịn hoặc bóng, dễ lau dầu mỡ. Tường bếp nên dùng men kháng khuẩn.</p></div></div>
+    <div class="r"><div class="ic">🚿</div><div><b>Nhà vệ sinh</b><p>Nền men mờ chống trơn 30x30, 30x60. Tường 30x60, 40x80 cùng tông với nền.</p></div></div>
+    <div class="r"><div class="ic">🌿</div><div><b>Sân, ban công, sân thượng</b><p>Porcelain mờ nhám chống trượt, chịu nắng mưa, không thấm.</p></div></div>
+    <div class="meo"><b>Mẹo mua gạch không tốn tiền oan</b>
+      <ul>
+        <li>Mua dư khoảng 5% để phòng hao hụt và tránh lệch lô màu.</li>
+        <li>Lát nền nên chọn xương Porcelain, ốp tường có thể dùng Ceramic.</li>
+        <li>Dùng keo dán gạch chuyên dụng để gạch bám chắc, không bộp.</li>
+        <li>Xem mẫu thật dưới ánh sáng cửa hàng trước khi chốt.</li>
+      </ul>
+    </div>
+    <div class="anh-ke"><span>Vân đá Porcelain, mẫu thật trưng bày tại đại lý</span></div>
+  </div>
+
+  <!-- Mặt sau: đại lý + QR -->
+  <div class="pn sau">
+    <div class="moi">MỜI ANH/CHỊ ĐẾN XEM MẪU THỰC TẾ<br>TẠI ĐẠI LÝ GẦN CÔNG TRÌNH</div>
+    <div class="dl-ten"><small>Đại lý hợp tác Đồng Tâm</small><b class="js-dl-ten">—</b><span class="js-dl-day"></span></div>
+    <div class="chs js-chs"></div>
+    <div class="qr-khoi">
+      <div class="qr js-qr"></div>
+      <div class="ct"><b>Quét mã bằng camera điện thoại</b>
+        <ul><li>Chọn gạch theo số tiền bạn có</li><li>Xem giá niêm yết, thông số, hình ảnh</li><li>Gọi, Zalo, chỉ đường tới cửa hàng</li></ul>
+      </div>
+    </div>
+    <div class="hl">Hỗ trợ kỹ thuật & báo giá công trình: <b class="js-hotline"></b></div>
+  </div>
+
+  <!-- Bìa -->
+  <div class="pn bia">
+    <div class="tren">
+      <img src="../logo-dongtam.png" alt="">
+      <div class="ten">Dongtam<small>Vì cuộc sống tươi đẹp</small></div>
+      <div class="khien"><b>NANO</b><span>KHÁNG<br>KHUẨN</span></div>
+    </div>
+    <div class="anh"></div>
+    <div class="chu">
+      <div class="nho">Dành cho công trình đang thi công</div>
+      <h1>GIẢI PHÁP GẠCH ỐP LÁT CAO CẤP CHO NGÔI NHÀ CỦA BẠN</h1>
+      <ul>
+        <li>Xương Porcelain chịu lực, phẳng đều</li>
+        <li>Men Nano kháng khuẩn đến 99%</li>
+        <li>Chống thấm, chống trầy xước</li>
+      </ul>
+    </div>
+    <div class="day">📍 Mẫu thật có sẵn tại <b class="js-dl-ten">—</b></div>
+  </div>
+</section>
+
+<!-- ============ MẶT 2 (TRONG) ============ -->
+<section class="trang">
+  <!-- Nano -->
+  <div class="pn nano">
+    <div class="nano-dau">
+      <div class="khien"><b>NANO</b><span>KHÁNG<br>KHUẨN</span></div>
+      <h2><small>Công nghệ men mới</small>Men Nano kháng khuẩn bảo vệ cả gia đình</h2>
+    </div>
+    <div class="anh"></div>
+    <p>Hạt Nano kháng khuẩn được trộn vào men và nung ở <b>1150–1200°C</b>. Tính năng kháng khuẩn nằm luôn trong lớp men, <b>không mài mòn, không bong tróc</b>.</p>
+    <div class="thanh-kq">
+      <div class="tk"><div class="nhan"><i>B. subtilis · bệnh đường ruột</i><b>96–99%</b></div><div class="ong"><span style="width:99%"></span></div></div>
+      <div class="tk"><div class="nhan"><i>E. coli · tiêu chảy</i><b>75–95%</b></div><div class="ong"><span style="width:95%"></span></div></div>
+      <div class="tk"><div class="nhan"><i>S. typhi · thương hàn</i><b>57–70%</b></div><div class="ong"><span style="width:70%"></span></div></div>
+    </div>
+    <div class="nguon">Hiệu quả diệt khuẩn sau 24 giờ tiếp xúc. Viện Pasteur TP.HCM, tiêu chuẩn VILAS.</div>
+    <ul>
+      <li>An toàn cho trẻ nhỏ hay chơi dưới sàn và vật nuôi.</li>
+      <li>Men siêu mịn, chống bám bẩn, hạn chế nấm mốc, mùi hôi.</li>
+    </ul>
+    <div class="kem"><b>Bảo vệ trọn vẹn:</b> dùng kèm keo chà ron kháng khuẩn cho nhà vệ sinh, bếp, phòng trẻ em.</div>
+  </div>
+
+  <!-- Vì sao Đồng Tâm -->
+  <div class="pn">
+    <h2><small>Thương hiệu Việt từ năm 1969</small>Vì sao chọn gạch Đồng Tâm?</h2>
+    <div class="ss">
+      <div class="o"><b>Porcelain</b><p>Xương đá, cứng, hút nước rất thấp. Dùng lát nền, sân, ban công.</p></div>
+      <div class="o"><b>Ceramic</b><p>Nhẹ, men đẹp, giá mềm. Phù hợp ốp tường.</p></div>
+      <div class="o"><b>Men mờ</b><p>Ít trơn, ít lộ vết bẩn. Nền nhà vệ sinh, sân, nhà có người già.</p></div>
+      <div class="o"><b>Men bóng</b><p>Sáng, sang, dễ lau. Phòng khách, tường bếp, tường WC.</p></div>
+    </div>
+    <div class="vat"><div style="background-image:url(anh/van1.jpg)"></div><div style="background-image:url(anh/van2.jpg)"></div><div style="background-image:url(anh/van3.jpg)"></div></div>
+    <div class="tn">
+      <span>Chống trầy xước</span><span>Chống thấm</span>
+      <span>Chống trượt</span><span>Chống bám bẩn</span>
+      <span>Mài men toàn phần</span><span>Gạch đồng chất</span>
+      <span>In kỹ thuật số</span><span>Vân đá tự nhiên</span>
+    </div>
+    <div class="kt"><b>Kích thước đang sản xuất:</b> 100x100, 60x120, 80x80, 60x60, 40x80, 30x60, 40x40, 30x30, gạch thanh vân gỗ 20x120, 20x80, 15x60 và nhiều kích thước khác.</div>
+    <div class="tho"><b>Dành cho thầu thợ, kiến trúc sư</b>
+      <p>Gạch chuẩn kích thước, phẳng đều, ít cong vênh nên thi công nhanh, ít hao hụt. Gửi diện tích hoặc bản vẽ để nhận báo giá công trình và chiết khấu theo số lượng.</p>
+    </div>
+  </div>
+
+  <!-- Chọn theo ngân sách -->
+  <div class="pn ns">
+    <h2><small>Tư vấn miễn phí trên điện thoại</small>Chọn gạch theo đúng số tiền bạn có</h2>
+    <div class="b"><div class="so">1</div><div><b>Quét mã QR bên dưới</b><p>Không cần cài ứng dụng, không cần đăng ký.</p></div></div>
+    <div class="b"><div class="so">2</div><div><b>Chọn phòng và nhập diện tích</b><p>Phòng khách, phòng ngủ, bếp, nhà vệ sinh, sân, ban công.</p></div></div>
+    <div class="b"><div class="so">3</div><div><b>Xem mẫu hợp ngân sách</b><p>Có hình ảnh, giá niêm yết và tổng tiền dự kiến cho cả công trình.</p></div></div>
+    <div class="muc"><span>Tiết kiệm</span><span>Phổ thông</span><span>Cao cấp</span></div>
+    <div class="b"><div class="so">4</div><div><b>Ghé đại lý xem mẫu thật</b><p>Nhận báo giá chính xác và chiết khấu theo công trình.</p></div></div>
+    <div class="qr-khoi" style="margin-top:auto">
+      <div class="qr js-qr"></div>
+      <div class="ct"><b>Quét để bắt đầu</b><p>Giá luôn cập nhật mới nhất trên điện thoại của bạn.</p></div>
+    </div>
+    <div class="dl-cuoi">Mẫu thật có sẵn tại <b class="js-dl-ten">—</b><br><span class="js-dl-dc"></span></div>
+  </div>
+</section>
+
+<script src="dai-ly.js"></script>
+<script>
+(function(){
+  var GOC_MAC_DINH='https://linhikigaicvtts-ops.github.io/dongtam-app/tim-gach/';
+  var qs=new URLSearchParams(location.search);
+  var sel=document.getElementById('chon-dl'), goc=document.getElementById('goc');
+  sel.innerHTML='<option value="">— Chung (không gắn đại lý) —</option>'+DAI_LY.map(function(d){ return '<option value="'+d.ma+'">'+d.ten+' ('+d.ma+')</option>'; }).join('');
+  sel.value=qs.has('dl') ? qs.get('dl') : DAI_LY[0].ma;
+  goc.value=qs.get('goc')||GOC_MAC_DINH;
+
+  function set(cls, html){ Array.prototype.forEach.call(document.querySelectorAll('.'+cls),function(e){ e.innerHTML=html; }); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function qrSvg(text){
+    var q=qrcode(0,'M'); q.addData(text); q.make();
+    return q.createSvgTag({cellSize:4,margin:0,scalable:true});
+  }
+  function ve(){
+    var d=timDaiLy(sel.value);
+    var link=goc.value.trim()+(d?'?dl='+d.ma:'');
+    document.getElementById('link-qr').textContent=link;
+    set('js-qr', qrSvg(link));
+    set('js-hotline', dinhDangSdt(HOTLINE_HO_TRO));
+    if(d){
+      set('js-dl-ten', esc(d.ten));
+      set('js-dl-day', esc(d.tenDay));
+      var chs=d.cuaHang.slice(0,3);
+      set('js-chs', chs.map(function(c){
+        return '<div class="c">📍 '+esc(c.diaChi)+'<br>📞 <b>'+esc(dinhDangSdt(c.sdt||HOTLINE_HO_TRO))+'</b>'+(c.sdt?'':' <i style="font-size:7pt">(hotline hỗ trợ)</i>')+'</div>';
+      }).join(''));
+      var c0=d.cuaHang[0];
+      set('js-dl-dc', esc(c0.diaChi)+' · '+esc(dinhDangSdt(c0.sdt||HOTLINE_HO_TRO)));
+    } else {
+      set('js-dl-ten', DAI_LY.length+' đại lý hợp tác gần bạn');
+      set('js-dl-day', 'Quét mã QR để tìm cửa hàng gần công trình nhất');
+      set('js-chs', '<div class="c" style="text-align:center">Thiên Lộc Home · Đặng Ngọc Anh · Tân Hùng Anh · Hoàng Lam · Thanh Nhàn · Đức Truyền · Việt Mỹ · Tiến Phát · Khang Anh · Nhật Nam và các đại lý khác khu vực phía Đông TP.HCM</div>');
+      set('js-dl-dc', 'Quét mã để xem đại lý gần nhất');
+    }
+    document.title='To roi A4 - '+(d?d.ten:'Chung');
+    var u=new URL(location.href); if(sel.value) u.searchParams.set('dl',sel.value); else u.searchParams.delete('dl'); history.replaceState(null,'',u);
+  }
+  sel.onchange=ve; goc.oninput=ve;
+  ve();
+})();
+</script>
+</body>
+</html>
