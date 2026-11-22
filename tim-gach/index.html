@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Chọn gạch Đồng Tâm theo ngân sách</title>
-<meta name="description" content="Chọn gạch ốp lát Đồng Tâm phù hợp số tiền bỏ ra, xem mẫu thật tại đại lý gần công trình.">
+<title>Gạch, ngói, keo Đồng Tâm theo ngân sách</title>
+<meta name="description" content="Chọn gạch ốp lát, ngói tráng men, keo dán gạch Đồng Tâm phù hợp số tiền bỏ ra, xem mẫu thật tại đại lý gần công trình.">
 <meta name="theme-color" content="#D7141A">
 <link rel="icon" href="../logo-dongtam.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -125,6 +125,51 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 
 .chan{text-align:center;font-size:12px;color:var(--phu);padding:26px 0 10px}
 
+/* Lối tắt ngành hàng */
+.loi-tat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.loi-tat a{background:var(--the);border:1px solid var(--vien);border-radius:14px;padding:10px 6px;text-align:center;font-size:12.5px;font-weight:700;line-height:1.25}
+.loi-tat a .ic{display:block;font-size:22px;margin-bottom:3px}
+
+/* Vật tư đi kèm (keo + chà ron) */
+.vt{background:var(--xanh-nhat);border:1px solid #BFE5D3;border-radius:16px;padding:14px;margin-top:16px}
+.vt h4{font-size:15px;font-weight:800;color:#0A6B49}
+.vt .mo{font-size:12.5px;color:var(--phu);margin-top:2px}
+.vt-dong{display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:9px 10px;margin-top:8px}
+.vt-dong .h{flex:0 0 46px;height:46px;border-radius:10px;background:#EEE center/cover no-repeat}
+.vt-dong .t{flex:1;min-width:0;font-size:13px;line-height:1.3}
+.vt-dong .t b{display:block;font-size:13.5px}
+.vt-dong .t small{color:var(--phu);font-size:11.5px}
+.vt-dong .s{text-align:right;font-weight:800;font-size:13.5px;white-space:nowrap}
+.vt-dong .s small{display:block;font-weight:500;font-size:11px;color:var(--phu)}
+
+/* Ngói */
+.dong-ngoi{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dong-ngoi button{border:1.5px solid var(--vien);border-radius:14px;padding:11px;background:#fff;text-align:left;font-size:12.5px;line-height:1.35;color:var(--phu)}
+.dong-ngoi button b{display:block;font-size:15px;color:var(--chu)}
+.dong-ngoi button .g{display:block;margin-top:5px;font-weight:800;color:var(--do);font-size:13.5px}
+.dong-ngoi button.on{border-color:var(--do);background:var(--do-nhat)}
+.mau-ngoi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.mau-ngoi a{background:var(--the);border:1px solid var(--vien);border-radius:12px;overflow:hidden;font-size:11.5px;line-height:1.25}
+.mau-ngoi .anh{aspect-ratio:1/1;background:#EEE center/cover no-repeat;position:relative}
+.mau-ngoi .anh .dh{position:absolute;left:4px;top:4px;background:rgba(0,0,0,.6);color:#fff;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:999px}
+.mau-ngoi .anh .o{position:absolute;right:5px;bottom:5px;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.mau-ngoi .tt{padding:6px 7px 8px}
+.mau-ngoi .tt b{display:block;font-size:12px}
+.tong-ngoi{background:var(--the);border:1.5px solid var(--do);border-radius:14px;padding:12px 14px;margin-top:12px;display:flex;align-items:center;gap:10px}
+.tong-ngoi .l{flex:1;font-size:13px;color:var(--phu);line-height:1.4}
+.tong-ngoi .l b{color:var(--chu)}
+.tong-ngoi .r{text-align:right;font-weight:900;font-size:18px;color:var(--do);white-space:nowrap}
+.tong-ngoi .r small{display:block;font-size:11px;font-weight:600;color:var(--phu)}
+
+/* Keo */
+.keo{display:grid;gap:8px;margin-top:12px}
+.keo a{display:flex;gap:10px;align-items:center;background:var(--the);border:1px solid var(--vien);border-radius:14px;padding:10px}
+.keo .h{flex:0 0 58px;height:58px;border-radius:10px;background:#EEE center/cover no-repeat}
+.keo .t{flex:1;min-width:0;font-size:12.5px;color:var(--phu);line-height:1.35}
+.keo .t b{display:block;font-size:14px;color:var(--chu)}
+.keo .g{text-align:right;font-weight:800;color:var(--do);font-size:14px;white-space:nowrap}
+.keo .g small{display:block;font-size:11px;font-weight:600;color:var(--phu)}
+
 /* Thanh dưới */
 .thanh{position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(255,255,255,.97);backdrop-filter:blur(8px);border-top:1px solid var(--vien);padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
 .thanh .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:1.25fr 1fr;gap:8px}
@@ -140,14 +185,20 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
       <div class="logo"><img src="../logo-dongtam.png" alt=""><span style="color:#D7141A;font-weight:900;font-size:17px;margin-left:6px;letter-spacing:-.3px">Dongtam</span></div>
       <div class="nano">🛡️ Men Nano kháng khuẩn</div>
     </div>
-    <h1>Chọn gạch đẹp, bền<br>đúng với số tiền bạn có</h1>
-    <p>Chọn phòng, nhập diện tích, xem ngay mẫu gợi ý và giá niêm yết. Sau đó ghé đại lý gần công trình để xem mẫu thật.</p>
+    <h1>Gạch, ngói đẹp và bền<br>đúng với số tiền bạn có</h1>
+    <p>Chọn phòng hoặc mái nhà, nhập diện tích, xem ngay mẫu gợi ý, giá niêm yết và vật tư đi kèm. Sau đó ghé đại lý gần công trình để xem mẫu thật.</p>
   </div>
 </header>
 
 <main class="wrap">
   <!-- Thẻ đại lý -->
   <section class="dl" id="the-dl"></section>
+
+  <nav class="loi-tat">
+    <a href="#chon"><span class="ic">🧱</span>Gạch ốp lát</a>
+    <a href="#ngoi"><span class="ic">🏠</span>Ngói lợp mái</a>
+    <a href="#keo"><span class="ic">🧴</span>Keo dán, chà ron</a>
+  </nav>
 
   <!-- Chọn theo ngân sách -->
   <section class="khoi" id="chon">
@@ -173,6 +224,43 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
     </div>
 
     <div id="ket-qua"></div>
+    <div id="vat-tu"></div>
+  </section>
+
+  <!-- Ngói lợp mái -->
+  <section class="khoi" id="ngoi">
+    <h3>🏠 Ngói tráng men lợp mái</h3>
+    <p class="mo-ta">Ngói Đồng Tâm xương ceramic, men nung trên 1150°C, bền màu, thoát nước nhanh, hạn chế rêu mốc.</p>
+    <div class="buoc">
+      <div class="buoc-tieu">1 · Chọn dòng ngói</div>
+      <div class="dong-ngoi" id="ds-dong"><div class="dang-tai" style="grid-column:1/-1"><div class="xoay"></div>Đang tải…</div></div>
+    </div>
+    <div class="buoc">
+      <div class="buoc-tieu">2 · Diện tích mái (tính theo mặt nghiêng)</div>
+      <div class="m2"><input id="m2-mai" type="number" inputmode="decimal" min="1" step="1" value="100" aria-label="Diện tích mái (m²)"><span>m²</span></div>
+      <div class="m2-goi">Định mức khoảng 11–12 viên/m² tùy khoảng cách lito. Trang tính theo 12 viên/m² để đủ dùng.</div>
+      <div id="tong-ngoi"></div>
+    </div>
+    <div class="buoc">
+      <div class="buoc-tieu">3 · Chọn màu</div>
+      <div class="mau-ngoi" id="ds-mau"></div>
+      <p class="ghi-chu">Ngói nóc, ngói rìa, ngói chặn cuối, ngói chạc… tùy hình dáng mái. Gửi bản vẽ mái cho đại lý để được bóc tách đủ phụ kiện cùng màu.</p>
+    </div>
+  </section>
+
+  <!-- Keo dán gạch & bột chà ron -->
+  <section class="khoi" id="keo">
+    <h3>🧴 Keo dán gạch GECKO & bột chà ron GROUTEX</h3>
+    <p class="mo-ta">Dùng keo thay hồ dầu: gạch bám chắc, không bộp, thi công nhanh, dán được lên nền gạch cũ.</p>
+    <div class="keo" id="ds-keo"><div class="dang-tai"><div class="xoay"></div>Đang tải…</div></div>
+    <details class="kt" style="margin-top:12px">
+      <summary>💡 Keo có đắt hơn hồ dầu nhiều không?</summary>
+      <div class="nd"><ul>
+        <li>Lát 30 m² phòng khách: dùng keo chỉ chênh khoảng <b>400.000đ</b> so với hồ dầu.</li>
+        <li>Gạch bong, bộp sau vài năm thì sửa lại tốn gấp nhiều lần chi phí ban đầu.</li>
+        <li>Bao 25 kg lát nền được khoảng <b>6,9 m²</b> (lớp keo 2 mm); ốp tường, gạch khổ lớn khoảng <b>4,6 m²</b> (lớp keo 3 mm).</li>
+      </ul></div>
+    </details>
   </section>
 
   <!-- Kiến thức nhanh -->
@@ -242,7 +330,7 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 'use strict';
 var APPS_URL='https://script.google.com/macros/s/AKfycbyrO8symCYOkWsGG0nRWPF7gpndC3mzEVUk15UvWrA0O81ZUumW-kX_gEOZhtCJ34bMVQ/exec';
 var APP_KEY='QDy3MCObF1FLdoBexB9XO3dECy64';
-var CACHE_KEY='tg_cache_v1', CACHE_GIO=6;   // giữ bảng giá 6 tiếng trên máy khách
+var CACHE_KEY='tg_cache_v2', CACHE_GIO=6;   // giữ bảng giá 6 tiếng trên máy khách
 var HAO_HUT=1.05;
 
 var qs=new URLSearchParams(location.search);
@@ -345,28 +433,50 @@ function anhNho(u){
   var m=String(u).match(/\/d\/([a-zA-Z0-9_-]{20,})/)||String(u).match(/[?&]id=([a-zA-Z0-9_-]{20,})/);
   return m ? 'https://lh3.googleusercontent.com/d/'+m[1]+'=w480' : u;
 }
+function giaSo(v){ return typeof v==='number'?v:(parseFloat(String(v||'0').replace(/\./g,'').replace(/,/g,'.'))||0); }
+function anhCua(img,sap){ var u=img[sap]; if(Array.isArray(u)) u=u[0]; return u?anhNho(u):''; }
 function gonDuLieu(res){
   var g=(res&&res.gach&&res.gach.data)||[], tt=(res&&res.thuocTinh&&res.thuocTinh.data)||{}, img=res&&res.spImages||{};
-  var out=[];
+  var nkk=(res&&res.ngoiKeoKinh)||{};
+  var out={sp:[],ngoi:[],keo:[]};
   g.forEach(function(r){
-    var u=img[r.sap]; if(Array.isArray(u)) u=u[0];
+    var u=anhCua(img,r.sap);
     if(!r.le || !u) return;
     var t=tt[r.ma]||{};
-    out.push({ma:r.ma, kc:String(r.kc||'').toLowerCase(), x:r.cat, le:+r.le, cl:r.gio?1:0, img:anhNho(u),
+    out.sp.push({ma:r.ma, kc:String(r.kc||'').toLowerCase(), x:r.cat, le:+r.le, cl:r.gio?1:0, img:u,
       men:t.men||'', cn:t.congNang||'', tn:t.tinhNang||'', hv:t.hoaVan||'', mau:t.mau||''});
   });
+  // Ngói lợp (chỉ viên lợp chính; phụ kiện nóc/rìa để đại lý bóc tách theo mái)
+  ((nkk.ngoi&&nkk.ngoi.data)||[]).forEach(function(r){
+    var m=String(r.ten||'').match(/^Ngói lợp\s+(TITAN|ALPHA)\s?0*(\d{1,3})/i);
+    if(!m) return;
+    var code=m[1].toUpperCase()+('00'+m[2]).slice(-3), le=giaSo(r.le);
+    if(!le || out.ngoi.some(function(x){return x.code===code;})) return;
+    out.ngoi.push({ma:String(r.ma).trim(), code:code, dong:m[1].toUpperCase(), le:le, kc:r.kc||'', img:anhCua(img,String(r.ma).trim())});
+  });
+  ((nkk.keo&&nkk.keo.data)||[]).forEach(function(r){
+    var ma=String(r.ma||'').trim(), le=giaSo(r.le);
+    if(!KEO_INFO[ma] || !le) return;
+    out.keo.push({ma:ma, le:le, img:anhCua(img,ma)});
+  });
   return out;
+}
+function apDung(d){
+  if(d.sp&&d.sp.length) SP=d.sp;
+  if(d.ngoi&&d.ngoi.length) NGOI=d.ngoi;
+  if(d.keo&&d.keo.length) KEO=d.keo;
+  veTatCa(); veNgoi(); veKeo();
 }
 function taiDuLieu(){
   var cache=null;
   try{ cache=JSON.parse(localStorage.getItem(CACHE_KEY)||'null'); }catch(e){}
-  if(cache && cache.sp && cache.sp.length){ SP=cache.sp; veTatCa(); }
+  if(cache && cache.sp && cache.sp.length) apDung(cache);
   if(cache && Date.now()-cache.t < CACHE_GIO*3600e3) return;
   var cb='_tg'+Date.now(), s=document.createElement('script'), xong=false;
   window[cb]=function(res){
     xong=true; delete window[cb]; s.remove();
-    var sp=gonDuLieu(res);
-    if(sp.length){ SP=sp; try{ localStorage.setItem(CACHE_KEY,JSON.stringify({t:Date.now(),sp:sp})); }catch(e){} veTatCa(); }
+    var d=gonDuLieu(res);
+    if(d.sp.length){ d.t=Date.now(); try{ localStorage.setItem(CACHE_KEY,JSON.stringify(d)); }catch(e){} apDung(d); }
     else if(!SP.length) baoLoi();
   };
   s.src=APPS_URL+'?action=getAll&k='+encodeURIComponent(APP_KEY)+'&t=&g=1&callback='+cb;
@@ -375,6 +485,7 @@ function taiDuLieu(){
   document.head.appendChild(s);
 }
 function baoLoi(){
+  ['ds-dong','ds-keo'].forEach(function(id){ document.getElementById(id).innerHTML='<div class="trong" style="grid-column:1/-1">Chưa tải được bảng giá.</div>'; });
   document.getElementById('ds-tang').innerHTML='<div class="trong">Chưa tải được bảng giá. Kiểm tra mạng rồi <a href="" style="color:var(--do);font-weight:700">tải lại</a>, hoặc gọi đại lý để được tư vấn.</div>';
 }
 
@@ -435,6 +546,7 @@ function veTatCa(){
     b.onclick=function(){ tang=+b.dataset.i; document.getElementById('ns').value=''; soHien=12; veTatCa(); };
   });
   veKetQua(ds,t,luong,ns);
+  veVatTu();
 }
 function tenMau(ma){
   // 100DONGVAN001-FP-H+ → DONGVAN 001
@@ -482,7 +594,106 @@ function veKetQua(ds,t,luong,ns){
   var b=document.getElementById('them'); if(b) b.onclick=function(){ soHien+=12; veTatCa(); };
 }
 
+// ===== VẬT TƯ ĐI KÈM: KEO DÁN + BỘT CHÀ RON =====
+// Định mức keo (theo thông số GECKO): lát nền lớp 2mm ≈ 6,9 m²/bao 25kg; ốp tường, gạch lớn lớp 3mm ≈ 4,6 m²/bao.
+var KEO_INFO={
+  '10006208':{ten:'GECKO FLOOR', loai:'Keo lát nền', dung:'Lát nền, thay hồ dầu. Ốp tường nội thất tới 2 m.', m2Bao:6.9},
+  '10006209':{ten:'GECKO WALL',  loai:'Keo ốp tường', dung:'Ốp tường cao tới 5 m, gạch tới 80x80, dán gạch chồng gạch.', m2Bao:4.6},
+  '10006195':{ten:'GECKO SUPER', loai:'Keo khu ẩm ướt', dung:'Hồ bơi, spa, khu ẩm ướt; gạch lớn tới 60x120.', m2Bao:4.6},
+  '10006196':{ten:'GECKO PRO',   loai:'Keo gạch khổ lớn', dung:'Gạch tới 120x120, công trình lớn, nơi rung động.', m2Bao:4.6},
+  '10002953':{ten:'GROUTEX 1 kg', loai:'Bột chà ron', dung:'Chống nứt, chống nấm mốc, chống bám bẩn. 15 màu ron.', kg:1, ron:true},
+  '10002955':{ten:'GROUTEX 5 kg', loai:'Bột chà ron', dung:'Bao lớn cho công trình, tiết kiệm hơn bao 1 kg.', kg:5, ron:true}
+};
+var THU_TU_KEO=['10006208','10006209','10006195','10006196','10002953','10002955'];
+var KEO=[];
+function keoTheoMa(ma){ return KEO.filter(function(k){return k.ma===ma;})[0]; }
+function linkSP(ma){ return '../index.html?ma='+encodeURIComponent(ma)+(DL?'&dl='+encodeURIComponent(DL.ma):''); }
+// Lượng bột chà ron (kg/m²) = (A+B)/(A·B) × dày gạch × rộng ron × 1,6 (mm)
+function kgRonM2(kc){
+  var m=String(kc).match(/(\d+)x(\d+)/); if(!m) return 0.15;
+  var a=+m[1], b=+m[2], day=Math.max(a,b)>=800?10:9;
+  return (a+b)/(a*b)*day*2*1.6;
+}
+function veVatTu(){
+  var el=document.getElementById('vat-tu'), m2=dienTich();
+  if(!KEO.length || !m2){ el.innerHTML=''; return; }
+  var maKeo = phong.id==='tuong' ? '10006209' : '10006208';
+  var k=keoTheoMa(maKeo), info=KEO_INFO[maKeo], h='';
+  if(k){
+    var bao=Math.ceil(m2/info.m2Bao);
+    h+='<a class="vt-dong" href="'+linkSP(k.ma)+'"><span class="h" style="background-image:url(\''+esc(k.img)+'\')"></span>'
+      +'<span class="t"><b>'+info.ten+'</b><small>'+info.loai+' · bao 25 kg ≈ '+String(info.m2Bao).replace('.',',')+' m²</small></span>'
+      +'<span class="s">'+bao+' bao<small>≈ '+tienGon(bao*k.le)+'</small></span></a>';
+  }
+  var r1=keoTheoMa('10002953'), r5=keoTheoMa('10002955');
+  if(r1){
+    var kg=Math.max(1,Math.ceil(m2*kgRonM2(phong.kc[0])*1.1));
+    var n5=r5?Math.floor(kg/5):0, n1=kg-n5*5;
+    if(r5 && n1*r1.le>r5.le){ n5++; n1=0; }
+    var tienRon=n5*(r5?r5.le:0)+n1*r1.le;
+    var mo=[n5?n5+' bao 5 kg':'', n1?n1+' bao 1 kg':''].filter(Boolean).join(' + ');
+    h+='<a class="vt-dong" href="'+linkSP(n5?r5.ma:r1.ma)+'"><span class="h" style="background-image:url(\''+esc((n5?r5:r1).img)+'\')"></span>'
+      +'<span class="t"><b>Bột chà ron GROUTEX</b><small>Khoảng '+kg+' kg cho gạch '+esc(phong.kc[0].replace('x',' x '))+', ron 2 mm</small></span>'
+      +'<span class="s">'+mo+'<small>≈ '+tienGon(tienRon)+'</small></span></a>';
+  }
+  el.innerHTML='<div class="vt"><h4>🧴 Vật tư đi kèm cho '+(m2).toLocaleString('vi-VN')+' m²</h4>'
+    +'<div class="mo">Ước tính để bạn dự trù chi phí. Đại lý tính lại theo đúng mẫu gạch bạn chọn.</div>'+h
+    +(phong.id==='tuong'?'':'<div class="mo" style="margin-top:8px">Gạch từ 60x120 trở lên hoặc khu ẩm ướt, hồ bơi: nên dùng GECKO PRO / GECKO SUPER.</div>')
+    +'</div>';
+}
+function veKeo(){
+  if(!KEO.length) return;
+  document.getElementById('ds-keo').innerHTML=THU_TU_KEO.map(function(ma){
+    var k=keoTheoMa(ma), i=KEO_INFO[ma]; if(!k) return '';
+    return '<a href="'+linkSP(ma)+'"><span class="h" style="background-image:url(\''+esc(k.img)+'\')"></span>'
+      +'<span class="t"><b>'+i.ten+'</b>'+esc(i.loai)+' · '+esc(i.dung)+'</span>'
+      +'<span class="g">'+tien(k.le)+'<small>đ/bao</small></span></a>';
+  }).join('');
+}
+
+// ===== NGÓI =====
+var VIEN_M2_NGOI=12;   // định mức 11–12 viên/m² (theo mô tả ALPHA) → lấy 12 cho đủ dùng
+var NGOI_DONG={
+  TITAN:{ten:'TITAN', mo:'Ngói sóng lớn, men mờ. Chịu lực, cách nhiệt, chống tia UV.'},
+  ALPHA:{ten:'ALPHA', mo:'Ngói phẳng hiện đại, men bóng. Bảo hành màu 50 năm, chống hắt dột.'}
+};
+var NGOI_MAU={
+  TITAN001:['Cam đất nung','#B3502A'],TITAN002:['Xám đen','#4A4E52'],TITAN003:['Nâu đậm','#4E3728'],TITAN004:['Nâu socola','#6B4A33'],
+  TITAN005:['Đỏ thanh long','#8E2C35'],TITAN006:['Xanh dương','#2C4A73'],TITAN007:['Xanh lá','#3E6B4A'],TITAN008:['Xanh nhớt','#2F5548'],
+  TITAN009:['Đỏ thanh long đậm','#6E1F28'],TITAN011:['Xanh đậm','#1F3A4D'],
+  ALPHA001:['Cam đất nung','#B3502A',1],ALPHA002:['Xám xanh','#5E6B70'],ALPHA003:['Nâu đậm','#4E3728'],ALPHA004:['Nâu','#7A5A3F'],
+  ALPHA005:['Đỏ','#A62B27'],ALPHA006:['Xanh coban','#28527A'],ALPHA007:['Xanh lá','#3E6B4A',1],ALPHA008:['Xanh nhớt','#2F5548'],
+  ALPHA009:['Đỏ thanh long','#8E2C35',1],ALPHA010:['Cam','#C96A2E',1],ALPHA011:['Xanh đậm','#1F3A4D'],ALPHA012:['Trắng','#E8E6E0',1],
+  ALPHA013:['Đen','#26262A',1],ALPHA014:['Kem','#D9C9A8',1]
+};
+var NGOI=[], dongNgoi='TITAN';
+function m2Mai(){ var v=parseFloat(String(document.getElementById('m2-mai').value).replace(',','.')); return v>0?v:0; }
+function veNgoi(){
+  if(!NGOI.length) return;
+  var gia={}; NGOI.forEach(function(n){ gia[n.dong]=Math.min(gia[n.dong]||Infinity,n.le); });
+  var dongs=['TITAN','ALPHA'].filter(function(d){return gia[d];});
+  if(dongs.indexOf(dongNgoi)<0) dongNgoi=dongs[0];
+  var elD=document.getElementById('ds-dong');
+  elD.innerHTML=dongs.map(function(d){
+    return '<button data-d="'+d+'" class="'+(d===dongNgoi?'on':'')+'"><b>'+NGOI_DONG[d].ten+'</b>'+esc(NGOI_DONG[d].mo)
+      +'<span class="g">'+tien(gia[d])+' đ/viên</span></button>';
+  }).join('');
+  Array.prototype.forEach.call(elD.querySelectorAll('button'),function(b){ b.onclick=function(){ dongNgoi=b.dataset.d; veNgoi(); }; });
+  var m2=m2Mai(), vien=Math.ceil(m2*VIEN_M2_NGOI), g=gia[dongNgoi];
+  document.getElementById('tong-ngoi').innerHTML = m2
+    ? '<div class="tong-ngoi"><div class="l">Ngói lợp <b>'+dongNgoi+'</b> cho <b>'+m2.toLocaleString('vi-VN')+' m²</b> mái<br>≈ <b>'+vien.toLocaleString('vi-VN')+' viên</b> ('+Math.ceil(vien/6).toLocaleString('vi-VN')+' thùng 6 viên)</div>'
+      +'<div class="r">'+tienGon(vien*g)+'<small>chưa gồm phụ kiện</small></div></div>' : '';
+  var ds=NGOI.filter(function(n){return n.dong===dongNgoi;}).sort(function(a,b){ return (NGOI_MAU[a.code]&&NGOI_MAU[a.code][2]?1:0)-(NGOI_MAU[b.code]&&NGOI_MAU[b.code][2]?1:0) || (a.code<b.code?-1:1); });
+  document.getElementById('ds-mau').innerHTML=ds.map(function(n){
+    var mau=NGOI_MAU[n.code]||[n.code,'#999'];
+    return '<a href="'+linkSP(n.ma)+'"><div class="anh" style="background-image:url(\''+esc(n.img)+'\');background-color:'+mau[1]+'">'
+      +(mau[2]?'<span class="dh">Đặt trước</span>':'')+'<span class="o" style="background:'+mau[1]+'"></span></div>'
+      +'<div class="tt"><b>'+esc(mau[0])+'</b>'+esc(n.code)+'</div></a>';
+  }).join('');
+}
+
 // Sự kiện
+document.getElementById('m2-mai').addEventListener('input',function(){ veNgoi(); });
 document.getElementById('m2').addEventListener('input',function(){ veTatCa(); });
 document.getElementById('ns').addEventListener('input',function(){ soHien=12; veTatCa(); });
 document.getElementById('chi-kk').addEventListener('change',function(){ soHien=12; veTatCa(); });
