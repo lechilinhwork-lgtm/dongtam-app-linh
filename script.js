@@ -1933,6 +1933,8 @@ function render(){
 function showDP(ma){
   var p=DATA.find(function(x){return x.ma===ma;}); if(!p) return;
   curP_ma=ma;
+  if(typeof ggVaoSP==='function') ggVaoSP(ma);   // giảm thêm cho đại lý (tài khoản đặc biệt)
+  var GGK=(typeof ggFactorCho==='function')?ggFactorCho(ma):1;
   if(typeof hoCapNhatNutDP==='function') hoCapNhatNutDP(ma);
   document.getElementById('dp-ma').textContent=p.ma;
   document.getElementById('dp-kc').textContent='Kích cỡ: '+p.kc+(p.gio?' · '+p.gio+(p.gio==='★'?' Chiến lược':' Chủ lực'):'');
@@ -1953,8 +1955,8 @@ function showDP(ma){
   var isSaleItem = p._fromCT==='CT1' || p._fromCT==='CT2';
   var dispNhan = p.nhan>0 ? p.nhan : (p.ns||0);
   var dispGiao = p.giao>0 ? p.giao : (p.gs||0);
-  document.getElementById('dp-nhan').textContent = fmt(dispNhan);
-  document.getElementById('dp-giao').textContent = fmt(dispGiao);
+  document.getElementById('dp-nhan').textContent = fmt(dispNhan*GGK);
+  document.getElementById('dp-giao').textContent = fmt(dispGiao*GGK);
   // Cập nhật label GIÁ ĐẠI LÝ → GIÁ SALE nếu là SP từ CT1/CT2
   var giaDlLabel = document.getElementById('dp-gia-dl-label');
   if(giaDlLabel){
@@ -1993,15 +1995,15 @@ function showDP(ma){
   var xaKhoWrap = document.getElementById('dp-xakho-wrap');
   if(xaKhoWrap) xaKhoWrap.style.display = hasXaKho ? 'block' : 'none';
   if(hasXaKho){
-    document.getElementById('dp-xk-nk').textContent = xaKhoNK>0 ? fmt(xaKhoNK) : '–';
-    document.getElementById('dp-xk-gh').textContent = xaKhoGH>0 ? fmt(xaKhoGH) : '–';
+    document.getElementById('dp-xk-nk').textContent = xaKhoNK>0 ? fmt(xaKhoNK*GGK) : '–';
+    document.getElementById('dp-xk-gh').textContent = xaKhoGH>0 ? fmt(xaKhoGH*GGK) : '–';
   }
   if(hasSale){
-    document.getElementById('dp-ns').textContent=fmt(ns_sale);
-    document.getElementById('dp-gs').textContent=fmt(gs_sale);
+    document.getElementById('dp-ns').textContent=fmt(ns_sale*GGK);
+    document.getElementById('dp-gs').textContent=fmt(gs_sale*GGK);
     // base = giá thường (trước sale): p.nhan ưu tiên, fallback sang saleInfo.nhan
-    var base=p.nhan||p.giao||(saleInfo?(saleInfo.nhan||saleInfo.giao||0):0);
-    var saleP=ns_sale||gs_sale;
+    var base=(p.nhan||p.giao||(saleInfo?(saleInfo.nhan||saleInfo.giao||0):0))*GGK;
+    var saleP=(ns_sale||gs_sale)*GGK;
     var saveEl=document.getElementById('dp-save');
     if(base&&saleP&&base>saleP){
       var save=base-saleP; var pct=Math.round(save/base*100);
@@ -2081,6 +2083,7 @@ function setTabGeneric(prefix, tab){
 }
 function dpSetTab(tab){ setTabGeneric('dp', tab); }
 function closeDp(){
+  if(typeof ggDongDP==='function') ggDongDP();   // bỏ % giảm đang chọn khi đóng sản phẩm
   document.getElementById('dp').style.display='none';
   document.body.classList.remove('dp-open');
   var bd=document.getElementById('dp-backdrop'); if(bd) bd.classList.remove('on');
@@ -3450,7 +3453,7 @@ function thangHienTai(){
 }
 
 // Dựng nội dung báo giá text (dùng chung cho popup chi tiết SP + Zalo nhanh)
-function layNoiDungBaoGia(ma){
+function layNoiDungBaoGia(ma, pctGG){
   var p=DATA.find(function(x){return x.ma===ma;});
   if(!p) return '';
 
@@ -3476,6 +3479,9 @@ function layNoiDungBaoGia(ma){
   // SP thường: nếu nk=0 nhưng ns>0 (do merge) → vẫn dùng ns làm NK thường
   if(!isSale && nk===0 && saleNK>0) nk = saleNK;
   if(!isSale && gh===0 && saleGH>0) gh = saleGH;
+  // Tài khoản đặc biệt chọn giảm thêm cho đại lý: trừ % lên giá nhận kho / đi giao (kể cả sale, vét kho), không làm tròn
+  var kGG=(typeof ggK==='function'&&pctGG>0&&typeof ggDuocDung==='function'&&ggDuocDung())?ggK(pctGG):1;
+  nk*=kGG; gh*=kGG; saleNK*=kGG; saleGH*=kGG; vetNK*=kGG; vetGH*=kGG;
   // % giảm luôn tính so với Giá niêm yết (không phải so với giá ĐL gốc)
   var pct = function(sale){ return (le>0 && sale>0) ? Math.round((le-sale)/le*100) : 0; };
 
@@ -3519,7 +3525,7 @@ function layNoiDungBaoGia(ma){
   return lines.join('\n');
 }
 function shareZalo(){
-  var msg=layNoiDungBaoGia(curP_ma);
+  var msg=layNoiDungBaoGia(curP_ma, (typeof ggSel==='function')?ggSel(curP_ma):0);
   if(!msg) return;
   navigator.clipboard&&navigator.clipboard.writeText
     ?navigator.clipboard.writeText(msg).then(function(){showToast('✅ Đã copy! Paste vào Zalo');}).catch(function(){fallbackCopy(msg);})
@@ -4625,7 +4631,7 @@ function saveSession(user){
     token: user.token||'',
     tenCty: user.tenCty||'', mst: user.mst||'', diaChi: user.diaChi||'',
     email: user.email||'', tenKH: user.tenKH||'', khoPhuTrach: user.khoPhuTrach||'', sdt: user.sdt||'',
-    dl: user.dl||'', rg: user.rg||0
+    dl: user.dl||'', rg: user.rg||0, gg: user.gg?1:0
   };
   localStorage.setItem(SESSION_KEY, JSON.stringify(obj));
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(obj));
@@ -4669,7 +4675,7 @@ function doLogin(){
     if(s.parentNode) s.parentNode.removeChild(s);
     delete window[cbName];
     if(data && data.status==='ok'){
-      saveSession({u:u, name:data.name, role:data.role, token:data.token||'', tenCty:data.tenCty, mst:data.mst, diaChi:data.diaChi, email:data.email, tenKH:data.tenKH, khoPhuTrach:data.khoPhuTrach, sdt:data.sdt||'', dl:data.duanLabel||'', rg:data.rieng||0});
+      saveSession({u:u, name:data.name, role:data.role, token:data.token||'', tenCty:data.tenCty, mst:data.mst, diaChi:data.diaChi, email:data.email, tenKH:data.tenKH, khoPhuTrach:data.khoPhuTrach, sdt:data.sdt||'', dl:data.duanLabel||'', rg:data.rieng||0, gg:data.giamGia?1:0});
       showApp(data.name);
     } else {
       errEl.textContent = '❌ Sai tài khoản hoặc mật khẩu!';
@@ -5182,6 +5188,11 @@ function addToDon(ma, qty){
       qty:qty
     });
   }
+  if(_ggTamThoi!==null){
+    var _it=donItems.find(function(x){return x.ma===ma;});
+    if(_it && typeof ggDuocDung==='function' && ggDuocDung()) ggApDung(_it,_ggTamThoi);
+    _ggTamThoi=null;
+  } else if(typeof ggSauThem==='function') ggSauThem(ma);
   updateDonBadge();
   showToast('✓ Đã thêm vào đơn!');
 }
@@ -5347,6 +5358,8 @@ function addToDonWithQty(){
     }
   }
 
+  var _g=(typeof ggSel==='function')?ggSel(curP_ma):0;
+  _ggTamThoi=(_g>0)?_g:null;          // giảm thêm cho đại lý (nếu có chọn) áp vào dòng vừa thêm
   addToDon(curP_ma, qtyM2);
   // Reset input
   document.getElementById('dp-qty-input').value = 1;
@@ -5372,6 +5385,7 @@ function addToDonNgoi(ma){
       qty:1, loai:'ngoi'
     });
   }
+  if(typeof ggSauThem==='function') ggSauThem(ma);
   updateDonBadge();
   showToast('✓ Đã thêm ngói vào đơn!');
 }
@@ -5393,6 +5407,7 @@ function addToDonKeo(ma){
       qty:1, loai:'keo'
     });
   }
+  if(typeof ggSauThem==='function') ggSauThem(ma);
   updateDonBadge();
   showToast('✓ Đã thêm keo vào đơn!');
 }
@@ -5473,6 +5488,7 @@ function renderDon(){
   document.getElementById('don-content').style.display=isEmpty?'none':'block';
   if(isEmpty) return;
   var el=document.getElementById('don-list'); el.innerHTML='';
+  if(typeof ggRenderDonAll==='function') ggRenderDonAll();   // ô chọn % giảm CẢ ĐƠN (tài khoản đặc biệt)
   donItems.forEach(function(item){
     var unit=item.unit||'m²';
     var loai=item.loai||'gach';
@@ -5502,6 +5518,7 @@ function renderDon(){
       +'<p style="font-size:13px;font-weight:700;margin-bottom:2px">'+(item.ten||item.ma)+'</p>'
       +'<p style="font-size:11px;color:var(--t2)">'+item.ma+(item.kc&&item.kc!=='–'?' · '+item.kc:'')+'</p>'
       +(item.ns>0?'<span style="font-size:10px;background:#FDECEA;color:#8B0000;padding:1px 6px;border-radius:4px;font-weight:600">🔥 SALE</span>':'')
+      +(item.ggDL>0?' <span style="font-size:10px;background:#F3E5F5;color:#6A1B9A;padding:1px 6px;border-radius:4px;font-weight:700">🎯 giảm thêm '+item.ggDL+'%</span>':'')
       +'</div>'
       +'<button data-rm="'+item.ma+'" style="color:var(--t2);border:none;background:transparent;font-size:18px;cursor:pointer;flex-shrink:0;width:40px;height:40px;margin:-8px -8px 0 0" aria-label="Xóa sản phẩm">✕</button>'
       +'</div>'
@@ -5571,6 +5588,7 @@ function renderDon(){
       })()
       +'</div>';
     if(laBanRieng()) thayHopGiaRieng(div,item,unit);
+    if(typeof ggHtmlDong==='function'){ var _gx=ggHtmlDong(item); if(_gx) div.insertAdjacentHTML('beforeend',_gx); }
     el.appendChild(div);
   });
 
@@ -5605,6 +5623,8 @@ function renderDon(){
     }
   };
   el.oninput=function(e){
+    var gd=e.target.closest('[data-ggdl]');
+    if(gd){ ggDatDong(gd.dataset.ggdl, gd.value); return; }
     var gi=e.target.closest('[data-gg]');
     if(gi){
       var it=donItems.find(function(x){return x.ma===gi.dataset.gg;});
@@ -5709,6 +5729,7 @@ function guiDonHang(){
     diachi:document.getElementById('don-dc').value.trim(),
     ghichu:document.getElementById('don-note').value.trim()+
       (document.getElementById('don-cty').value.trim()?' | Cty: '+document.getElementById('don-cty').value.trim():'')+
+      (typeof ggGhiChuDon==='function'?ggGhiChuDon():'')+
       (laBanRieng()&&(donGgAll>0||donItems.some(function(x){return ggDong(x)>0;}))?' | Giảm giá: toàn đơn '+donGgAll+'%'+donItems.filter(function(x){return ggDong(x)>0;}).map(function(x){return '; '+x.ma+' '+ggDong(x)+'%';}).join(''):''),
     ngay:new Date().toLocaleString('vi-VN'),
     nguoi_lap:nguoiLap,
@@ -6864,6 +6885,7 @@ function renderDonTotals(){
 function clearDon(){
   if(!confirm('Xóa toàn bộ đơn hàng?')) return;
   donItems=[];updateDonBadge();renderDon();
+  if(typeof ggReset==='function') ggReset();
   ['don-ten','don-cty','don-sdt','don-dc','don-note'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
 }
 
