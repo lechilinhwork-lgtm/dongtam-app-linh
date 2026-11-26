@@ -54,13 +54,14 @@ function ggVaoSP(ma){
   if(!_ggGiu) GGSEL={};           // mở sản phẩm khác -> bỏ % cũ, tránh báo nhầm giá giảm cho đại lý khác
   ggRenderChips(ma);
 }
-function ggRenderChips(ma){
-  var w=document.getElementById('dp-gg-wrap'); if(!w) return;
+function ggRenderChips(ma, wrapId, ham){
+  wrapId=wrapId||'dp-gg-wrap'; ham=ham||'ggChonDP';
+  var w=document.getElementById(wrapId); if(!w) return;
   if(!ggDuocDung()){ w.style.display='none'; w.innerHTML=''; return; }
   var cur=ggSel(ma);
   var chip=function(v,txt){
     var on=(cur===v);
-    return '<button type="button" onclick="ggChonDP('+v+')" style="min-width:42px;min-height:38px;padding:0 10px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid '+(on?'#6A1B9A':'#CE93D8')+';background:'+(on?'#6A1B9A':'#fff')+';color:'+(on?'#fff':'#6A1B9A')+'">'+txt+'</button>';
+    return '<button type="button" onclick="'+ham+'('+v+')" style="min-width:42px;min-height:38px;padding:0 10px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid '+(on?'#6A1B9A':'#CE93D8')+';background:'+(on?'#6A1B9A':'#fff')+';color:'+(on?'#fff':'#6A1B9A')+'">'+txt+'</button>';
   };
   var h='<p class="dp-sec-label" style="color:#6A1B9A">🎯 GIẢM THÊM CHO ĐẠI LÝ <span style="font-weight:400;font-size:10px;color:#888">(tài khoản đặc biệt)</span></p>'
     +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">'+chip(0,'Không');
@@ -69,6 +70,21 @@ function ggRenderChips(ma){
     +(cur>0?'<div style="font-size:12px;color:#6A1B9A;background:#F3E5F5;border-radius:8px;padding:6px 10px;margin-bottom:8px">Đang báo giá <b>giảm thêm '+cur+'%</b> trên giá nhận kho / đi giao (kể cả giá Sale). Zalo và "Thêm đơn" dùng giá này.</div>':'');
   w.innerHTML=h; w.style.display='block';
 }
+// Ngói / Keo: cùng cách chọn % ở cửa sổ chi tiết
+function ggVaoNK(ma, wrapId, ham){
+  if(!_ggGiu) GGSEL={};
+  ggRenderChips(ma, wrapId, ham);
+}
+function ggChonNK(loai, pct){
+  if(!ggDuocDung()) return;
+  var ngoi=(loai==='ngoi'), ma=ngoi?curNgoiMa:curKeoMa; if(!ma) return;
+  var inpId=ngoi?'nd-soluong':'kd-soluong', inp=document.getElementById(inpId), v=inp?inp.value:'';
+  GGSEL[ma]=Number(pct)||0;
+  _ggGiu=true; try{ if(ngoi) showNgoi(ma); else showKeo(ma); }finally{ _ggGiu=false; }
+  var i2=document.getElementById(inpId); if(i2&&v){ i2.value=v; if(ngoi) tinhTienNgoi(); else tinhTienKeo(); }   // trả lại số lượng đang nhập
+}
+function ggChonNgoi(pct){ ggChonNK('ngoi',pct); }
+function ggChonKeo(pct){ ggChonNK('keo',pct); }
 function ggChonDP(pct){
   if(!ggDuocDung()||!curP_ma) return;
   var ma=curP_ma, sc=document.getElementById('dp-scroll'), top=sc?sc.scrollTop:0;

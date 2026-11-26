@@ -2685,6 +2685,8 @@ function renderNdColorBar(ma){
 }
 function showNgoi(ma){
   curNgoiMa=ma;
+  if(typeof ggVaoNK==='function') ggVaoNK(ma,'nd-gg-wrap','ggChonNgoi');   // giảm thêm cho đại lý (tài khoản đặc biệt)
+  var GGK=(typeof ggFactorCho==='function')?ggFactorCho(ma):1;
   var p=NGOI.find(function(x){return x.ma===ma;}); if(!p) return;
   loadNdImg(p.ma);
   renderNdColorBar(ma);
@@ -2695,10 +2697,10 @@ function showNgoi(ma){
   document.getElementById('nd-kc').textContent=p.kc+' · '+p.dong_goi+(p._new?' · Mã SAP: '+p.ma:'');
   var fg=function(v){return v>0?v.toLocaleString('vi-VN')+'đ/viên':'–';};
   document.getElementById('nd-le').textContent=fg(p.le);
-  document.getElementById('nd-nhan1').textContent=fg(p.nhan);
-  document.getElementById('nd-giao1').textContent=fg(p.giao);
-  document.getElementById('nd-nhan2').textContent=fg(p.nhan2);
-  document.getElementById('nd-giao2').textContent=(p.giao2>0?p.giao2.toLocaleString('vi-VN')+'đ/viên':'Liên hệ báo giá');
+  document.getElementById('nd-nhan1').textContent=fg(p.nhan*GGK);
+  document.getElementById('nd-giao1').textContent=fg(p.giao*GGK);
+  document.getElementById('nd-nhan2').textContent=fg(p.nhan2*GGK);
+  document.getElementById('nd-giao2').textContent=(p.giao2>0?(p.giao2*GGK).toLocaleString('vi-VN')+'đ/viên':'Liên hệ báo giá');
   document.getElementById('ngoi-detail').style.display='block';
   document.getElementById('nk-backdrop').classList.add('on');
   document.getElementById('nd-soluong').value=100;
@@ -2720,10 +2722,11 @@ function tinhTienNgoi(){
   var useLevel2 = sl>=1500;
   var nhanVal = useLevel2 ? p.nhan2 : p.nhan;
   var giaoVal = useLevel2 ? (p.giao2||p.giao) : p.giao;
-  var f=function(n){return n>0?(n*sl).toLocaleString('vi-VN')+'đ':'–';};
+  var GGK=(typeof ggFactorCho==='function')?ggFactorCho(curNgoiMa):1;
+  var f=function(n,k){return n>0?(n*(k||1)*sl).toLocaleString('vi-VN')+'đ':'–';};
   document.getElementById('nd-tien-le').textContent=f(p.le);
-  document.getElementById('nd-tien-nhan').textContent=f(nhanVal)+' ('+(useLevel2?'≥1.500v':'<1.500v')+')';
-  document.getElementById('nd-tien-giao').textContent=f(giaoVal)+' ('+(useLevel2?'≥1.500v':'<1.500v')+')';
+  document.getElementById('nd-tien-nhan').textContent=f(nhanVal,GGK)+' ('+(useLevel2?'≥1.500v':'<1.500v')+')';
+  document.getElementById('nd-tien-giao').textContent=f(giaoVal,GGK)+' ('+(useLevel2?'≥1.500v':'<1.500v')+')';
 }
 
 function themNgoiVaoDon(){
@@ -2743,6 +2746,9 @@ function themNgoiVaoDon(){
       ns:0, gs:0, qty:sl, loai:'ngoi'
     });
   }
+  var _gN=(typeof ggSel==='function')?ggSel(p.ma):0;   // % giảm thêm đã chọn trong cửa sổ chi tiết
+  if(_gN>0){ var _itN=donItems.find(function(x){return x.ma===p.ma;}); if(_itN) ggApDung(_itN,_gN); }
+  else if(typeof ggSauThem==='function') ggSauThem(p.ma);
   updateDonBadge();
   showToast('✓ Đã thêm '+sl+' viên '+p.ten+' vào đơn!');
   closeNgoiDetail();
@@ -2759,6 +2765,7 @@ function ngoiNav(delta){
   if(next) showNgoi(next.ma);
 }
 function closeNgoiDetail(){
+  if(typeof ggDongDP==='function') ggDongDP();
   document.getElementById('ngoi-detail').style.display='none';
   var kd=document.getElementById('keo-detail');
   if(!kd||kd.style.display!=='block') document.getElementById('nk-backdrop').classList.remove('on');
@@ -2891,6 +2898,8 @@ function renderKeo(){
 
 function showKeo(ma){
   curKeoMa=ma;
+  if(typeof ggVaoNK==='function') ggVaoNK(ma,'kd-gg-wrap','ggChonKeo');   // giảm thêm cho đại lý (tài khoản đặc biệt)
+  var GGK=(typeof ggFactorCho==='function')?ggFactorCho(ma):1;
   var p=KEO.find(function(x){return x.ma===ma;}); if(!p) return;
   loadKdImg(p.ma);
   document.getElementById('kd-ten').textContent=p.ten;
@@ -2904,10 +2913,10 @@ function showKeo(ma){
     kdTkEl.style.display='block';
     kdTkEl.textContent=tkDot+' Còn '+(typeof fmtTkCard==='function'?fmtTkCard(tk.tong,p.dv||tk.dvt):Math.floor(tk.tong)+' '+(p.dv||''));
   } else { kdTkEl.style.display='none'; }
-  document.getElementById('kd-nhan1').textContent=p.nhan.toLocaleString('vi-VN')+'đ';
-  document.getElementById('kd-giao1').textContent=p.giao.toLocaleString('vi-VN')+'đ';
-  document.getElementById('kd-nhan2').textContent=p.nhan2.toLocaleString('vi-VN')+'đ';
-  document.getElementById('kd-giao2').textContent=p.giao2.toLocaleString('vi-VN')+'đ';
+  document.getElementById('kd-nhan1').textContent=(p.nhan*GGK).toLocaleString('vi-VN')+'đ';
+  document.getElementById('kd-giao1').textContent=(p.giao*GGK).toLocaleString('vi-VN')+'đ';
+  document.getElementById('kd-nhan2').textContent=(p.nhan2*GGK).toLocaleString('vi-VN')+'đ';
+  document.getElementById('kd-giao2').textContent=(p.giao2*GGK).toLocaleString('vi-VN')+'đ';
   document.getElementById('kd-soluong').value=10;
   document.getElementById('keo-detail').style.display='block';
   document.getElementById('nk-backdrop').classList.add('on');
@@ -2926,8 +2935,9 @@ function tinhTienKeo(){
   var p=KEO.find(function(x){return x.ma===curKeoMa;}); if(!p) return;
   var sl=parseInt(document.getElementById('kd-soluong').value)||0;
   var use2=sl>=50;
-  var nhanVal=use2?p.nhan2:p.nhan;
-  var giaoVal=use2?p.giao2:p.giao;
+  var GGK=(typeof ggFactorCho==='function')?ggFactorCho(curKeoMa):1;
+  var nhanVal=(use2?p.nhan2:p.nhan)*GGK;
+  var giaoVal=(use2?p.giao2:p.giao)*GGK;
   var tierLabel=use2?' (≥50 bao)':' (<50 bao)';
   var color=use2?'#388E3C':'#7B1FA2';
   document.getElementById('kd-tien-nhan').textContent=(nhanVal*sl).toLocaleString('vi-VN')+'đ'+tierLabel;
@@ -2955,6 +2965,9 @@ function themKeoVaoDon(){
       ns:0, gs:0, qty:sl, loai:'keo'
     });
   }
+  var _gK=(typeof ggSel==='function')?ggSel(p.ma):0;   // % giảm thêm đã chọn trong cửa sổ chi tiết
+  if(_gK>0){ var _itK=donItems.find(function(x){return x.ma===p.ma;}); if(_itK) ggApDung(_itK,_gK); }
+  else if(typeof ggSauThem==='function') ggSauThem(p.ma);
   updateDonBadge();
   showToast('✓ Đã thêm '+sl+' bao '+p.ten+' vào đơn!');
   closeKeoDetail();
@@ -2968,6 +2981,7 @@ function keoNav(delta){
   if(next) showKeo(next.ma);
 }
 function closeKeoDetail(){
+  if(typeof ggDongDP==='function') ggDongDP();
   document.getElementById('keo-detail').style.display='none';
   var nd=document.getElementById('ngoi-detail');
   if(!nd||nd.style.display!=='block') document.getElementById('nk-backdrop').classList.remove('on');
@@ -4414,9 +4428,11 @@ function chiaSeAnhSanPham(ma, tenSP){
   document.body.appendChild(ov);
 }
 
-function shareZaloNgoi(ma){
+function shareZaloNgoi(ma, pctGG){
   var p=NGOI.find(function(x){return x.ma===ma;}); if(!p) return;
-  var f=function(n){ return n>0?n.toLocaleString('vi-VN')+'đ/viên':'–'; };
+  // Tài khoản đặc biệt chọn giảm thêm cho đại lý: chỉ áp lên giá đại lý (nhận kho / đi giao), không làm tròn, không ghi chữ "giảm thêm"
+  var kGG=(typeof ggK==='function'&&pctGG>0&&ggDuocDung())?ggK(pctGG):1;
+  var f=function(n,k){ return n>0?(n*(k||1)).toLocaleString('vi-VN')+'đ/viên':'–'; };
   // Tên hiển thị giống popup chi tiết (VD "Ngói lợp TITAN001 – Cam đất nung") thay vì mã SAP thô
   var info=p._new?ngoiParse(p):null;
   var col=info?NGOI_COLORS[info.code]:null;
@@ -4427,30 +4443,31 @@ function shareZaloNgoi(ma){
   lines.push('━━━━━━━━━━━━━━');
   if(p.le>0){ lines.push('1. Giá niêm yết: '+f(p.le)); lines.push(''); }
   lines.push('2. Giá đại lý lấy hàng dưới 1.500 viên:');
-  lines.push('   Nhận tại kho: '+f(p.nhan));
-  lines.push('   Đi giao: '+f(p.giao));
+  lines.push('   Nhận tại kho: '+f(p.nhan,kGG));
+  lines.push('   Đi giao: '+f(p.giao,kGG));
   lines.push('');
   lines.push('3. Giá đại lý lấy hàng từ 1.500 viên 🔥 trở lên:');
-  lines.push('   Nhận tại kho: '+f(p.nhan2));
-  lines.push('   Đi giao: '+f(p.giao2));
+  lines.push('   Nhận tại kho: '+f(p.nhan2,kGG));
+  lines.push('   Đi giao: '+f(p.giao2,kGG));
   copyZaloMsg(lines.join('\n'));
 }
 
-function shareZaloKeo(ma){
+function shareZaloKeo(ma, pctGG){
   var p=KEO.find(function(x){return x.ma===ma;}); if(!p) return;
-  var f=function(n){ return n>0?n.toLocaleString('vi-VN')+'đ/bao':'–'; };
+  var kGG=(typeof ggK==='function'&&pctGG>0&&ggDuocDung())?ggK(pctGG):1;
+  var f=function(n,k){ return n>0?(n*(k||1)).toLocaleString('vi-VN')+'đ/bao':'–'; };
   var lines=['🧱 KEO ĐỒNG TÂM'];
   lines.push('📌 Mã: '+p.ten);
   lines.push('📐 Quy cách: '+(p.qc||''));
   lines.push('━━━━━━━━━━━━━━');
   if(p.le>0){ lines.push('1. Giá niêm yết: '+f(p.le)); lines.push(''); }
   lines.push('2. Giá đại lý lấy hàng dưới 50 bao:');
-  lines.push('   Nhận tại kho: '+f(p.nhan));
-  lines.push('   Đi giao: '+f(p.giao));
+  lines.push('   Nhận tại kho: '+f(p.nhan,kGG));
+  lines.push('   Đi giao: '+f(p.giao,kGG));
   lines.push('');
   lines.push('3. Giá đại lý lấy hàng từ 50 bao 🔥 trở lên (giá tốt hơn):');
-  lines.push('   Nhận tại kho: '+f(p.nhan2));
-  lines.push('   Đi giao: '+f(p.giao2));
+  lines.push('   Nhận tại kho: '+f(p.nhan2,kGG));
+  lines.push('   Đi giao: '+f(p.giao2,kGG));
   copyZaloMsg(lines.join('\n'));
 }
 

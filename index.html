@@ -430,6 +430,7 @@
         <div id="nd-video-embed" style="border-radius:10px;overflow:hidden;background:#000;width:100%"></div>
       </div>
     </div><!-- end nd-panel-video -->
+    <div id="nd-gg-wrap" style="display:none;margin-top:12px"></div>
     <!-- Lên đơn ngói - luôn hiện, không phụ thuộc tab đang chọn -->
     <div style="display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bd)">
       <span style="font-size:13px;color:var(--t2)">Số lượng:</span>
@@ -458,7 +459,7 @@
         🛒 Thêm vào đơn
       </button>
       <button onclick="chiaSeAnhSanPham(curNgoiMa, document.getElementById('nd-ten').textContent)" style="padding:11px 12px;border:none;border-radius:var(--r8);background:#388E3C;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)" title="Chia sẻ nhiều ảnh sản phẩm">📤 Ảnh</button>
-      <button onclick="shareZaloNgoi(curNgoiMa)" style="padding:11px 14px;border:none;border-radius:var(--r8);background:#0068FF;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">
+      <button onclick="shareZaloNgoi(curNgoiMa, ggSel(curNgoiMa))" style="padding:11px 14px;border:none;border-radius:var(--r8);background:#0068FF;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">
         Zalo ↗
       </button>
     </div>
@@ -552,6 +553,7 @@
         <div id="kd-video-embed" style="border-radius:10px;overflow:hidden;background:#000;width:100%"></div>
       </div>
     </div><!-- end kd-panel-video -->
+    <div id="kd-gg-wrap" style="display:none;margin-bottom:10px"></div>
     <!-- Nhập SL - luôn hiện, không phụ thuộc tab đang chọn -->
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
       <span style="font-size:13px;color:var(--t2)">Số lượng:</span>
@@ -576,7 +578,7 @@
     <div style="display:flex;gap:8px;margin-bottom:6px">
       <button onclick="themKeoVaoDon()" style="flex:1;padding:11px;border:none;border-radius:var(--r8);background:#7B1FA2;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">🛒 Thêm vào đơn</button>
       <button onclick="chiaSeAnhSanPham(curKeoMa, document.getElementById('kd-ten').textContent)" style="padding:11px 12px;border:none;border-radius:var(--r8);background:#388E3C;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)" title="Chia sẻ ảnh">📤 Ảnh</button>
-      <button onclick="shareZaloKeo(curKeoMa)" style="padding:11px 14px;border:none;border-radius:var(--r8);background:#0068FF;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">Zalo ↗</button>
+      <button onclick="shareZaloKeo(curKeoMa, ggSel(curKeoMa))" style="padding:11px 14px;border:none;border-radius:var(--r8);background:#0068FF;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">Zalo ↗</button>
     </div>
     <button onclick="moTonKho(curKeoMa)" style="width:100%;font-size:12px;padding:8px;border-radius:var(--r8);border:1.5px solid #7B1FA2;background:none;color:#7B1FA2;font-weight:700;font-family:var(--f);cursor:pointer">📦 Xem tồn kho theo kho/lô</button>
     <button onclick="copyLinkSanPham(curKeoMa)" style="width:100%;margin-top:6px;font-size:12px;padding:8px;border-radius:var(--r8);border:1.5px solid #7B1FA2;background:none;color:#7B1FA2;font-weight:700;font-family:var(--f);cursor:pointer">🔗 Copy link sản phẩm</button>
@@ -934,10 +936,10 @@
 
 
 
-<script src="script.js?v=nav200" defer></script>
+<script src="script.js?v=nav201" defer></script>
 <script src="dv.js?v=7" defer></script>
 <script src="hangom.js?v=6" defer></script>
 <script src="kehoach.js?v=2" defer></script>
-<script src="giamgia.js?v=3" defer></script>
+<script src="giamgia.js?v=4" defer></script>
 </body>
 </html>
